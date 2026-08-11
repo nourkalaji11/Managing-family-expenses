@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>بنية تطبيق الموبايل — شرح مبسّط</title>
+<style>
+  :root{
+    --bg:#f8fafc; --panel:#ffffff; --ink:#0b1c30; --muted:#5b6472;
+    --line:#e2e8f0; --primary:#3b82f6; --primary-soft:#eff6ff;
+    --green:#10b981; --green-soft:#ecfdf5; --amber:#d97706; --amber-soft:#fffbeb;
+    --code-bg:#0f172a; --code-ink:#e2e8f0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --panel:#131c2e; --ink:#e8eefc; --muted:#9aa7bd;
+      --line:#243149; --primary:#6ea8fe; --primary-soft:#16243c;
+      --green:#34d399; --green-soft:#10261f; --amber:#fbbf24; --amber-soft:#2a2113;
+      --code-bg:#060b16; --code-ink:#cbd5e1;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+    line-height:1.9; font-size:16px;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:40px 20px 80px}
+
+  header.hero{
+    background:linear-gradient(135deg,var(--primary) 0%,#1d4ed8 100%);
+    color:#fff; border-radius:24px; padding:36px 28px; margin-bottom:32px;
+    box-shadow:0 8px 24px rgba(59,130,246,.15);
+  }
+  header.hero h1{margin:0 0 8px; font-size:30px; font-weight:700}
+  header.hero p{margin:0; opacity:.92; font-size:16px}
+  .chips{margin-top:18px; display:flex; flex-wrap:wrap; gap:8px}
+  .chip{background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.28);
+    padding:4px 12px; border-radius:999px; font-size:13px}
+
+  section{background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:24px 26px; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,.04)}
+  h2{font-size:21px; margin:0 0 16px; display:flex; align-items:center; gap:10px}
+  h2 .num{background:var(--primary-soft); color:var(--primary); font-size:14px;
+    width:30px; height:30px; border-radius:9px; display:grid; place-items:center; flex:none; font-weight:700}
+  h3{font-size:17px; margin:22px 0 10px; color:var(--ink)}
+  p{margin:0 0 12px; color:var(--muted)}
+  p strong,li strong{color:var(--ink)}
+  ul,ol{margin:0 0 12px; padding-inline-start:22px; color:var(--muted)}
+  li{margin-bottom:6px}
+  code{background:var(--primary-soft); color:var(--primary); padding:1px 6px;
+    border-radius:6px; font-size:13.5px; font-family:"Cascadia Code",Consolas,monospace; direction:ltr; display:inline-block}
+
+  .tablewrap{overflow-x:auto; margin-bottom:12px}
+  table{border-collapse:collapse; width:100%; min-width:460px; font-size:14.5px}
+  th,td{text-align:right; padding:10px 12px; border-bottom:1px solid var(--line)}
+  th{background:var(--primary-soft); color:var(--primary); font-weight:600; white-space:nowrap}
+  td{color:var(--muted)}
+  td:first-child{color:var(--ink); font-weight:500; white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+
+  pre{background:var(--code-bg); color:var(--code-ink); padding:18px 20px; border-radius:12px;
+    overflow-x:auto; direction:ltr; text-align:left; font-size:13px; line-height:1.75;
+    font-family:"Cascadia Code",Consolas,monospace; margin:0 0 14px}
+  pre .c{color:#94a3b8}
+  pre .k{color:#7dd3fc}
+
+  .flow{list-style:none; padding:0; margin:0 0 14px; counter-reset:step}
+  .flow li{position:relative; padding:12px 54px 12px 14px; margin-bottom:8px;
+    background:var(--bg); border:1px solid var(--line); border-radius:12px; color:var(--ink); font-size:14.5px}
+  .flow li::before{counter-increment:step; content:counter(step);
+    position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%);
+    width:26px; height:26px; border-radius:8px; background:var(--primary); color:#fff;
+    display:grid; place-items:center; font-size:13px; font-weight:700}
+
+  .note{background:var(--green-soft); border-inline-start:4px solid var(--green);
+    padding:12px 16px; border-radius:10px; margin:0 0 14px; font-size:14.5px}
+  .warn{background:var(--amber-soft); border-inline-start:4px solid var(--amber);
+    padding:12px 16px; border-radius:10px; margin:0 0 14px; font-size:14.5px}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:12px}
+  .card{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+  .card b{display:block; margin-bottom:4px; font-size:15px}
+  .card span{font-size:13.5px; color:var(--muted)}
+
+  ol.todo{counter-reset:t; list-style:none; padding:0}
+  ol.todo li{position:relative; padding:12px 48px 12px 14px; margin-bottom:8px;
+    background:var(--amber-soft); border-radius:10px; color:var(--ink); font-size:14.5px}
+  ol.todo li::before{counter-increment:t; content:counter(t);
+    position:absolute; inset-inline-start:14px; top:13px; width:24px; height:24px; border-radius:7px;
+    background:var(--amber); color:#fff; display:grid; place-items:center; font-size:12.5px; font-weight:700}
+
+  footer{text-align:center; color:var(--muted); font-size:13.5px; margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>بنية تطبيق الموبايل — شرح مبسّط</h1>
+  <p>تطبيق Flutter لإدارة مصاريف العائلة · المجلد الأساسي <code style="background:rgba(255,255,255,.2);color:#fff">mobile/</code></p>
+  <div class="chips">
+    <span class="chip">Flutter + Dart</span>
+    <span class="chip">BLoC / Cubit</span>
+    <span class="chip">Clean Architecture</span>
+    <span class="chip">Dio + Hive</span>
+    <span class="chip">عربي / إنجليزي</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">١</span> نظرة عامة سريعة</h2>
+  <p>المشروع حاليًا <strong>قالب أساسي جاهز (Base Template)</strong>: البنية التحتية كلها موجودة — شبكة، تخزين، مصادقة، إشعارات، لغات، ثيم — بس <strong>شاشات المصاريف نفسها لسه ما اتبنت</strong>. الموجود منها لهلق هو التصاميم فقط داخل <code>stitch_family_finance_tracker/</code>.</p>
+  <p>اسم الباكج داخل الكود هو <code>lootah_main_structure</code>، وهو اسم القالب اللي انبنى عليه المشروع.</p>
+  <p>المعمارية = <strong>Clean Architecture مبسّطة + BLoC</strong>، بثلاث طبقات:</p>
+  <div class="tablewrap">
+  <table>
+    <tr><th>الطبقة</th><th>الوظيفة</th><th>وين موجودة</th></tr>
+    <tr><td>Presentation</td><td>الشاشات والويدجت (اللي بيشوفه المستخدم)</td><td><code>lib/presentation/</code></td></tr>
+    <tr><td>Business Logic</td><td>Bloc / Cubit — العقل المدبّر</td><td><code>lib/blocs/</code> + <code>bloc/</code> بكل صفحة</td></tr>
+    <tr><td>Data</td><td>الموديلات، الـ Repos، التخزين المحلي</td><td><code>lib/data/</code></td></tr>
+    <tr><td>Network</td><td>كلاينت الـ API، الأخطاء، الروابط</td><td><code>lib/network/</code></td></tr>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">٢</span> شجرة المجلدات</h2>
+<pre>mobile/
+├── lib/                          <span class="c">← كل كود التطبيق (Dart)</span>
+│   ├── main.dart                 <span class="c">← نقطة البداية: تهيئة كل شي ثم تشغيل التطبيق</span>
+│   ├── firebase_options.dart     <span class="c">← إعدادات Firebase المولّدة تلقائيًا</span>
+│   │
+│   ├── <span class="k">core/</span>                     <span class="c">← الأساسيات المشتركة بكل التطبيق</span>
+│   │   ├── default_settings.dart      <span class="c">← ثوابت عامة (النسخة، مفاتيح Navigator، اللغات)</span>
+│   │   ├── locals_app.dart            <span class="c">← متغيّرات عامة (المستخدم، اللغة، نوع الجهاز)</span>
+│   │   └── notification_manager.dart  <span class="c">← إدارة إشعارات OneSignal</span>
+│   │
+│   ├── <span class="k">blocs/</span>                    <span class="c">← كيوبتات عامة مشتركة بين الشاشات</span>
+│   │   ├── locale_cubit.dart          <span class="c">← تبديل اللغة</span>
+│   │   ├── local_user_cubit.dart      <span class="c">← بيانات المستخدم المسجّل</span>
+│   │   ├── toggle_cubit.dart          <span class="c">← تبديل بسيط true/false</span>
+│   │   ├── password_cubit.dart        <span class="c">← إظهار/إخفاء كلمة المرور</span>
+│   │   └── date_cubit.dart            <span class="c">← اختيار التاريخ</span>
+│   │
+│   ├── <span class="k">data/</span>                     <span class="c">← طبقة البيانات</span>
+│   │   ├── local_storage.dart         <span class="c">← تخزين محلي عبر Hive (توكن، لغة، FCM)</span>
+│   │   ├── constant/enums.dart        <span class="c">← ثوابت مُعدّدة (نوع الدخول، الأدوار، التبويبات)</span>
+│   │   ├── models/                    <span class="c">← تحويل JSON ↔ كائنات Dart</span>
+│   │   │   ├── user.dart
+│   │   │   └── custom_notification.dart
+│   │   └── repos/                     <span class="c">← تنفيذ نداءات الـ API</span>
+│   │       ├── auth_repo.dart
+│   │       └── notifications_repo.dart
+│   │
+│   ├── <span class="k">network/</span>                  <span class="c">← طبقة الاتصال بالسيرفر</span>
+│   │   ├── network_client.dart        <span class="c">← DioClient: كل الطلبات بتمرق من هون</span>
+│   │   ├── global_api_endpoint.dart   <span class="c">← قائمة روابط الـ API بمكان واحد</span>
+│   │   ├── failure.dart               <span class="c">← أنواع الأخطاء (سيرفر، اتصال، عام...)</span>
+│   │   └── network_connection.dart    <span class="c">← فحص وجود إنترنت</span>
+│   │
+│   ├── <span class="k">presentation/</span>             <span class="c">← الواجهات</span>
+│   │   ├── pages/                     <span class="c">← الشاشات، كل شاشة بمجلد مستقل</span>
+│   │   │   ├── auth/                       <span class="c">← الدخول والتسجيل</span>
+│   │   │   ├── dashboard/                  <span class="c">← الرئيسية + الشريط السفلي</span>
+│   │   │   └── notifications/              <span class="c">← الإشعارات</span>
+│   │   └── widgets/                   <span class="c">← ويدجت جاهزة قابلة لإعادة الاستخدام</span>
+│   │       ├── main_button · text_field · password_field
+│   │       ├── custom_app_bar · dialog_template · error_message
+│   │       ├── image_picker_widget · file_picker_widget
+│   │       └── country_picker · no_items · refresh · default_loader
+│   │
+│   ├── <span class="k">style/</span>                    <span class="c">← نظام التصميم</span>
+│   │   ├── colors · text_style · theme
+│   │   └── padding · radius · spaces · decorations
+│   │
+│   └── <span class="k">utils/</span>                    <span class="c">← أدوات مساعدة</span>
+│       ├── service_locator.dart       <span class="c">← تسجيل الـ Blocs بـ GetIt (حقن التبعيات)</span>
+│       ├── validator · date_formatter · string_formatter
+│       ├── google_sign_controller · apple_sign_controller
+│       ├── analytics_controller · device_controller
+│       └── app_links · url_handler · system_func · countries
+│
+├── android/ ios/ web/ windows/ macos/ linux/   <span class="c">← ملفات كل منصّة (مولّدة تلقائيًا)</span>
+├── test/                                        <span class="c">← الاختبارات</span>
+├── pubspec.yaml                                 <span class="c">← الحزم والإعدادات</span>
+└── stitch_family_finance_tracker/               <span class="c">← تصاميم الشاشات (HTML+صور) — مو كود</span></pre>
+</section>
+
+<section>
+  <h2><span class="num">٣</span> بنية الشاشة الواحدة (النمط المتكرر)</h2>
+  <p>كل شاشة رئيسية بتتقسم لـ ٣ مجلدات. مثال <code>auth</code>:</p>
+<pre>presentation/pages/auth/
+├── <span class="k">domain/</span>
+│   └── auth_domain.dart      <span class="c">← عقد مجرّد: شو العمليات المتاحة؟ (تسجيل، دخول، OTP)</span>
+├── <span class="k">bloc/</span>
+│   ├── auth_event.dart       <span class="c">← الأحداث: شو المستخدم عمل؟ (OnLogin, OnRegister)</span>
+│   ├── auth_state.dart       <span class="c">← الحالات: شو وضع الشاشة؟ (Loading, Success, Failure)</span>
+│   └── auth_bloc.dart        <span class="c">← المنطق: حدث ← ينادي الـ Repo ← يطلّع حالة</span>
+└── <span class="k">presentation/</span>
+    ├── welcome_screen.dart
+    ├── login_with_password.dart
+    └── signup.dart</pre>
+  <div class="note">الـ <strong>domain</strong> بيعرّف <strong>شو</strong> بدنا نعمل، والـ <strong>repo</strong> بـ <code>data/repos/</code> بينفّذ <strong>كيف</strong> بينعمل. هيك بتقدر تبدّل مصدر البيانات بدون ما تلمس الواجهة.</div>
+</section>
+
+<section>
+  <h2><span class="num">٤</span> رحلة البيانات (مثال: تسجيل الدخول)</h2>
+  <ol class="flow">
+    <li>المستخدم بيضغط زر «دخول».</li>
+    <li>الشاشة بتبعت حدث: <code>context.read&lt;AuthBloc&gt;().add(OnLogin(...))</code></li>
+    <li><code>AuthBloc</code> بيطلّع <code>AuthLoading()</code> ← الشاشة بتعرض لودر.</li>
+    <li>بينادي <code>AuthRepo().login(...)</code></li>
+    <li><code>DioClient.request()</code> بيضيف الهيدرز تلقائيًا: اللغة، التوكن، نوع الجهاز.</li>
+    <li>السيرفر بيرجّع JSON.</li>
+    <li>الـ Repo بيرجّع <code>Either&lt;Failure, User&gt;</code>:<br>
+        <strong>Left</strong> = خطأ ← <code>emit(AuthFailure)</code> ← رسالة خطأ.<br>
+        <strong>Right</strong> = نجاح ← حفظ التوكن بـ Hive + <code>emit(LoginSuccess)</code> ← انتقال للرئيسية.</li>
+  </ol>
+  <div class="note"><strong>نقطة مهمة:</strong> المشروع بيستخدم <code>Either</code> من حزمة <code>dartz</code> بدل رمي Exceptions. يعني كل دالة بترجع <strong>إمّا خطأ إمّا نتيجة</strong>، وأنت مجبور تتعامل مع الحالتين — هاد بيمنع الكراشات المفاجئة.</div>
+</section>
+
+<section>
+  <h2><span class="num">٥</span> أهم الحزم المستخدمة</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>الحزمة</th><th>الوظيفة</th></tr>
+    <tr><td>flutter_bloc</td><td>إدارة الحالة (State Management)</td></tr>
+    <tr><td>dio</td><td>طلبات HTTP</td></tr>
+    <tr><td>get_it</td><td>حقن التبعيات (Dependency Injection)</td></tr>
+    <tr><td>hive</td><td>تخزين محلي سريع</td></tr>
+    <tr><td>dartz</td><td>نمط <code>Either</code> لمعالجة الأخطاء</td></tr>
+    <tr><td>easy_localization</td><td>تعدد اللغات (عربي / إنجليزي)</td></tr>
+    <tr><td>flutter_screenutil</td><td>تجاوب الشاشات — التصميم المرجعي ٤١٢×٩١٧</td></tr>
+    <tr><td>firebase_core / auth / messaging / analytics</td><td>خدمات فايربيز</td></tr>
+    <tr><td>onesignal_flutter</td><td>الإشعارات</td></tr>
+    <tr><td>google_sign_in + sign_in_with_apple</td><td>تسجيل دخول اجتماعي</td></tr>
+    <tr><td>flutter_easyloading</td><td>مؤشرات التحميل والتوستات</td></tr>
+    <tr><td>shorebird_code_push</td><td>تحديثات فورية بدون رفع نسخة جديدة</td></tr>
+    <tr><td>connectivity_plus</td><td>فحص الإنترنت</td></tr>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">٦</span> ملفات مفتاحية لازم تعرفها</h2>
+  <div class="grid">
+    <div class="card"><b>lib/main.dart</b><span>التهيئة بالترتيب: Firebase ← اللغات ← Hive ← OneSignal ← GetIt ← تشغيل التطبيق.</span></div>
+    <div class="card"><b>utils/service_locator.dart</b><span>مكان تسجيل أي Bloc جديد — لازم تضيفه هون.</span></div>
+    <div class="card"><b>network/global_api_endpoint.dart</b><span>كل روابط الـ API بمكان واحد.</span></div>
+    <div class="card"><b>core/locals_app.dart</b><span>متغيّرات عامة: المستخدم الحالي، اللغة، نوع الجهاز.</span></div>
+    <div class="card"><b>data/constant/enums.dart</b><span>تبويبات الشريط السفلي مُعرّفة هون (<code>MainTabs</code>).</span></div>
+    <div class="card"><b>style/theme.dart</b><span>الثيم العام للتطبيق.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">٧</span> مجلد التصاميم <code>stitch_family_finance_tracker/</code></h2>
+  <p>هاد مجلد <strong>تصاميم فقط</strong> (HTML + صور PNG)، مو جزء من كود التطبيق. فيه ١٢ شاشة مصمّمة:</p>
+  <ul>
+    <li><strong>splash</strong> — شاشة البداية</li>
+    <li><strong>login / register</strong> — الدخول والتسجيل</li>
+    <li><strong>dashboard</strong> — لوحة التحكم الرئيسية</li>
+    <li><strong>accounts_list + add_edit_account</strong> — الحسابات</li>
+    <li><strong>transactions_list + add_edit_transaction</strong> — الحركات المالية</li>
+    <li><strong>budgets_list + add_edit_budget</strong> — الميزانيات</li>
+    <li><strong>categories_list + add_edit_category</strong> — التصنيفات</li>
+  </ul>
+  <p>وفيه <code>kinship_finance/DESIGN.md</code> = <strong>نظام التصميم الكامل</strong>: الألوان، الخطوط (IBM Plex Sans Arabic)، المسافات، الظلال، الأشكال. التصميم مبني أصلًا لواجهة <strong>RTL</strong> عربية.</p>
+</section>
+
+<section>
+  <h2><span class="num">٨</span> ملاحظات ونواقص حالية (TODO)</h2>
+  <p>أشياء لازم تنتبه إلها لأنها لسه فاضية أو من القالب القديم:</p>
+  <ol class="todo">
+    <li><strong>رابط الـ API فاضي</strong> — <code>global_api_endpoint.dart:3</code> فيه <code>https://domain/api/v1</code> (قيمة وهمية).</li>
+    <li><strong>مفتاح OneSignal فاضي</strong> — <code>default_settings.dart:22</code> ← <code>oneSignalAppId = ""</code>.</li>
+    <li><strong>رابط التطبيق بالمتجر فاضي</strong> — <code>default_settings.dart:19</code> ← <code>linkApp</code>.</li>
+    <li><strong>مجلد <code>assets/</code> غير موجود</strong> — بس <code>main.dart:42</code> بيدوّر على <code>assets/translations</code>، وقسم <code>assets</code> بـ <code>pubspec.yaml</code> لسه كومنت. التطبيق رح يفشل عند الإقلاع بدون ما تنشئه.</li>
+    <li><strong>الشاشة الرئيسية فاضية</strong> — <code>dashboard_cubit.dart:11</code> قائمة <code>tabs</code> كلها كومنتات.</li>
+    <li><strong>التبويبات من تطبيق تاني</strong> — <code>MainTabs</code> فيها feed / explore / chats / appointments (تطبيق شات)، لازم تتبدّل لتبويبات المصاريف.</li>
+    <li><strong>عنوان التطبيق</strong> — <code>main.dart:102</code> لسه <code>"Cash For Chat"</code>.</li>
+    <li><strong>اسم الباكج</strong> — <code>lootah_main_structure</code> بكل ملفات الاستيراد؛ تغييره بدّو تعديل شامل.</li>
+  </ol>
+  <div class="warn">المجلدات <code>backend/</code> و <code>docs/</code> كانت موجودة بالكوميت الأول كمجلدات فاضية (<code>.gitkeep</code> بس)، وحاليًا محذوفة من الشجرة — يعني الباك-إند لسه ما بلش.</div>
+</section>
+
+<footer>ملف الشرح النصّي المقابل: <code>docs/mobile-structure.md</code></footer>
+
+</div>
+</body>
+</html>

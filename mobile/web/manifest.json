@@ -1,6 +1,6 @@
 {
-    "name": "mobile",
-    "short_name": "mobile",
+    "name": "lootah_main_structure",
+    "short_name": "lootah_main_structure",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

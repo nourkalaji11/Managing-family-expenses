@@ -1,0 +1,258 @@
+{
+  "auth": {
+    "app_name": "المصاريف العائلية",
+
+    "splash_title": "تتبع مصاريف العائلة",
+    "splash_subtitle": "إدارة ذكية لميزانية منزلك",
+    "splash_tag_secure": "آمن",
+    "splash_tag_smart": "ذكي",
+    "splash_tag_family": "عائلي",
+
+    "login_title": "المصاريف العائلية",
+    "login_subtitle": "إدارة أموال أسرتك بذكاء وسهولة",
+    "email": "البريد الإلكتروني",
+    "email_hint": "example@family.com",
+    "password": "كلمة المرور",
+    "password_hint": "••••••••",
+    "forgot_password": "نسيت كلمة المرور؟",
+    "forgot_password_soon": "سيتم إضافة استعادة كلمة المرور لاحقاً",
+    "remember_me": "تذكرني على هذا الجهاز",
+    "login_button": "تسجيل الدخول",
+    "or_continue_with": "أو عبر",
+    "google": "جوجل",
+    "facebook": "فيسبوك",
+    "social_not_available": "تسجيل الدخول عبر مواقع التواصل غير مفعّل حالياً",
+    "no_account": "ليس لديك حساب؟ ",
+    "register_now": "سجل الآن مجاناً",
+    "rights_reserved": "جميع الحقوق محفوظة ©",
+    "bank_grade_encryption": "تشفير بيانات بمعايير مصرفية",
+
+    "register_title": "المصاريف العائلية",
+    "register_subtitle": "إدارة مالية ذكية بلمسة خاصة",
+    "register_heading": "إنشاء حساب جديد",
+    "create_account": "إنشاء حساب",
+    "full_name": "الاسم الكامل",
+    "full_name_hint": "أدخل اسمك الكامل",
+    "account_type": "نوع الحساب",
+    "parent": "ولي أمر",
+    "family_member": "عضو عائلة",
+    "confirm_password": "تأكيد كلمة المرور",
+    "accept_terms_prefix": "أوافق على ",
+    "terms_of_use": "شروط الاستخدام",
+    "accept_terms_separator": " و ",
+    "privacy_policy": "سياسة الخصوصية",
+    "accept_terms_suffix": ".",
+    "terms_page_soon": "سيتم إضافة صفحات الشروط والخصوصية لاحقاً",
+    "already_have_account": "لديك حساب بالفعل؟ ",
+    "login_now": "تسجيل الدخول",
+    "register_success": "تم إنشاء حسابك بنجاح",
+
+    "error_name_required": "يرجى إدخال الاسم الكامل",
+    "error_email_required": "يرجى إدخال البريد الإلكتروني",
+    "error_email_invalid": "البريد الإلكتروني غير صالح",
+    "error_password_required": "يرجى إدخال كلمة المرور",
+    "error_password_short": "كلمة المرور قصيرة جداً",
+    "error_password_confirm_required": "يرجى تأكيد كلمة المرور",
+    "error_passwords_not_match": "كلمتا المرور غير متطابقتين",
+    "error_terms_required": "يجب الموافقة على شروط الاستخدام"
+  },
+
+  "dashboard": {
+    "title": "المصاريف",
+
+    "total_balance": "الرصيد الإجمالي",
+    "currency_sar": "ر.س",
+    "family_account_number": "رقم الحساب العائلي",
+
+    "add_transaction": "إضافة معاملة",
+    "transfer": "تحويل",
+
+    "income": "الدخل",
+    "expenses": "المصاريف",
+    "remaining": "المتبقي",
+
+    "spending_distribution": "توزيع المصاريف",
+    "total": "المجموع",
+    "other": "أخرى",
+    "no_expenses": "لا توجد مصاريف في هذه الفترة",
+
+    "recent_transactions": "آخر المعاملات",
+    "view_all": "عرض الكل",
+    "no_transactions": "لا توجد معاملات بعد",
+    "untitled": "معاملة",
+
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "am": "ص",
+    "pm": "م",
+
+    "coming_soon": "قيد التطوير",
+    "retry": "إعادة المحاولة"
+  },
+
+  "transactions": {
+    "search_hint": "بحث عن معاملة...",
+    "clear_search": "مسح البحث",
+
+    "filter_all": "الكل",
+    "filter_this_month": "هذا الشهر",
+
+    "undated": "بدون تاريخ",
+
+    "empty_title": "لا توجد معاملات بعد",
+    "empty_body": "ابدأ بإضافة أول معاملة لك",
+    "empty_filtered_title": "لا توجد نتائج",
+    "empty_filtered_body": "جرّب تعديل البحث أو الفلاتر",
+    "clear_filters": "مسح الفلاتر",
+
+    "add_title": "إضافة معاملة",
+    "edit_title": "تعديل معاملة",
+
+    "total_amount": "المبلغ الإجمالي",
+    "type_expense": "مصروف",
+    "type_income": "دخل",
+
+    "account": "الحساب",
+    "category": "الفئة",
+    "date": "التاريخ",
+    "description": "الوصف",
+    "description_hint": "أضف ملاحظة قصيرة...",
+
+    "select_account": "اختر الحساب",
+    "select_category": "اختر الفئة",
+    "select_date": "اختر التاريخ",
+    "no_accounts": "لا توجد حسابات متاحة",
+    "no_categories": "لا توجد فئات متاحة",
+
+    "backspace": "حذف",
+    "save": "حفظ المعاملة",
+    "created": "تمت إضافة المعاملة بنجاح",
+    "updated": "تم تحديث المعاملة بنجاح",
+
+    "error_amount_required": "يرجى إدخال المبلغ",
+    "error_amount_positive": "يجب أن يكون المبلغ أكبر من صفر",
+    "error_account_required": "يرجى اختيار الحساب",
+    "error_category_required": "يرجى اختيار الفئة",
+    "error_date_future": "لا يمكن اختيار تاريخ في المستقبل",
+    "error_description_long": "الوصف طويل جداً (٢٥٥ حرفاً كحد أقصى)",
+    "error_no_user": "تعذّر تحديد المستخدم الحالي",
+    "error_invalid_selection": "الحساب أو الفئة المختارة غير صالحة",
+    "error_not_found": "لم يتم العثور على المعاملة"
+  },
+
+  "budgets": {
+    "previous_month": "الشهر السابق",
+    "next_month": "الشهر التالي",
+
+    "total_limit": "إجمالي الميزانية",
+    "spent": "تم صرفه",
+    "remaining": "المتبقي",
+
+    "by_category": "الميزانيات حسب الفئة",
+    "limit": "الحد الأقصى",
+    "footer_spent": "صرفت",
+    "footer_remaining": "المتبقي",
+    "over_by": "تجاوز بـ",
+    "untitled": "ميزانية",
+
+    "status_early": "بداية جيدة ({percent})",
+    "status_on_track": "تم استهلاك {percent}",
+    "status_near_limit": "اقتربت من الحد ({percent})",
+    "status_exceeded": "تجاوزت الميزانية بـ {amount}",
+
+    "empty_title": "لا توجد ميزانيات بعد",
+    "empty_body": "ابدأ بتحديد ميزانية لأول فئة",
+    "empty_month_title": "لا توجد ميزانيات في هذا الشهر",
+    "empty_month_body": "جرّب اختيار شهر آخر أو أضف ميزانية جديدة",
+    "go_to_current_month": "العودة إلى الشهر الحالي",
+
+    "add_title": "إضافة ميزانية",
+    "edit_title": "تعديل الميزانية",
+
+    "hint_title": "حدد ميزانيتك بحكمة",
+    "hint_body": "تخصيص مبلغ محدد لكل فئة يساعد العائلة على البقاء ضمن المسار المالي الصحيح.",
+
+    "select_category": "اختر الفئة",
+    "limit_label": "الحد الأقصى للميزانية",
+    "limit_hint": "0",
+    "start_date": "تاريخ البدء",
+    "end_date": "تاريخ الانتهاء",
+    "no_categories": "لا توجد فئات متاحة",
+
+    "preview": "معاينة الميزانية",
+    "preview_caption": "ميزانية \"{category}\" من {start} إلى {end}",
+    "preview_placeholder": "اختر فئة وحدد المبلغ لمعاينة الميزانية",
+
+    "save": "حفظ الميزانية",
+    "created": "تمت إضافة الميزانية بنجاح",
+    "updated": "تم تحديث الميزانية بنجاح",
+
+    "error_category_required": "يرجى اختيار الفئة",
+    "error_limit_required": "يرجى إدخال الحد الأقصى للميزانية",
+    "error_limit_positive": "يجب أن يكون المبلغ أكبر من صفر",
+    "error_end_before_start": "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء",
+    "error_invalid_category": "الفئة المختارة غير صالحة",
+    "error_not_found": "لم يتم العثور على الميزانية"
+  },
+
+  "months": {
+    "1": "يناير",
+    "2": "فبراير",
+    "3": "مارس",
+    "4": "أبريل",
+    "5": "مايو",
+    "6": "يونيو",
+    "7": "يوليو",
+    "8": "أغسطس",
+    "9": "سبتمبر",
+    "10": "أكتوبر",
+    "11": "نوفمبر",
+    "12": "ديسمبر"
+  },
+
+  "tabs": {
+    "home": "الرئيسية",
+    "transactions": "المعاملات",
+    "budgets": "الميزانية",
+    "accounts": "الحسابات",
+    "categories": "الفئات"
+  },
+
+  "required": "هذا الحقل مطلوب",
+  "or": "أو",
+  "login": "تسجيل الدخول",
+  "signup": "إنشاء حساب",
+  "username": "اسم المستخدم",
+  "password": "كلمة المرور",
+  "confirm_password": "تأكيد كلمة المرور",
+  "email": "البريد الإلكتروني",
+  "phone": "رقم الهاتف",
+  "full_name": "الاسم الكامل",
+  "referral_code": "كود الدعوة",
+  "create_account": "إنشاء حساب",
+  "fill_info": "يرجى تعبئة البيانات التالية",
+  "enter_username_password": "أدخل اسم المستخدم وكلمة المرور",
+  "welcome_screen_message": "أهلاً بك، سجّل الدخول للمتابعة",
+  "continue_google": "المتابعة عبر جوجل",
+  "continue_apple": "المتابعة عبر آبل",
+  "use_phone_instead": "استخدم رقم الهاتف بدلاً من ذلك",
+  "use_email_instead": "استخدم البريد الإلكتروني بدلاً من ذلك",
+  "i_agree": "أوافق على ",
+  "terms": "شروط الاستخدام",
+  "invalid_email": "البريد الإلكتروني غير صالح",
+  "invalid_password": "كلمة المرور غير صالحة",
+  "invalid_format": "الصيغة غير صحيحة",
+  "passwords_not_match": "كلمتا المرور غير متطابقتين",
+  "notifications": "الإشعارات",
+  "no_notifications": "لا توجد إشعارات",
+  "no_items": "لا توجد عناصر",
+  "exit_warning": "اضغط مرة أخرى للخروج",
+  "unknown": "غير معروف",
+  "free": "مجاني",
+  "pick_file": "اختر ملفاً",
+  "photo_access_denied": "تم رفض الوصول إلى الصور",
+  "photo_req_message": "يرجى السماح بالوصول إلى الصور",
+  "server_error": "حدث خطأ في الخادم، يرجى المحاولة لاحقاً",
+  "connection_error": "لا يوجد اتصال بالإنترنت",
+  "errorglobal": "حدث خطأ ما، يرجى المحاولة مرة أخرى"
+}

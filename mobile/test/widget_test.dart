@@ -1,30 +1,57 @@
-// This is a basic Flutter widget test.
+// Smoke test for the shared authentication widgets.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// The previous contents of this file were the unmodified Flutter counter
+// template, which asserted on a counter UI this app never had and so always
+// failed. The feature-level tests live in `test/auth/`.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_primary_button.dart';
 
-import 'package:mobile/main.dart';
+import 'auth/auth_test_harness.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUp(resetLocator);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('AuthPrimaryButton ignores taps while loading', (tester) async {
+    int taps = 0;
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(
+      wrapForTest(
+        Scaffold(
+          body: AuthPrimaryButton(
+            text: 'submit',
+            isLoading: true,
+            onPressed: () => taps++,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    await tester.tap(find.byType(AuthPrimaryButton));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(taps, 0);
+  });
+
+  testWidgets('AuthPrimaryButton forwards taps when idle', (tester) async {
+    int taps = 0;
+
+    await tester.pumpWidget(
+      wrapForTest(
+        Scaffold(
+          body: AuthPrimaryButton(text: 'submit', onPressed: () => taps++),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AuthPrimaryButton));
+    await tester.pump();
+
+    expect(taps, 1);
   });
 }

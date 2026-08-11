@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .minimal-input {
+            background-color: #ffffff;
+            border: 1px solid #e5eeff;
+            transition: all 0.2s ease;
+        }
+        .minimal-input:focus-within {
+            border-color: #006c49;
+            box-shadow: 0 0 0 4px rgba(0, 108, 73, 0.05);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006c49",
+                        "secondary-container": "#6cf8bb",
+                        "on-secondary-container": "#00714d",
+                        "surface": "#f8f9ff",
+                        "on-surface": "#0b1c30",
+                        "on-surface-variant": "#424754",
+                        "outline": "#727785",
+                        "outline-variant": "#c2c6d6",
+                        "background": "#f8f9ff",
+                        "on-background": "#0b1c30",
+                        "error": "#ba1a1a",
+                        "surface-container": "#e5eeff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-high": "#dce9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.25rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "1.25rem",
+                        "stack-gap-sm": "0.5rem",
+                        "stack-gap-md": "1rem",
+                        "stack-gap-lg": "1.5rem"
+                    }
+                },
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top App Bar -->
+<header class="fixed top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-outline-variant/30 flex flex-row-reverse justify-between items-center w-full px-margin-mobile h-16">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<h1 class="font-bold text-lg text-on-surface">تعديل الحساب</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors active:scale-95" onclick="history.back()">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</header>
+<main class="max-w-md mx-auto px-margin-mobile pt-20 pb-44 space-y-6">
+<!-- Header Illustration -->
+<div class="relative w-full aspect-[21/9] rounded-2xl overflow-hidden border border-outline-variant/20">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCP6O4tmz6mqldJ6fGIzfXAbT5EuxKclFFmzqF-xZPwgS6bdpqtAkE2FvR1LcAIORG1Y7XcCvhC-XHKgPURDH57TWg34gslBRhgV1aUAlHAvpEm2fmygCJ-LE4hipGhTbLR9rkXcdt8BYxEA2ton2dgDyD4sYtSgg3vsqxxkZ6gBI-cROLuc88HPxXexFqeoFWZBzndv51DjT4TAlo3DsRybo0Y3paOLJMStCsF3dCxcqkuvXevIQZvoc8DDbRU1hoEKUkNJOxMLZI')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/60 to-transparent"></div>
+<div class="absolute bottom-4 right-5 text-white">
+<p class="text-[10px] font-bold text-secondary-container uppercase tracking-wider mb-0.5">إدارة الشؤون المالية</p>
+<h2 class="text-xl font-bold">بيانات الحساب البنكي</h2>
+</div>
+</div>
+<!-- Main Form Container -->
+<div class="bg-white rounded-2xl p-6 space-y-6 border border-outline-variant/20 shadow-sm">
+<!-- Input Fields -->
+<div class="space-y-5">
+<!-- Account Name Field -->
+<div class="space-y-1.5 group">
+<label class="block text-xs font-bold text-on-surface-variant px-1" for="account-name">
+                    اسم الحساب
+                </label>
+<div class="minimal-input relative flex items-center rounded-xl overflow-hidden">
+<input class="w-full bg-transparent border-none focus:ring-0 px-4 py-3.5 text-base text-on-surface placeholder:text-outline/60" id="account-name" placeholder="مثلاً: حساب الادخار" type="text"/>
+<div class="pl-4 text-on-surface-variant/70">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+</div>
+</div>
+<!-- Initial Balance Field -->
+<div class="space-y-1.5 group">
+<label class="block text-xs font-bold text-on-surface-variant px-1" for="initial-balance">
+                    الرصيد الافتتاحي
+                </label>
+<div class="minimal-input relative flex items-center rounded-xl overflow-hidden">
+<input class="w-full bg-transparent border-none focus:ring-0 px-4 py-3.5 text-base text-on-surface placeholder:text-outline/60 text-left ltr" id="initial-balance" placeholder="0.00" type="number"/>
+<div class="pl-3 text-on-surface font-bold text-sm border-r border-outline-variant/30 ml-4">ر.س</div>
+<div class="pl-4 text-on-surface-variant/70">
+<span class="material-symbols-outlined">payments</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Account Type Selection -->
+<div class="space-y-3">
+<h3 class="text-xs font-bold text-on-surface-variant px-1">نوع الحساب</h3>
+<div class="grid grid-cols-2 gap-2">
+<button class="px-4 py-3 rounded-xl bg-secondary text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                    جاري
+                </button>
+<button class="px-4 py-3 rounded-xl border border-outline-variant/50 text-on-surface-variant font-medium text-sm hover:bg-surface-container-low transition-all active:scale-95">ادخار</button>
+<button class="px-4 py-3 rounded-xl border border-outline-variant/50 text-on-surface-variant font-medium text-sm hover:bg-surface-container-low transition-all active:scale-95">بطاقة ائتمانية</button>
+<button class="px-4 py-3 rounded-xl border border-outline-variant/50 text-on-surface-variant font-medium text-sm hover:bg-surface-container-low transition-all active:scale-95">نقد</button>
+</div>
+</div>
+</div>
+<!-- Info Cards -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-white p-4 rounded-xl border border-outline-variant/20 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined !text-2xl">security</span>
+</div>
+<span class="text-xs font-bold text-on-surface">آمن ومشفر</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant/20 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined !text-2xl">sync</span>
+</div>
+<span class="text-xs font-bold text-on-surface">مزامنة فورية</span>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center h-16 px-2 pb-safe bg-white border-t border-outline-variant/30 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col items-center justify-center text-outline h-full px-2 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[9px] mt-1 font-medium">الرئيسية</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline h-full px-2 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-[9px] mt-1 font-medium">المعاملات</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline h-full px-2 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="text-[9px] mt-1 font-medium">الميزانية</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary h-full px-2 border-b-2 border-secondary">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="text-[9px] mt-1 font-bold">الحسابات</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline h-full px-2 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[9px] mt-1 font-medium">الفئات</span>
+</div>
+</nav>
+<!-- Actions Footer -->
+<div class="fixed bottom-20 left-0 right-0 px-margin-mobile flex gap-2">
+<button class="flex-1 bg-secondary text-white font-bold text-base py-4 rounded-xl shadow-lg shadow-secondary/20 hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+<span>حفظ التغييرات</span>
+<span class="material-symbols-outlined">save</span>
+</button>
+<button class="w-14 h-14 bg-white border border-outline-variant/30 rounded-xl flex items-center justify-center text-error hover:bg-error/5 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">delete_outline</span>
+</button>
+</div>
+<!-- Success Toast -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-white px-6 py-3 rounded-full shadow-xl opacity-0 translate-y-[-10px] transition-all duration-300 pointer-events-none flex items-center gap-3 z-[100]" id="success-toast">
+<span class="material-symbols-outlined text-secondary-container">check_circle</span>
+<span class="text-sm font-bold">تم حفظ البيانات بنجاح</span>
+</div>
+<script>
+    const saveBtn = document.querySelector('button.bg-secondary');
+    const toast = document.getElementById('success-toast');
+
+    saveBtn.addEventListener('click', () => {
+        const originalContent = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span>';
+        
+        setTimeout(() => {
+            saveBtn.innerHTML = '<span>تم بنجاح</span><span class="material-symbols-outlined">done</span>';
+            
+            toast.classList.remove('opacity-0', 'translate-y-[-10px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
+            }, 3000);
+        }, 1000);
+    });
+
+    const balanceInput = document.getElementById('initial-balance');
+    balanceInput.addEventListener('input', (e) => {
+        if(e.target.value < 0) e.target.value = 0;
+    });
+
+    const typeButtons = document.querySelectorAll('.grid button');
+    typeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            typeButtons.forEach(b => {
+                b.className = 'px-4 py-3 rounded-xl border border-outline-variant/50 text-on-surface-variant font-medium text-sm hover:bg-surface-container-low transition-all active:scale-95';
+                b.innerHTML = b.textContent.trim();
+            });
+            btn.className = 'px-4 py-3 rounded-xl bg-secondary text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2';
+            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-white"></span>${btn.textContent.trim()}`;
+        });
+    });
+</script>
+</body></html>

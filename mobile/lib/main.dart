@@ -1,122 +1,146 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-void main() {
-  runApp(const MyApp());
+import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive/hive.dart';
+import 'package:family_expense_management/blocs/local_user_cubit.dart';
+import 'package:family_expense_management/blocs/locale_cubit.dart';
+import 'package:family_expense_management/core/app_routes.dart';
+import 'package:family_expense_management/core/default_settings.dart';
+import 'package:family_expense_management/core/locals_app.dart';
+import 'package:family_expense_management/core/notification_manager.dart';
+import 'package:family_expense_management/data/constant/enums.dart';
+import 'package:family_expense_management/data/local_storage.dart';
+import 'package:family_expense_management/firebase_options.dart';
+import 'package:family_expense_management/presentation/pages/auth/presentation/splash_screen.dart';
+import 'package:family_expense_management/presentation/pages/dashboard/bloc/dashboard_cubit.dart';
+import 'package:family_expense_management/presentation/widgets/custom_easyloading.dart';
+import 'package:family_expense_management/style/theme.dart';
+import 'package:family_expense_management/utils/service_locator.dart';
+import 'package:path_provider/path_provider.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await EasyLocalization.ensureInitialized();
+  final appDocumentDirectory = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDirectory.path);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  Locale locale = await LocalStorage().getLanguage();
+
+  await OneSignalNotificationManager.initialize();
+  OneSignalNotificationManager.addClickListener();
+
+  setupServiceLocator();
+  runApp(
+    EasyLocalization(
+      startLocale: locale,
+      supportedLocales: DefaultSettings.supportedLocales,
+      path: 'assets/translations',
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+  State<MyApp> createState() => _MyAppState();
+  static void restartApp(BuildContext context, {MainTabs? tab}) {
+    context.findAncestorStateOfType<_MyAppState>()?.restartApp(tab);
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
+class _MyAppState extends State<MyApp> {
+  void restartApp(MainTabs? tab) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      DefaultSettings.mainNavigatorKey = GlobalKey(
+        debugLabel: "Main Navigator",
+      );
+      Future.delayed(Duration(seconds: 2), () {
+        DefaultSettings.scaffoldDashboardKey.currentState?.context
+            .read<DashboardCubit>()
+            .changeTab(tab ?? MainTabs.home);
+      });
     });
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    LocalsApp.locale = context.locale;
+    if (Platform.isAndroid) {
+      LocalsApp.deviceOS = "android";
+    } else if (Platform.isIOS) {
+      LocalsApp.deviceOS = "ios";
+    }
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<LocaleCubit>.value(value: getIt<LocaleCubit>()),
+        BlocProvider<LocalUserCubit>.value(value: getIt<LocalUserCubit>()),
+      ],
+      child: Builder(
+        builder: (context) {
+          final locale = context.watch<LocaleCubit>().state;
+          return ScreenUtilInit(
+            designSize: const Size(412, 917),
+            minTextAdapt: true,
+            splitScreenMode: true,
+            builder: (context, child) {
+              return MaterialApp(
+                navigatorKey: DefaultSettings.mainNavigatorKey,
+                title: "Family Expenses",
+                debugShowCheckedModeBanner: false,
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: locale,
+                theme: Themes.theme,
+                themeMode: ThemeMode.light,
+                home: const SplashScreen(),
+                // `AppRoutes.routes` intentionally has no '/' entry: MaterialApp
+                // asserts when `home` and `routes['/']` are both provided.
+                routes: AppRoutes.routes,
+                builder: (context, widget) {
+                  EasyLoading.init();
+                  ScreenUtil.init(context);
+                  CustomEasyLoading().configLoading();
+                  double width = MediaQuery.of(context).size.width;
+
+                  widget = MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(width < 600 ? 1.0 : 0.8),
+                    ),
+                    child: widget!,
+                  );
+                  widget = EasyLoading.init()(context, widget);
+                  return ScrollConfiguration(
+                    behavior: NoGlowScrollBehavior(),
+                    child: widget,
+                  );
+                },
+              );
+            },
+          );
+        },
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class NoGlowScrollBehavior extends ScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, _) {
+    return child; // Removes the glow effect
   }
 }

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>المصاريف العائلية - الحسابات</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#adc6ff",
+                    "secondary-container": "#6cf8bb",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-tint": "#005ac2",
+                    "secondary-fixed-dim": "#4edea3",
+                    "secondary-fixed": "#6ffbbe",
+                    "surface-dim": "#cbdbf5",
+                    "primary": "#0058be",
+                    "surface-bright": "#f8f9ff",
+                    "on-primary-container": "#fefcff",
+                    "tertiary": "#825100",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#002113",
+                    "on-background": "#0b1c30",
+                    "on-tertiary-fixed": "#2a1700",
+                    "inverse-surface": "#213145",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "surface-container-high": "#dce9ff",
+                    "on-primary-fixed-variant": "#004395",
+                    "error": "#ba1a1a",
+                    "primary-container": "#2170e4",
+                    "tertiary-container": "#a36700",
+                    "surface": "#f8f9ff",
+                    "outline": "#727785",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-fixed": "#ffddb8",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "surface-variant": "#d3e4fe",
+                    "background": "#f8f9ff",
+                    "surface-container-low": "#eff4ff",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#424754",
+                    "primary-fixed-dim": "#adc6ff",
+                    "outline-variant": "#c2c6d6",
+                    "on-secondary-container": "#00714d",
+                    "on-primary-fixed": "#001a42",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-surface": "#0b1c30",
+                    "surface-container": "#e5eeff",
+                    "secondary": "#006c49"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "1.25rem",
+                    "stack-gap-sm": "0.5rem",
+                    "stack-gap-md": "1rem",
+                    "stack-gap-lg": "1.5rem",
+                    "container-padding": "1.25rem"
+            },
+            "fontFamily": {
+                    "display": ["IBM Plex Sans Arabic"],
+                    "headline": ["IBM Plex Sans Arabic"],
+                    "body": ["IBM Plex Sans Arabic"],
+                    "label": ["IBM Plex Sans Arabic"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+                    "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff;
+            color: #0b1c30;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .m3-card {
+            background: #ffffff;
+            border: 1px solid #e5eeff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        .m3-card:active {
+            transform: scale(0.99);
+            background: #eff4ff;
+        }
+        .premium-emerald {
+            background: linear-gradient(135deg, #006c49 0%, #004d34 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="w-full fixed top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-surface-container-high h-16 flex flex-row-reverse justify-between items-center px-margin-mobile">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface hover:bg-surface-container-low transition-colors p-2 rounded-full active:scale-95 duration-200">notifications</button>
+<h1 class="font-headline text-title-lg text-on-surface">الحسابات</h1>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/30 overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+</header>
+<main class="px-container-padding pt-24 max-w-2xl mx-auto">
+<!-- Summary Section -->
+<section class="mb-8">
+<div class="premium-emerald p-6 rounded-2xl text-on-primary flex flex-col items-center justify-center space-y-1 shadow-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+<span class="font-label text-label-sm opacity-80 uppercase tracking-widest">إجمالي الأرصدة</span>
+<span class="font-display text-display-lg-mobile">24,500.00 <span class="text-lg font-normal opacity-70">ر.س</span></span>
+<div class="flex items-center bg-white/10 px-3 py-1 rounded-full mt-3">
+<span class="material-symbols-outlined text-sm ml-1">trending_up</span>
+<span class="text-xs font-medium">+2.4% هذا الشهر</span>
+</div>
+</div>
+</section>
+<!-- Search & Filter -->
+<div class="flex gap-3 mb-8">
+<div class="relative flex-1 group">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
+<input class="w-full pr-12 pl-4 py-3 bg-white border border-surface-container-high rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary font-body text-body-md placeholder:text-outline transition-all" placeholder="البحث في الحسابات..." type="text"/>
+</div>
+<button class="p-3 bg-white border border-surface-container-high rounded-xl text-on-surface-variant active:scale-95 transition-transform hover:bg-surface-container-low">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<!-- Accounts List -->
+<div class="space-y-3">
+<!-- Cash Account Card -->
+<div class="m3-card p-5 rounded-2xl flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div>
+<h3 class="font-headline text-on-surface font-semibold">محفظة نقدية</h3>
+<p class="font-label text-on-surface-variant text-xs">النقود المتوفرة يدوياً</p>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline text-on-surface text-lg">1,250.00</div>
+<div class="font-label text-outline text-[10px]">ر.س</div>
+</div>
+</div>
+<!-- Bank Account Card -->
+<div class="m3-card p-5 rounded-2xl flex items-center justify-between cursor-pointer group border-r-4 border-secondary">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h3 class="font-headline text-on-surface font-semibold">حساب بنكي</h3>
+<p class="font-label text-on-surface-variant text-xs">مصرف الراجحي - الجاري</p>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline text-on-surface text-lg">18,450.50</div>
+<div class="font-label text-outline text-[10px]">ر.س</div>
+</div>
+</div>
+<!-- Credit Card Card -->
+<div class="m3-card p-5 rounded-2xl flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-error-container/20 flex items-center justify-center text-error group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">credit_card</span>
+</div>
+<div>
+<h3 class="font-headline text-on-surface font-semibold">بطاقة ائتمان</h3>
+<p class="font-label text-on-surface-variant text-xs">بطاقة التسوق عبر الإنترنت</p>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline text-error text-lg">4,800.00-</div>
+<div class="font-label text-outline text-[10px]">ر.س</div>
+</div>
+</div>
+<!-- Savings Account -->
+<div class="m3-card p-5 rounded-2xl flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">savings</span>
+</div>
+<div>
+<h3 class="font-headline text-on-surface font-semibold">حساب الادخار</h3>
+<p class="font-label text-on-surface-variant text-xs">صندوق الطوارئ العائلي</p>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline text-on-surface text-lg">9,600.00</div>
+<div class="font-label text-outline text-[10px]">ر.س</div>
+</div>
+</div>
+</div>
+<!-- Decorative Visualization -->
+<div class="mt-10 relative overflow-hidden rounded-2xl h-44 group shadow-md border border-surface-container-high">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB9I2ns8Waq7LjakCWWPVVyHOMu4aoAQ7orEdL3FVX7UDhCmkd-79CIFr9yjHB-zZfRahayF6oCuHBx9knfTOzyrISw0mkk1QEL5WpJLmy0vkO5nPY4mfnW5RlGRLblbOFS8aLhK8SFJvQyf6GvAFJwyFyVLrw2K-CZ5mUopRLiVHeI6mHV9InOwiD5sQ3Ud4HklYfainuPZqbPYyxp6R517DMF06GM9KiM06zWaPWiRK5_Yll7kdubpJ5dTEyvmqw1M6LeLVEN2bo')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/80 via-on-background/20 to-transparent flex items-end p-6">
+<div class="text-white">
+<h4 class="font-headline text-lg font-bold">توزيع الثروة العائلية</h4>
+<p class="font-body text-body-md opacity-80">تحليل الأرصدة عبر جميع القنوات المالية</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-28 left-6 w-14 h-14 bg-secondary text-on-primary rounded-2xl shadow-xl shadow-secondary/20 flex items-center justify-center active:scale-90 transition-all duration-200 z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center h-20 px-2 pb-safe bg-white border-t border-surface-container-high shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label text-label-sm">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label text-label-sm">المعاملات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-label text-label-sm">الميزانية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary font-bold h-full px-2 active:scale-90 relative" href="#">
+<div class="absolute top-0 left-0 right-0 h-1 bg-secondary rounded-b-full"></div>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="font-label text-label-sm">الحسابات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-label text-label-sm">الفئات</span>
+</a>
+</nav>
+<script>
+    // Visual feedback for interactions
+    document.querySelectorAll('.m3-card').forEach(card => {
+        card.addEventListener('click', function() {
+            this.classList.add('ring-2', 'ring-secondary/10');
+            setTimeout(() => {
+                this.classList.remove('ring-2', 'ring-secondary/10');
+            }, 200);
+        });
+    });
+
+    // Summary card subtle tilt effect
+    const summaryCard = document.querySelector('.premium-emerald');
+    if (summaryCard) {
+        summaryCard.addEventListener('mousemove', (e) => {
+            const { left, top, width, height } = summaryCard.getBoundingClientRect();
+            const x = (e.clientX - left) / width - 0.5;
+            const y = (e.clientY - top) / height - 0.5;
+            summaryCard.style.transform = `perspective(1000px) rotateY(${x * 1.5}deg) rotateX(${-y * 1.5}deg)`;
+        });
+        summaryCard.addEventListener('mouseleave', () => {
+            summaryCard.style.transform = 'none';
+        });
+    }
+</script>
+</body></html>
