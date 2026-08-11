@@ -30,12 +30,15 @@ class BudgetController extends Controller
         $validated = $request->validate([
             'category_id'  => 'required|exists:categories,id',
             'limit_amount' => 'required|numeric|min:0.01',
+            'start_date'  =>  'required|date',
+            'end_date'    =>  'required|date|after_or_equal:start_date',
         ]);
+        $validated['user_id'] = auth()->id();
 
         // 2. حفظ الميزانية أو تحديثها بشكل ذكي في قاعدة البيانات
         $budget = Budget::updateOrCreate(
             ['category_id' => $validated['category_id']],
-            ['limit_amount' => $validated['limit_amount']]
+            $validated
         );
 
         return response()->json([

@@ -40,6 +40,7 @@ class TransactionController extends Controller
     ]);
 
     // 2. تسجيل العملية مباشرة في قاعدة البيانات
+    $validated['user_id'] = auth()->id();
     $transaction = \App\Models\Transaction::create($validated);
 
     // 3. إرجاع رد نجاح للتطبيق بصيغة JSON

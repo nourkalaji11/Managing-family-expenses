@@ -28,10 +28,10 @@ class AccountController extends Controller
     {
         // 1. فحص صحة البيانات القادمة من تطبيق الموبايل
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
             'name'    => 'required|string|max:100',
             'balance' => 'required|numeric',
         ]);
+        $validated['user_id'] = auth()->id();
 
         // 2. حفظ الحساب الجديد في قاعدة البيانات
         $account = Account::create($validated);
