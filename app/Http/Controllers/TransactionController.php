@@ -6,27 +6,35 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-    public function index()
-{
-    // جلب كل العمليات من قاعدة البيانات مرتبة من الأحدث إلى الأقدم
-    // مع جلب بيانات الحساب والفئة التابعة لها لتسهيل العرض في الموبايل
-    $transactions = \App\Models\Transaction::with(['account', 'category'])->latest()->get();
-
-    // إرجاع البيانات بصيغة JSON
-    return response()->json([
-        'message' => 'تم جلب جميع العمليات بنجاح',
-        'data'    => $transactions
-    ], 200); // 200 تعني OK
-}
+    public function index(Request $request)
+    {
+        // 1. بناء الاستعلام وجلب العمليات مع فئات الصرف والحساب البنكي وترتيبها من الأحدث للأقدم
+        $query = \App\Models\Transaction::with(['account', 'category'])->latest();
     
-
-    /**
-     * Store a newly created resource in storage.
-     */
+        // 2. فلترة حسب مستخدم معين (ابن محدد) إذا تم إرسال user_id بالـ Postman
+        if ($request->has('user_id') && $request->user_id != null) {
+            $query->where('user_id', $request->user_id);
+        }
+    
+        // 3. فلترة حسب فئة معينة (طعام، مواصلات...) إذا تم إرسال category_id
+        if ($request->has('category_id') && $request->category_id != null) {
+            $query->where('category_id', $request->category_id);
+        }
+    
+        // 4. فلترة حسب تاريخ محدد (من تاريخ إلى تاريخ) إذا أرسل الأب نطاقاً زمنياً
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+    
+        // 5. تنفيذ الاستعلام النهائي وجلب البيانات المفلترة
+        $transactions = $query->get();
+    
+        return response()->json([
+            'message' => 'تم جلب العمليات المفلترة بنجاح',
+            'data'    => $transactions
+        ], 200);
+    };
+    
      public function store(Request $request)
 {
     // 1. التحقق من صحة البيانات القادمة من تطبيق الموبايل
