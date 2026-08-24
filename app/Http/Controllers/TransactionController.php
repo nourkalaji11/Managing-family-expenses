@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
-{
+    {
     public function index(Request $request)
     {
         // 1. بناء الاستعلام وجلب العمليات مع فئات الصرف والحساب البنكي وترتيبها من الأحدث للأقدم
@@ -33,8 +33,8 @@ class TransactionController extends Controller
             'message' => 'تم جلب العمليات المفلترة بنجاح',
             'data'    => $transactions
         ], 200);
-    };
-    
+    }
+
      public function store(Request $request)
 {
     // 1. التحقق من صحة البيانات القادمة من تطبيق الموبايل
@@ -99,5 +99,4 @@ class TransactionController extends Controller
         'message' => 'تم حذف العملية بنجاح'
     ], 200);
 }
-    
-
+    }

@@ -29,7 +29,7 @@ class DashboardController extends Controller
                     'spent' => $budget->current_spending,
                     'message' => "تنبيه: الابن {$budget->user->name} تجاوز ميزانية الـ {$budget->category->name}!"
                 ];
-            ]);
+            });
 
         // إرجاع كل هذه الإحصائيات لتطبيق الموبايل بطلب واحد
         return response()->json([
