@@ -6,7 +6,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BudgetController;
-
+use App\Http\Controllers\DashboardController;
 /*
 |--------------------------------------------------------------------------
 | Public Routes (المسارات العامة)
@@ -27,9 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'me']);
 
     // الداشبورد الإحصائي
-    Route::get('/dashboard', function() {
-        return response()->json(['message' => 'مرحباً بك في لوحة تحكم إدارة العائلة']);
-    });
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // مسارات الحسابات المادية (Accounts)
     Route::get('/accounts', [AccountController::class, 'index']);
