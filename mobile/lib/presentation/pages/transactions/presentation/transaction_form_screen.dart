@@ -408,27 +408,6 @@ class _DescriptionFieldState extends State<_DescriptionField> {
   }
 
   @override
-  void didUpdateWidget(covariant _DescriptionField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // The form is seeded asynchronously: `OnFormStarted` is dispatched from
-    // `didChangeDependencies`, so the first build of an Edit form still carries
-    // an empty description and the controller is created empty. Without this
-    // the real value never reaches the field, and saving an edited transaction
-    // silently wipes its description.
-    //
-    // Guarded on the controller's current text, not just the widget's, so a
-    // rebuild never clobbers what the user is in the middle of typing.
-    if (widget.initialValue != oldWidget.initialValue &&
-        widget.initialValue != _controller.text) {
-      _controller.text = widget.initialValue;
-      _controller.selection = TextSelection.collapsed(
-        offset: _controller.text.length,
-      );
-    }
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

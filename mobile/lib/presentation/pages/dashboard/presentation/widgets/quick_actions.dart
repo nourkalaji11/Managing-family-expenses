@@ -87,20 +87,16 @@ class _ActionButton extends StatelessWidget {
                       : ColorsApp.primaryGreenPressed,
                 ),
                 SizedBox(width: 8.w),
-                // The column is a fixed half-width, and "Add transaction" is
-                // wider than the Arabic label the size was picked for. Scaling
-                // down keeps the whole label readable; ellipsising it hid the
-                // verb the button is named after.
+                // Flexible so a longer English label ellipsises rather than
+                // overflowing the fixed-width half-column.
                 Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      style: filled
-                          ? TextStyleApp.dashboardActionLabel
-                          : TextStyleApp.dashboardActionLabelDark,
-                    ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: filled
+                        ? TextStyleApp.dashboardActionLabel
+                        : TextStyleApp.dashboardActionLabelDark,
                   ),
                 ),
               ],

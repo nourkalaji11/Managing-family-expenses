@@ -7,7 +7,6 @@ import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/mock/dashboard_mock_source.dart';
 import 'package:family_expense_management/data/models/dashboard_summary.dart';
-import 'package:family_expense_management/data/models/transaction.dart';
 import 'package:family_expense_management/data/repos/dashboard_repo.dart';
 import 'package:family_expense_management/network/failure.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/bloc/dashboard_bloc.dart';
@@ -18,7 +17,6 @@ import 'package:family_expense_management/presentation/pages/dashboard/presentat
 import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/financial_summary_strip.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/quick_actions.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/recent_transactions_section.dart';
-import 'package:family_expense_management/presentation/pages/transactions/presentation/transaction_form_screen.dart';
 import 'package:family_expense_management/style/colors.dart';
 import 'package:family_expense_management/style/text_style.dart';
 
@@ -78,26 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Opens a recent-transactions row in the shared Edit Transaction screen.
-  ///
-  /// The account and category lists are passed empty on purpose:
-  /// `TransactionFormBloc` loads its own options when either is empty, so the
-  /// dashboard does not have to hold a copy of them just to open the form.
-  Future<void> _openEditTransaction(TransactionModel transaction) async {
-    final Object? result = await Navigator.of(context).pushNamed(
-      AppRoutes.editTransaction,
-      arguments: TransactionFormArgs(
-        transaction: transaction,
-        accounts: const [],
-        categories: const [],
-      ),
-    );
-
-    if (result == true && mounted) {
-      _bloc.add(const OnRefreshDashboard());
-    }
-  }
-
   /// "عرض الكل" and the transactions tab are the same destination, so this
   /// switches tabs inside the shell rather than pushing a route.
   void _openTransactionsTab() {
@@ -139,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       onAddTransaction: _openAddTransaction,
                       onTransfer: _showSoon,
                       onViewAll: _openTransactionsTab,
-                      onTransactionTap: _openEditTransaction,
                     ),
                   };
                 },
@@ -159,7 +136,6 @@ class _LoadedView extends StatelessWidget {
   final VoidCallback onAddTransaction;
   final VoidCallback onTransfer;
   final VoidCallback onViewAll;
-  final void Function(TransactionModel) onTransactionTap;
 
   const _LoadedView({
     required this.data,
@@ -168,7 +144,6 @@ class _LoadedView extends StatelessWidget {
     required this.onAddTransaction,
     required this.onTransfer,
     required this.onViewAll,
-    required this.onTransactionTap,
   });
 
   @override
@@ -221,7 +196,6 @@ class _LoadedView extends StatelessWidget {
             child: RecentTransactionsSection(
               transactions: data.recentTransactions,
               onViewAll: onViewAll,
-              onTransactionTap: onTransactionTap,
             ),
           ),
         ],

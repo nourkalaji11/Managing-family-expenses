@@ -1,19 +1,6 @@
 enum GlobalApiEndpoint {
-  // TODO(deploy): point this at the real host once the API is deployed.
-  //
-  // The path is `/api` with NO version prefix: `routes/api.php` on
-  // `origin/souad-backend` registers `/register`, `/login`, `/dashboard`,
-  // `/transactions`, ... directly under it. The old `/api/v1` value pointed at
-  // routes that do not exist.
-  //
-  // To run against a local Laravel server, use:
-  //   Android emulator → http://10.0.2.2:8000/api   (10.0.2.2 is the host's
-  //                       loopback as seen from inside the emulator)
-  //   iOS simulator    → http://127.0.0.1:8000/api
-  //   Physical device  → http://<your-LAN-ip>:8000/api
-  // Plain HTTP additionally needs the cleartext opt-in, which is already set in
-  // `android/app/src/debug/AndroidManifest.xml` for debug builds only.
-  base("https://domain/api"),
+  //TODO
+  base("https://domain/api/v1"),
 
   //splash
   initialSettings("settings/init"),

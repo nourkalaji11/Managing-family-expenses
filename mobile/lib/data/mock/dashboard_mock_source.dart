@@ -48,11 +48,11 @@ class DashboardMockSource {
   const DashboardMockSource._();
 
   /// Category rows. `categories` only has (id, name) — no colour, no icon.
-  static const Category _restaurants = Category(id: 1, name: 'Restaurants');
-  static const Category _housing = Category(id: 2, name: 'Housing');
-  static const Category _transport = Category(id: 3, name: 'Transport');
-  static const Category _shopping = Category(id: 4, name: 'Shopping');
-  static const Category _salary = Category(id: 5, name: 'Salary');
+  static const Category _restaurants = Category(id: 1, name: 'المطاعم');
+  static const Category _housing = Category(id: 2, name: 'السكن');
+  static const Category _transport = Category(id: 3, name: 'النقل');
+  static const Category _shopping = Category(id: 4, name: 'التسوق');
+  static const Category _salary = Category(id: 5, name: 'الراتب');
 
   static const List<Category> categories = [
     _restaurants,
@@ -64,8 +64,8 @@ class DashboardMockSource {
 
   /// Σ balance = 12,450.00, matching the design's total.
   static const List<Account> accounts = [
-    Account(id: 1, name: 'Current Account', balance: 9450.00, userId: 1),
-    Account(id: 2, name: 'Savings', balance: 3000.00, userId: 1),
+    Account(id: 1, name: 'الحساب الجاري', balance: 9450.00, userId: 1),
+    Account(id: 2, name: 'التوفير', balance: 3000.00, userId: 1),
   ];
 
   /// Placeholder for the masked family account number in the balance card.
@@ -94,7 +94,7 @@ class DashboardMockSource {
         id: 1,
         amount: 245.50,
         type: TransactionType.expense,
-        description: 'Panda Retail',
+        description: 'بنده للتجزئة',
         date: today,
         createdAt: today.add(const Duration(hours: 10, minutes: 30)),
         userId: 1,
@@ -106,7 +106,7 @@ class DashboardMockSource {
         id: 2,
         amount: 32.00,
         type: TransactionType.expense,
-        description: 'Starbucks',
+        description: 'ستاربكس',
         date: yesterday,
         createdAt: yesterday.add(const Duration(hours: 16, minutes: 15)),
         userId: 1,
@@ -118,7 +118,7 @@ class DashboardMockSource {
         id: 3,
         amount: 1200.00,
         type: TransactionType.income,
-        description: 'Transfer from Ahmed',
+        description: 'تحويل من أحمد',
         date: yesterday,
         createdAt: yesterday.add(const Duration(hours: 9)),
         userId: 1,
@@ -132,7 +132,7 @@ class DashboardMockSource {
         id: 4,
         amount: 468.00,
         type: TransactionType.expense,
-        description: 'Family Restaurant',
+        description: 'مطعم عائلي',
         date: today.subtract(const Duration(days: 3)),
         createdAt: today.subtract(const Duration(days: 3)),
         userId: 1,
@@ -144,7 +144,7 @@ class DashboardMockSource {
         id: 5,
         amount: 800.00,
         type: TransactionType.expense,
-        description: 'Food Delivery',
+        description: 'طلبات توصيل',
         date: today.subtract(const Duration(days: 5)),
         createdAt: today.subtract(const Duration(days: 5)),
         userId: 1,
@@ -156,7 +156,7 @@ class DashboardMockSource {
         id: 6,
         amount: 800.00,
         type: TransactionType.expense,
-        description: 'Apartment Rent',
+        description: 'إيجار الشقة',
         date: today.subtract(const Duration(days: 6)),
         createdAt: today.subtract(const Duration(days: 6)),
         userId: 1,
@@ -168,7 +168,7 @@ class DashboardMockSource {
         id: 7,
         amount: 175.00,
         type: TransactionType.expense,
-        description: 'Electricity Bill',
+        description: 'فاتورة الكهرباء',
         date: today.subtract(const Duration(days: 7)),
         createdAt: today.subtract(const Duration(days: 7)),
         userId: 1,
@@ -180,7 +180,7 @@ class DashboardMockSource {
         id: 8,
         amount: 250.00,
         type: TransactionType.expense,
-        description: 'Fuel',
+        description: 'بنزين',
         date: today.subtract(const Duration(days: 8)),
         createdAt: today.subtract(const Duration(days: 8)),
         userId: 1,
@@ -192,7 +192,7 @@ class DashboardMockSource {
         id: 9,
         amount: 400.00,
         type: TransactionType.expense,
-        description: 'Car Maintenance',
+        description: 'صيانة السيارة',
         date: today.subtract(const Duration(days: 9)),
         createdAt: today.subtract(const Duration(days: 9)),
         userId: 1,
@@ -204,7 +204,7 @@ class DashboardMockSource {
         id: 10,
         amount: 79.50,
         type: TransactionType.expense,
-        description: 'Clothes and Shoes',
+        description: 'ملابس وأحذية',
         date: today.subtract(const Duration(days: 10)),
         createdAt: today.subtract(const Duration(days: 10)),
         userId: 1,
@@ -216,7 +216,7 @@ class DashboardMockSource {
         id: 11,
         amount: 7300.00,
         type: TransactionType.income,
-        description: 'Monthly Salary',
+        description: 'الراتب الشهري',
         date: today.subtract(const Duration(days: 12)),
         createdAt: today.subtract(const Duration(days: 12)),
         userId: 1,

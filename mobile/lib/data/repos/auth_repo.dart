@@ -12,15 +12,6 @@ import 'package:family_expense_management/presentation/pages/auth/domain/auth_do
 
 class AuthRepo extends AuthDomain {
   static DioClient client = DioClient();
-
-  /// `DioClient` is configured with `ResponseType.plain`, so `response.data`
-  /// arrives as a `String`. It is decoded here rather than at each call site so
-  /// that flipping `responseType` later cannot break every parse at once.
-  static Map<String, dynamic> _decode(dynamic data) {
-    if (data is Map<String, dynamic>) return data;
-    return json.decode(data as String) as Map<String, dynamic>;
-  }
-
   @override
   Future<Either<Failure, User>> register({
     required String name,
@@ -67,18 +58,17 @@ class AuthRepo extends AuthDomain {
         },
       );
 
+      print(response.statusCode);
+      print(response.data);
       if (response.statusCode == 201 || response.statusCode == 200) {
-        // AuthController@register returns a flat body:
-        //   { message, access_token, token_type, user }
-        // There is no `data` envelope and no Authorization response header.
-        final result = _decode(response.data);
-        User user = User.fromJson(result['user'] as Map<String, dynamic>);
-        user.token = result['access_token'] as String?;
+        var result = json.decode(response.data);
+        User user = userFromJson(json.encode(result['data']));
+        user.token = response.headers['authorization']?.first;
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
       } else {
-        final result = _decode(response.data);
+        var result = json.decode(response.data);
         return Left(ResultFailure(result['message']));
       }
     } on DioException catch (ex) {
@@ -114,12 +104,14 @@ class AuthRepo extends AuthDomain {
         },
       );
 
+      print(response.statusCode);
+      print(response.data);
       if (response.statusCode == 200) {
         return const Right(true);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
       } else {
-        final result = _decode(response.data);
+        var result = json.decode(response.data);
         return Left(ResultFailure(result['message']));
       }
     } on DioException catch (ex) {
@@ -161,17 +153,17 @@ class AuthRepo extends AuthDomain {
         },
       );
 
+      print(response.statusCode);
+      print(response.data);
       if (response.statusCode == 200) {
-        // AuthController@login returns a flat body:
-        //   { message, access_token, token_type, user }
-        final result = _decode(response.data);
-        User user = User.fromJson(result['user'] as Map<String, dynamic>);
-        user.token = result['access_token'] as String?;
+        var result = json.decode(response.data);
+        User user = userFromJson(json.encode(result['data']['user']));
+        user.token = response.headers['authorization']?.first;
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
       } else {
-        final result = _decode(response.data);
+        var result = json.decode(response.data);
         return Left(ResultFailure(result['message']));
       }
     } on DioException catch (ex) {
@@ -220,12 +212,14 @@ class AuthRepo extends AuthDomain {
         body: fields,
       );
 
+      print(response.statusCode);
+      print(response.data);
       if (response.statusCode == 200) {
         return Right(response.headers['authorization']?.first as String);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
       } else {
-        final result = _decode(response.data);
+        var result = json.decode(response.data);
         return Left(ResultFailure(result['message']));
       }
     } on DioException catch (ex) {
@@ -270,17 +264,17 @@ class AuthRepo extends AuthDomain {
         },
       );
 
+      print(response.statusCode);
+      print(response.data);
       if (response.statusCode == 200) {
-        // AuthController@login returns a flat body:
-        //   { message, access_token, token_type, user }
-        final result = _decode(response.data);
-        User user = User.fromJson(result['user'] as Map<String, dynamic>);
-        user.token = result['access_token'] as String?;
+        var result = json.decode(response.data);
+        User user = userFromJson(json.encode(result['data']['user']));
+        user.token = response.headers['authorization']?.first;
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
       } else {
-        final result = _decode(response.data);
+        var result = json.decode(response.data);
         return Left(ResultFailure(result['message']));
       }
     } on DioException catch (ex) {

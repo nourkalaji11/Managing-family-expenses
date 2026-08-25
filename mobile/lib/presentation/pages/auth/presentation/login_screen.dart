@@ -9,10 +9,12 @@ import 'package:family_expense_management/core/locals_app.dart';
 import 'package:family_expense_management/presentation/pages/auth/bloc/auth_bloc.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_card.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_checkbox.dart';
+import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_divider.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_header.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_password_field.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_primary_button.dart';
 import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/auth_text_field.dart';
+import 'package:family_expense_management/presentation/pages/auth/presentation/widgets/social_login_button.dart';
 import 'package:family_expense_management/style/colors.dart';
 import 'package:family_expense_management/style/padding.dart';
 import 'package:family_expense_management/style/spaces.dart';
@@ -179,6 +181,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             text: "auth.login_button".tr(),
                             isLoading: isLoading,
                             onPressed: _submit,
+                          ),
+                          Spaces.height24,
+                          AuthDivider(text: "auth.or_continue_with".tr()),
+                          Spaces.height16,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SocialLoginButton.google(
+                                  label: "auth.google".tr(),
+                                  onPressed: () => _showSoon(
+                                    "auth.social_not_available".tr(),
+                                  ),
+                                ),
+                              ),
+                              Spaces.width12,
+                              Expanded(
+                                child: SocialLoginButton.facebook(
+                                  label: "auth.facebook".tr(),
+                                  onPressed: () => _showSoon(
+                                    "auth.social_not_available".tr(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

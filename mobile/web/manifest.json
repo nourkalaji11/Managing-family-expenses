@@ -1,6 +1,6 @@
 {
-    "name": "family_expenses",
-    "short_name": "family_expenses",
+    "name": "lootah_main_structure",
+    "short_name": "lootah_main_structure",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
