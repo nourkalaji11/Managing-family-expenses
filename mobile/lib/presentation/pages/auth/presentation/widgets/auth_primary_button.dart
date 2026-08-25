@@ -19,7 +19,7 @@ class AuthPrimaryButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isLoading = false,
-    this.trailingIcon = Icons.arrow_back,
+    this.trailingIcon = Icons.arrow_forward,
   });
 
   @override
@@ -54,7 +54,7 @@ class AuthPrimaryButton extends StatelessWidget {
                       if (trailingIcon != null) ...[
                         Spaces.width8,
                         // `textDirection: ltr` stops Flutter from mirroring the
-                        // arrow in RTL; the design keeps it pointing left.
+                        // arrow in RTL; the design keeps it pointing right.
                         Icon(
                           trailingIcon,
                           textDirection: TextDirection.ltr,

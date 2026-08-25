@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lootah_main_structure"
+    namespace = "com.example.family_expenses"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.lootah_main_structure"
+        applicationId = "com.example.family_expenses"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

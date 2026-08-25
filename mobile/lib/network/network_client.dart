@@ -15,6 +15,25 @@ enum RequestType { get, post, delete, put, patch }
 class DioClient {
   static final String _baseUrl = GlobalApiEndpoint.base.endpoint;
 
+  /// Request bodies are printed to the console for debugging. Credentials must
+  /// not be, because `adb logcat` is readable by anything with USB debugging
+  /// enabled and crash reporters capture console output verbatim.
+  static const _sensitiveKeys = {
+    'password',
+    'password_confirmation',
+    'token',
+    'secret_token',
+    'otp',
+  };
+
+  static Object? _redact(Object? body) {
+    if (body is! Map) return body;
+    return {
+      for (final entry in body.entries)
+        entry.key: _sensitiveKeys.contains(entry.key) ? '***' : entry.value,
+    };
+  }
+
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: _baseUrl,
@@ -52,7 +71,7 @@ class DioClient {
     if (connected) {
       log("$_baseUrl/$path", name: requestType.name);
       debugPrint(queryParameters.toString());
-      debugPrint(json.encode(body));
+      debugPrint(json.encode(_redact(body)));
 
       _dio.options.headers['Content-Type'] = 'application/json';
       _dio.options.headers['Accept'] = 'application/json';
@@ -60,7 +79,6 @@ class DioClient {
       _dio.options.headers['X-OS'] = LocalsApp.deviceOS;
 
       if (LocalsApp.user?.token != null) {
-        log(LocalsApp.user!.token ?? "no token");
         _dio.options.headers['Authorization'] =
             "Bearer ${LocalsApp.user!.token}";
       } else {

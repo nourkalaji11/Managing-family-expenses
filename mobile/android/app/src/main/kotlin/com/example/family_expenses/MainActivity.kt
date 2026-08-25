@@ -1,4 +1,4 @@
-package com.example.lootah_main_structure
+package com.example.family_expenses
 
 import io.flutter.embedding.android.FlutterActivity
 
