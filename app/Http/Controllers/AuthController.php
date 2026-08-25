@@ -15,16 +15,11 @@ class AuthController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            // `users.role` is NOT NULL, so it has to be validated and persisted
-            // here or every insert fails the constraint. The mobile client sends
-            // `parent` | `member` (AccountRole.apiValue).
-            'role'     => 'required|string|in:parent,member',
         ]);
 
         $user = User::create([
             'name'     => $validatedData['name'],
             'email'    => $validatedData['email'],
-            'role'     => $validatedData['role'],
             'password' => Hash::make($validatedData['password']),
         ]);
 
