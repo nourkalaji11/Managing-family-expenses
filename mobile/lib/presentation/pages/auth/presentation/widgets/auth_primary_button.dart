@@ -19,7 +19,7 @@ class AuthPrimaryButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isLoading = false,
-    this.trailingIcon = Icons.arrow_back,
+    this.trailingIcon = Icons.arrow_forward,
   });
 
   @override

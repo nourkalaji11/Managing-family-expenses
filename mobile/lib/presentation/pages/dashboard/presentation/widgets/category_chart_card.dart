@@ -10,20 +10,35 @@ import 'package:family_expense_management/style/text_style.dart';
 
 /// "توزيع المصاريف" — the donut plus its legend.
 ///
-/// Per the approved strategy the ring shows the top three categories and folds
-/// everything else into a single "أخرى" slice, so it always closes to 100%.
+/// Matches `docs/stitch_family_finance_tracker/dashboard_screen_minimal_redesign`:
+/// the ring draws only the named categories and the remainder shows the
+/// background track, exactly as the design's SVG does (40 + 30 + 20 = 90%, with
+/// `#eff4ff` visible for the last 10%). The "أخرى" bucket is therefore not
+/// drawn as its own arc and not listed in the legend.
 class CategoryChartCard extends StatelessWidget {
   final DashboardSummary summary;
 
   /// Below this width the donut and legend stack instead of sitting side by
   /// side, which keeps very small screens from squeezing the legend to nothing.
-  static const double stackBreakpoint = 340;
+  ///
+  /// The design is `flex items-center justify-between` — always side by side.
+  /// On a 1080px phone this card measures ~339dp, so a 340 threshold tipped it
+  /// into the stacked branch and never matched the design. 300 keeps the
+  /// safety net for genuinely narrow screens without catching normal phones.
+  static const double stackBreakpoint = 300;
 
   const CategoryChartCard({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
-    final slices = summary.breakdown;
+    // Only the named categories are drawn and listed. The index is carried
+    // along so the colour assignment stays tied to the slice's position in the
+    // full breakdown rather than its position after filtering.
+    final slices = <({CategoryBreakdown slice, int index})>[
+      for (int i = 0; i < summary.breakdown.length; i++)
+        if (!summary.breakdown[i].isOther)
+          (slice: summary.breakdown[i], index: i),
+    ];
 
     return DashboardCard(
       child: Column(
@@ -39,7 +54,11 @@ class CategoryChartCard extends StatelessWidget {
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                final chart = _Chart(summary: summary, maxWidth: constraints.maxWidth);
+                final chart = _Chart(
+                  summary: summary,
+                  slices: slices,
+                  maxWidth: constraints.maxWidth,
+                );
                 final legend = _Legend(slices: slices);
 
                 if (constraints.maxWidth < stackBreakpoint) {
@@ -66,9 +85,14 @@ class CategoryChartCard extends StatelessWidget {
 
 class _Chart extends StatelessWidget {
   final DashboardSummary summary;
+  final List<({CategoryBreakdown slice, int index})> slices;
   final double maxWidth;
 
-  const _Chart({required this.summary, required this.maxWidth});
+  const _Chart({
+    required this.summary,
+    required this.slices,
+    required this.maxWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,15 +105,13 @@ class _Chart extends StatelessWidget {
     return DonutChart(
       size: size.toDouble(),
       slices: [
-        for (int i = 0; i < summary.breakdown.length; i++)
+        for (final entry in slices)
           DonutSlice(
-            fraction: summary.breakdown[i].fraction,
-            color: summary.breakdown[i].isOther
-                ? CategoryVisuals.otherColor
-                : CategoryVisuals.colorFor(
-                    summary.breakdown[i].categoryId,
-                    index: i,
-                  ),
+            fraction: entry.slice.fraction,
+            color: CategoryVisuals.colorFor(
+              entry.slice.categoryId,
+              index: entry.index,
+            ),
           ),
       ],
       center: Column(
@@ -111,7 +133,7 @@ class _Chart extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  final List<CategoryBreakdown> slices;
+  final List<({CategoryBreakdown slice, int index})> slices;
 
   const _Legend({required this.slices});
 
@@ -123,7 +145,7 @@ class _Legend extends StatelessWidget {
       children: [
         for (int i = 0; i < slices.length; i++) ...[
           if (i > 0) SizedBox(height: 12.h),
-          _LegendRow(slice: slices[i], index: i),
+          _LegendRow(slice: slices[i].slice, index: slices[i].index),
         ],
       ],
     );
@@ -138,15 +160,13 @@ class _LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = slice.isOther
-        ? CategoryVisuals.otherColor
-        : CategoryVisuals.colorFor(slice.categoryId, index: index);
+    // `isOther` rows are filtered out before reaching the legend, so this only
+    // ever renders a named category.
+    final color = CategoryVisuals.colorFor(slice.categoryId, index: index);
 
     // Unnamed categories fall back to the localised "أخرى" rather than showing
     // a blank row.
-    final name = slice.isOther
-        ? 'dashboard.other'.tr()
-        : (slice.categoryName ?? 'dashboard.other'.tr());
+    final name = slice.categoryName ?? 'dashboard.other'.tr();
 
     return Row(
       mainAxisSize: MainAxisSize.min,

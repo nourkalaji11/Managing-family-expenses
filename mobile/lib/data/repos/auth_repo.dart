@@ -58,12 +58,13 @@ class AuthRepo extends AuthDomain {
         },
       );
 
-      print(response.statusCode);
-      print(response.data);
       if (response.statusCode == 201 || response.statusCode == 200) {
+        // AuthController@register returns a flat body:
+        //   { message, access_token, token_type, user }
+        // There is no `data` envelope and no Authorization response header.
         var result = json.decode(response.data);
-        User user = userFromJson(json.encode(result['data']));
-        user.token = response.headers['authorization']?.first;
+        User user = userFromJson(json.encode(result['user']));
+        user.token = result['access_token'];
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
@@ -104,8 +105,6 @@ class AuthRepo extends AuthDomain {
         },
       );
 
-      print(response.statusCode);
-      print(response.data);
       if (response.statusCode == 200) {
         return const Right(true);
       } else if (response.statusCode == 500) {
@@ -153,12 +152,11 @@ class AuthRepo extends AuthDomain {
         },
       );
 
-      print(response.statusCode);
-      print(response.data);
       if (response.statusCode == 200) {
+        // Flat body; the token is in `access_token`, not a response header.
         var result = json.decode(response.data);
-        User user = userFromJson(json.encode(result['data']['user']));
-        user.token = response.headers['authorization']?.first;
+        User user = userFromJson(json.encode(result['user']));
+        user.token = result['access_token'];
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());
@@ -212,8 +210,6 @@ class AuthRepo extends AuthDomain {
         body: fields,
       );
 
-      print(response.statusCode);
-      print(response.data);
       if (response.statusCode == 200) {
         return Right(response.headers['authorization']?.first as String);
       } else if (response.statusCode == 500) {
@@ -264,12 +260,13 @@ class AuthRepo extends AuthDomain {
         },
       );
 
-      print(response.statusCode);
-      print(response.data);
       if (response.statusCode == 200) {
+        // AuthController@login returns a flat body:
+        //   { message, access_token, token_type, user }
+        // There is no `data` envelope and no Authorization response header.
         var result = json.decode(response.data);
-        User user = userFromJson(json.encode(result['data']['user']));
-        user.token = response.headers['authorization']?.first;
+        User user = userFromJson(json.encode(result['user']));
+        user.token = result['access_token'];
         return Right(user);
       } else if (response.statusCode == 500) {
         return Left(ServerFailure());

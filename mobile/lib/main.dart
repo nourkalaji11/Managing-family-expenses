@@ -26,7 +26,18 @@ import 'package:path_provider/path_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // `firebase_options.dart` ships with empty apiKey/projectId, so this throws
+  // `ApiKey must be set.` before `runApp` and the app never leaves the native
+  // splash. Firebase is not required for the app to function, so a failed init
+  // degrades instead of blocking startup. Fill in the real options to restore
+  // messaging and analytics.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase init skipped: $e');
+  }
   await EasyLocalization.ensureInitialized();
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDirectory.path);
