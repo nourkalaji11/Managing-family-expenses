@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Account;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
     {
@@ -36,27 +38,39 @@ class TransactionController extends Controller
     }
 
      public function store(Request $request)
-{
-    // 1. التحقق من صحة البيانات القادمة من تطبيق الموبايل
-    $validated = $request->validate([
-        'account_id'   => 'required|exists:accounts,id',
-        'category_id'  => 'required|exists:categories,id',
-        'amount'       => 'required|numeric|min:0.01',
-        'type'         => 'required|in:income,expense', // إما إيراد أو مصروف
-        'description'  => 'nullable|string|max:255',
-        'date'         => 'required|date',
-    ]);
+    {
+        // 1. التحقق من صحة البيانات
+        $validated = $request->validate([
+            'account_id'  => 'required|exists:accounts,id',
+            'category_id' => 'required|exists:categories,id',
+            'amount'      => 'required|numeric|min:0.01',
+            'type'        => 'required|in:income,expense',
+            'description' => 'nullable|string|max:255',
+            'date'        => 'required|date',
+        ]);
 
-    // 2. تسجيل العملية مباشرة في قاعدة البيانات
-    $validated['user_id'] = auth()->id();
-    $transaction = \App\Models\Transaction::create($validated);
+        // 2. استخدام Transaction لضمان حفظ العملية وتحديث الرصيد معاً
+        return DB::transaction(function () use ($validated, $request) {
+            $account = Account::findOrFail($validated['account_id']);
 
-    // 3. إرجاع رد نجاح للتطبيق بصيغة JSON
-    return response()->json([
-        'message' => 'تم تسجيل العملية بنجاح!',
-        'data'    => $transaction
-    ], 201);
-}
+            // خصم أو إضافة المبلغ من رصيد الحساب
+            if ($validated['type'] === 'expense') {
+                $account->balance -= $validated['amount'];
+            } else {
+                $account->balance += $validated['amount'];
+            }
+            $account->save();
+
+            // حفظ العملية وتمرير user_id
+            $validated['user_id'] = auth()->id();
+            $transaction = \App\Models\Transaction::create($validated);
+
+            return response()->json([
+                'message' => 'تم تسجيل العملية وتحديث الرصيد بنجاح!',
+                'data'    => $transaction
+            ], 201);
+        });
+    }
     
 
     /**
