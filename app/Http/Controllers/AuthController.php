@@ -15,12 +15,14 @@ class AuthController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            'role'     =>  'nullable|string',
         ]);
 
         $user = User::create([
             'name'     => $validatedData['name'],
             'email'    => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
+            'role'     => $validatedData['role']?? 'member',
         ]);
 
         // إنشاء Token للمستخدم الجديد
@@ -40,6 +42,7 @@ class AuthController extends Controller
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
+        
         ]);
 
         $user = User::where('email', $request->email)->first();
