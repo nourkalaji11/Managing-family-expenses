@@ -11,33 +11,51 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. حساب إجمالي الرصيد المتوفر في حسابات العائلة
-        $totalBalance = Account::sum('balance');
+        $user = auth()->user();
 
-        // 2. حساب إجمالي ما تم صرفه من كل العائلة (العمليات من نوع expense)
-        $totalSpent = Transaction::where('type', 'expense')->sum('amount');
+        // 1. إذا كان المستخدم هو الأب (admin) -> يشوف الإحصائيات الكاملة والتنبيهات والرصيد
+        if ($user->role === 'admin') {
+            $totalBalance = Account::sum('balance');
+            $totalSpent = Transaction::where('type', 'expense')->sum('amount');
+            
+            $budgetsAlerts = Budget::with('user', 'category')
+                ->whereColumn('current_spending', '>=', 'limit_amount')
+                ->get()
+                ->map(function($budget) {
+                    return [
+                        'user_name' => $budget->user->name,
+                        'category'  => $budget->category->name,
+                        'limit'     => $budget->limit_amount,
+                        'spent'     => $budget->current_spending,
+                        'message'   => "تنبيه: الابن {$budget->user->name} تجاوز ميزانية {$budget->category->name}"
+                    ];
+                });
 
-        // 3. جلب تنبيهات الميزانيات (الميزانيات التي شارف الأبناء على تجاوزها أو تجاوزوها فعلاً)
-        $budgetsAlerts = Budget::with('user', 'category')
-            ->whereColumn('current_spending', '>=', 'limit_amount')
-            ->get()
-            ->map(function($budget) {
-                return [
-                    'user_name' => $budget->user->name,
-                    'category' => $budget->category->name,
-                    'limit' => $budget->limit_amount,
-                    'spent' => $budget->current_spending,
-                    'message' => "تنبيه: الابن {$budget->user->name} تجاوز ميزانية الـ {$budget->category->name}!"
-                ];
-            });
+            return response()->json([
+                'message' => 'تم جلب بيانات لوحة تحكم الأب بنجاح',
+                'data' => [
+                    'role'                 => 'admin',
+                    'total_family_balance' => $totalBalance,
+                    'total_family_spent'   => $totalSpent,
+                    'alerts'               => $budgetsAlerts,
+                ]
+            ], 200);
+        }
 
-        // إرجاع كل هذه الإحصائيات لتطبيق الموبايل بطلب واحد
+        // 2. إذا كان المستخدم ابن (member) -> يختفي الرصيد الإجمالي ويظهر حد سحبه ومسحوباته فقط
+        $mySpent = Transaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->sum('amount');
+            
+        $limit = $user->spending_limit;
+
         return response()->json([
-            'message' => 'تم جلب بيانات لوحة تحكم الأب بنجاح',
+            'message' => 'تم جلب بيانات لوحة تحكم الابن بنجاح',
             'data' => [
-                'total_family_balance' => $totalBalance,
-                'total_family_spent'   => $totalSpent,
-                'alerts'               => $budgetsAlerts
+                'role'               => 'member',
+                'my_spending_limit'  => (float)$limit,
+                'my_total_spent'     => (float)$mySpent,
+                'my_remaining_limit' => (float)max(0, $limit - $mySpent),
             ]
         ], 200);
     }

@@ -49,11 +49,28 @@ class TransactionController extends Controller
             'date'        => 'required|date',
         ]);
 
-        // 2. استخدام Transaction لضمان حفظ العملية وتحديث الرصيد معاً
-        return DB::transaction(function () use ($validated, $request) {
+        $user = auth()->user();
+
+        // 2. التحقق من حد السحب الخاص بالابن عند إضافة مصروف
+        if ($user->role === 'member' && $validated['type'] === 'expense') {
+            $totalSpent = Transaction::where('user_id', $user->id)
+                ->where('type', 'expense')
+                ->sum('amount');
+
+            if (($totalSpent + $validated['amount']) > $user->spending_limit) {
+                return response()->json([
+                    'message'        => 'عذراً، هذا المبلغ يتجاوز حد السحب المسموح لك به من قبل الأب.',
+                    'spending_limit' => (float)$user->spending_limit,
+                    'current_spent'  => (float)$totalSpent,
+                    'remaining'      => (float)max(0, $user->spending_limit - $totalSpent)
+                ], 403);
+            }
+        }
+
+        // 3. حفظ العملية وتحديث الرصيد داخل DB::transaction
+        return \DB::transaction(function () use ($validated) {
             $account = Account::findOrFail($validated['account_id']);
 
-            // خصم أو إضافة المبلغ من رصيد الحساب
             if ($validated['type'] === 'expense') {
                 $account->balance -= $validated['amount'];
             } else {
@@ -61,18 +78,15 @@ class TransactionController extends Controller
             }
             $account->save();
 
-            // حفظ العملية وتمرير user_id
             $validated['user_id'] = auth()->id();
-            $transaction = \App\Models\Transaction::create($validated);
+            $transaction = Transaction::create($validated);
 
             return response()->json([
-                'message' => 'تم تسجيل العملية وتحديث الرصيد بنجاح!',
+                'message' => 'تم تسجيل العملية وتحديث الرصيد بنجاح',
                 'data'    => $transaction
             ], 201);
         });
     }
-    
-
     /**
      * Display the specified resource.
      */

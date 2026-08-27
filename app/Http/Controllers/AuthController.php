@@ -82,4 +82,24 @@ class AuthController extends Controller
             'user' => $request->user()
         ], 200);
     }
+    // 5. تحديد حد السحب المالي للابن (خاص بالأب)
+    public function setSpendingLimit(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بتحديد الحدود المالية.'], 403);
+        }
+
+        $request->validate([
+            'spending_limit' => 'required|numeric|min:0',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->spending_limit = $request->spending_limit;
+        $user->save();
+
+        return response()->json([
+            'message' => 'تم تحديث سقف السحب للابن بنجاح.',
+            'user' => $user
+        ], 200);
+    }
 };

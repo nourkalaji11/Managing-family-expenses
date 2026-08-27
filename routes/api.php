@@ -25,7 +25,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // الروابط الأساسية البروفايل والخروج
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'me']);
-
+    Route::put('/users/{id}/limit', [AuthController::class, 'setSpendingLimit']);
+    
     // الداشبورد الإحصائي
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
