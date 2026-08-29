@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // 1. إذا كان المستخدم هو الأب (admin) -> يشوف الإحصائيات الكاملة والتنبيهات والرصيد
-        if ($user->role === 'admin') {
+        if (strtolower($user->role) === 'admin') {
             $totalBalance = Account::sum('balance');
             $totalSpent = Transaction::where('type', 'expense')->sum('amount');
             
@@ -34,7 +34,7 @@ class DashboardController extends Controller
             return response()->json([
                 'message' => 'تم جلب بيانات لوحة تحكم الأب بنجاح',
                 'data' => [
-                    'role'                 => 'admin',
+                    'role'                 => $user->role,
                     'total_family_balance' => $totalBalance,
                     'total_family_spent'   => $totalSpent,
                     'alerts'               => $budgetsAlerts,
