@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006c49", // Emerald Green Accent
+                        "on-secondary": "#ffffff",
+                        "background": "#f8f9ff", // Clean white-ish background
+                        "on-background": "#0b1c30", // Dark Navy
+                        "surface": "#ffffff",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "on-surface-variant": "#424754",
+                        "outline": "#727785",
+                        "outline-variant": "#c2c6d6",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container": "#e5eeff",
+                        "surface-container-high": "#dce9ff",
+                        "surface-container-highest": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap-sm": "0.5rem",
+                        "section-margin": "2rem",
+                        "stack-gap-md": "1rem",
+                        "stack-gap-lg": "1.5rem",
+                        "container-padding": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "display": ["IBM Plex Sans Arabic"],
+                        "headline": ["IBM Plex Sans Arabic"],
+                        "body": ["IBM Plex Sans Arabic"],
+                        "label": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .minimal-card {
+            background: #ffffff;
+            border: 1px solid #e5eeff;
+            box-shadow: 0 4px 12px rgba(11, 28, 48, 0.05);
+        }
+        .icon-grid-item.active {
+            outline: 2px solid #006c49;
+            background-color: #f0fdf4;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-surface-container h-16 px-container-padding flex flex-row justify-between items-center">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-background">arrow_forward</span>
+</button>
+<h1 class="font-headline text-title-lg text-on-background">إضافة فئة</h1>
+<div class="w-10"></div>
+</header>
+<main class="px-container-padding pt-8 max-w-lg mx-auto">
+<!-- Visual Anchor/Icon Preview -->
+<div class="flex flex-col items-center justify-center mb-10">
+<div class="relative">
+<div class="w-24 h-24 rounded-full bg-surface-container-low flex items-center justify-center transition-all duration-500 transform border border-surface-container" id="icon-preview">
+<span class="material-symbols-outlined text-secondary text-5xl" id="selected-icon-display">category</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-8 h-8 bg-surface border-2 border-secondary rounded-full flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary text-sm">edit</span>
+</div>
+</div>
+<p class="mt-6 font-label-md text-on-surface-variant uppercase tracking-wider">معاينة الفئة الجديدة</p>
+</div>
+<!-- Minimal Form Container -->
+<div class="minimal-card rounded-2xl p-6 space-y-8">
+<form class="space-y-8">
+<!-- Category Name Input -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-on-surface-variant pr-1" for="category-name">اسم الفئة</label>
+<input class="w-full h-12 px-4 rounded-xl border border-surface-container bg-surface text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-secondary focus:border-secondary transition-all outline-none font-body-lg" id="category-name" placeholder="مثلاً: البقالة، الإيجار، الترفيه" type="text"/>
+</div>
+<!-- Icon Selector -->
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-on-surface-variant pr-1">اختر الأيقونة المناسبة</label>
+<span class="font-label-md text-secondary font-semibold cursor-pointer hover:underline">المزيد</span>
+</div>
+<div class="grid grid-cols-5 gap-3 max-h-[200px] overflow-y-auto custom-scrollbar p-1">
+<!-- Icon Options -->
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('home')" type="button">
+<span class="material-symbols-outlined text-on-background">home</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('shopping_cart')" type="button">
+<span class="material-symbols-outlined text-on-background">shopping_cart</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('restaurant')" type="button">
+<span class="material-symbols-outlined text-on-background">restaurant</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('directions_car')" type="button">
+<span class="material-symbols-outlined text-on-background">directions_car</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('local_hospital')" type="button">
+<span class="material-symbols-outlined text-on-background">local_hospital</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('school')" type="button">
+<span class="material-symbols-outlined text-on-background">school</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('movie')" type="button">
+<span class="material-symbols-outlined text-on-background">movie</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('payments')" type="button">
+<span class="material-symbols-outlined text-on-background">payments</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('flight')" type="button">
+<span class="material-symbols-outlined text-on-background">flight</span>
+</button>
+<button class="icon-grid-item flex items-center justify-center p-3 rounded-xl bg-surface-container-low border border-transparent hover:border-secondary/20 transition-all active:scale-95" onclick="selectIcon('fitness_center')" type="button">
+<span class="material-symbols-outlined text-on-background">fitness_center</span>
+</button>
+</div>
+</div>
+<!-- Color Palette -->
+<div class="flex flex-col gap-4">
+<label class="font-label-md text-on-surface-variant pr-1">لون الفئة المميز</label>
+<div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+<button class="w-10 h-10 rounded-full bg-secondary flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-secondary/20" onclick="updateColor('#006c49')" type="button"></button>
+<button class="w-10 h-10 rounded-full bg-[#0058be] flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-black/5" onclick="updateColor('#0058be')" type="button"></button>
+<button class="w-10 h-10 rounded-full bg-[#7c3aed] flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-black/5" onclick="updateColor('#7c3aed')" type="button"></button>
+<button class="w-10 h-10 rounded-full bg-[#db2777] flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-black/5" onclick="updateColor('#db2777')" type="button"></button>
+<button class="w-10 h-10 rounded-full bg-[#ea580c] flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-black/5" onclick="updateColor('#ea580c')" type="button"></button>
+<button class="w-10 h-10 rounded-full bg-[#dc2626] flex-shrink-0 active:scale-90 border-2 border-white ring-1 ring-black/5" onclick="updateColor('#dc2626')" type="button"></button>
+</div>
+</div>
+</form>
+</div>
+</main>
+<!-- Fixed Bottom Save Action -->
+<div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background to-transparent z-40 flex justify-center">
+<button class="w-full max-w-lg h-14 bg-secondary text-on-secondary font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-secondary/20 active:scale-[0.98] transition-all">
+<span>حفظ الفئة</span>
+</button>
+</div>
+<!-- Hidden Input for Logic -->
+<input id="selected-icon-input" type="hidden" value="category"/>
+<script>
+        function selectIcon(iconName) {
+            // Update preview
+            document.getElementById('selected-icon-display').innerText = iconName;
+            document.getElementById('selected-icon-input').value = iconName;
+            
+            // Visual feedback on selection
+            const items = document.querySelectorAll('.icon-grid-item');
+            items.forEach(item => {
+                const icon = item.querySelector('.material-symbols-outlined').innerText;
+                if(icon === iconName) {
+                    item.classList.add('active');
+                    item.classList.remove('bg-surface-container-low');
+                    item.querySelector('.material-symbols-outlined').classList.add('text-secondary');
+                    item.querySelector('.material-symbols-outlined').classList.remove('text-on-background');
+                } else {
+                    item.classList.remove('active');
+                    item.classList.add('bg-surface-container-low');
+                    item.querySelector('.material-symbols-outlined').classList.remove('text-secondary');
+                    item.querySelector('.material-symbols-outlined').classList.add('text-on-background');
+                }
+            });
+
+            // Micro-interaction
+            const preview = document.getElementById('icon-preview');
+            preview.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                preview.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        function updateColor(hex) {
+            const preview = document.getElementById('icon-preview');
+            preview.style.borderColor = `${hex}44`;
+            preview.style.backgroundColor = `${hex}11`;
+            document.getElementById('selected-icon-display').style.color = hex;
+            
+            // Update selection indicators
+            const colorButtons = document.querySelectorAll('[onclick^="updateColor"]');
+            colorButtons.forEach(btn => {
+                const btnColor = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+                if(btnColor === hex) {
+                    btn.classList.add('ring-secondary');
+                    btn.classList.remove('ring-black/5', 'ring-secondary/20');
+                } else {
+                    btn.classList.remove('ring-secondary');
+                    btn.classList.add('ring-black/5');
+                }
+            });
+        }
+
+        // Initialize first selection
+        selectIcon('home');
+        updateColor('#006c49');
+    </script>
+</body></html>

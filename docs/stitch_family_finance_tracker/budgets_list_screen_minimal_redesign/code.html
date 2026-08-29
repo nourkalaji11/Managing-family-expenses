@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>المصاريف العائلية - الميزانية</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-primary": "#ffffff",
+                "inverse-primary": "#adc6ff",
+                "secondary-container": "#6cf8bb",
+                "inverse-on-surface": "#eaf1ff",
+                "surface-tint": "#005ac2",
+                "secondary-fixed-dim": "#4edea3",
+                "secondary-fixed": "#6ffbbe",
+                "surface-dim": "#cbdbf5",
+                "primary": "#006c49", // Emerald Green from system
+                "surface-bright": "#f8f9ff",
+                "on-primary-container": "#fefcff",
+                "tertiary": "#825100",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#d8e2ff",
+                "on-secondary-fixed-variant": "#005236",
+                "on-tertiary": "#ffffff",
+                "on-secondary-fixed": "#002113",
+                "on-background": "#0b1c30", // Dark Navy
+                "on-tertiary-fixed": "#2a1700",
+                "inverse-surface": "#213145",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface-container-high": "#dce9ff",
+                "on-primary-fixed-variant": "#004395",
+                "error": "#ba1a1a",
+                "primary-container": "#2170e4",
+                "tertiary-container": "#a36700",
+                "surface": "#f8f9ff",
+                "outline": "#727785",
+                "on-error": "#ffffff",
+                "on-tertiary-container": "#fffbff",
+                "tertiary-fixed": "#ffddb8",
+                "on-tertiary-fixed-variant": "#653e00",
+                "surface-variant": "#f1f3f4",
+                "background": "#ffffff", // Clean White Background
+                "surface-container-low": "#f7f9fc",
+                "on-secondary": "#ffffff",
+                "on-surface-variant": "#424754",
+                "primary-fixed-dim": "#adc6ff",
+                "outline-variant": "#e1e3e8",
+                "on-secondary-container": "#00714d",
+                "on-primary-fixed": "#001a42",
+                "error-container": "#ffdad6",
+                "surface-container-highest": "#e1e3e8",
+                "on-surface": "#0b1c30", // Dark Navy Text
+                "surface-container": "#eff4ff",
+                "secondary": "#006c49"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.5rem",
+                "lg": "0.75rem",
+                "xl": "1rem",
+                "2xl": "1.5rem",
+                "full": "9999px"
+        },
+        "spacing": {
+            "margin-mobile": "1.25rem",
+            "container-padding": "1.25rem"
+        },
+        "fontFamily": {
+                "headline": ["IBM Plex Sans Arabic"],
+                "display": ["IBM Plex Sans Arabic"],
+                "body": ["IBM Plex Sans Arabic"],
+                "label": ["IBM Plex Sans Arabic"]
+        }
+      },
+    },
+  }
+</script>
+<style>
+    body {
+        font-family: 'IBM Plex Sans Arabic', sans-serif;
+    }
+    .m3-card {
+        background: #ffffff;
+        border: 1px solid #e1e3e8;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .active-nav-fill .material-symbols-outlined {
+        font-variation-settings: 'FILL' 1;
+    }
+</style>
+</head>
+<body class="bg-background text-on-surface antialiased pb-28">
+<!-- Top AppBar -->
+<header class="fixed top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-outline-variant flex flex-row-reverse justify-between items-center w-full px-margin-mobile h-16">
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold">
+    ع
+</div>
+</div>
+<h1 class="font-headline text-lg font-bold text-on-surface">الميزانية</h1>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+</button>
+</header>
+<main class="px-container-padding pt-24 space-y-6 max-w-2xl mx-auto">
+<!-- Summary Header -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-center bg-surface-container-low p-5 rounded-2xl border border-outline-variant">
+<div class="flex items-center gap-2">
+<button class="p-1 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface"><span class="material-symbols-outlined rotate-180">chevron_left</span></button>
+<span class="text-base font-bold text-on-surface">مايو 2024</span>
+<button class="p-1 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface"><span class="material-symbols-outlined rotate-180">chevron_right</span></button>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider mb-0.5">إجمالي الميزانية</p>
+<p class="text-xl font-bold text-on-surface">12,500 ر.س</p>
+</div>
+</div>
+<!-- Summary Bento Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="m3-card p-5 rounded-2xl">
+<p class="text-xs text-on-surface-variant font-medium mb-1">تم صرفه</p>
+<p class="text-xl font-bold text-primary">4,320 ر.س</p>
+</div>
+<div class="m3-card p-5 rounded-2xl bg-surface-container-low border-none">
+<p class="text-xs text-on-surface-variant font-medium mb-1">المتبقي</p>
+<p class="text-xl font-bold text-on-surface">8,180 ر.س</p>
+</div>
+</div>
+</section>
+<!-- Budgets List -->
+<section class="space-y-4">
+<h2 class="text-sm font-bold text-on-surface-variant px-1 uppercase tracking-wider">الميزانيات حسب الفئة</h2>
+<!-- Budget Card 1: Restaurants -->
+<div class="m3-card rounded-2xl p-5">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-xl">restaurant</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">المطاعم والقهوة</h3>
+<p class="text-[11px] text-primary font-medium">تم استهلاك 45%</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-on-surface-variant font-medium">الحد الأقصى</p>
+<p class="text-sm font-bold text-on-surface">2,000 ر.س</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 45%"></div>
+</div>
+<div class="flex justify-between items-center text-xs text-on-surface-variant">
+<span>المتبقي: <span class="text-on-surface font-semibold">1,100 ر.س</span></span>
+<span>صرفت: <span class="text-on-surface font-semibold">900 ر.س</span></span>
+</div>
+</div>
+<!-- Budget Card 2: Groceries -->
+<div class="m3-card rounded-2xl p-5">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-xl">shopping_cart</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">المقاضي الشهرية</h3>
+<p class="text-[11px] text-tertiary font-medium">اقتربت من الحد (82%)</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-on-surface-variant font-medium">الحد الأقصى</p>
+<p class="text-sm font-bold text-on-surface">3,500 ر.س</p>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-3 overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 82%"></div>
+</div>
+<div class="flex justify-between items-center text-xs text-on-surface-variant">
+<span>المتبقي: <span class="text-on-surface font-semibold">630 ر.س</span></span>
+<span>صرفت: <span class="text-on-surface font-semibold">2,870 ر.س</span></span>
+</div>
+</div>
+<!-- Budget Card 3: Utilities (Danger) -->
+<div class="m3-card rounded-2xl p-5 border-error/20">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">electric_bolt</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">فواتير المنزل</h3>
+<p class="text-[11px] text-error font-medium">تجاوزت الميزانية بـ 150 ر.س</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-on-surface-variant font-medium">الحد الأقصى</p>
+<p class="text-sm font-bold text-on-surface">1,500 ر.س</p>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-3 overflow-hidden">
+<div class="bg-error h-full rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-error font-bold italic">تجاوز بـ: 150 ر.س</span>
+<span class="text-on-surface-variant">صرفت: <span class="text-on-surface font-semibold">1,650 ر.س</span></span>
+</div>
+</div>
+<!-- Budget Card 4: Entertainment -->
+<div class="m3-card rounded-2xl p-5">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-xl">movie</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">الترفيه</h3>
+<p class="text-[11px] text-on-surface-variant font-medium">بداية جيدة (10%)</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-on-surface-variant font-medium">الحد الأقصى</p>
+<p class="text-sm font-bold text-on-surface">1,000 ر.س</p>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 10%"></div>
+</div>
+<div class="flex justify-between items-center text-xs text-on-surface-variant">
+<span>المتبقي: <span class="text-on-surface font-semibold">900 ر.س</span></span>
+<span>صرفت: <span class="text-on-surface font-semibold">100 ر.س</span></span>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 left-6 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-lg flex items-center justify-center active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center h-20 px-2 pb-safe bg-white/90 backdrop-blur-md border-t border-outline-variant shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">account_balance_wallet</span>
+<span class="text-[10px] font-medium">المعاملات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary h-full px-4 active-nav-fill" href="#">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined mb-1">query_stats</span>
+<span class="text-[10px] font-bold">الميزانية</span>
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"></div>
+</div>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">account_balance</span>
+<span class="text-[10px] font-medium">الحسابات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">grid_view</span>
+<span class="text-[10px] font-medium">الفئات</span>
+</a>
+</nav>
+<script>
+    // Interaction effects for FAB
+    window.addEventListener('scroll', () => {
+        const fab = document.querySelector('.fixed.bottom-24');
+        if (window.scrollY > 30) {
+            fab.classList.add('opacity-80', 'scale-90');
+        } else {
+            fab.classList.remove('opacity-80', 'scale-90');
+        }
+    });
+</script>
+</body></html>

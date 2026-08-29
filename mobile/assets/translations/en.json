@@ -1,0 +1,258 @@
+{
+  "auth": {
+    "app_name": "Family Expenses",
+
+    "splash_title": "Track Family Expenses",
+    "splash_subtitle": "Smart management for your household budget",
+    "splash_tag_secure": "Secure",
+    "splash_tag_smart": "Smart",
+    "splash_tag_family": "Family",
+
+    "login_title": "Family Expenses",
+    "login_subtitle": "Manage your family's money smartly and easily",
+    "email": "Email",
+    "email_hint": "example@family.com",
+    "password": "Password",
+    "password_hint": "••••••••",
+    "forgot_password": "Forgot password?",
+    "forgot_password_soon": "Password recovery will be added later",
+    "remember_me": "Remember me on this device",
+    "login_button": "Log in",
+    "or_continue_with": "or via",
+    "google": "Google",
+    "facebook": "Facebook",
+    "social_not_available": "Social sign-in is not enabled yet",
+    "no_account": "Don't have an account? ",
+    "register_now": "Register now for free",
+    "rights_reserved": "All rights reserved ©",
+    "bank_grade_encryption": "Bank-grade data encryption",
+
+    "register_title": "Family Expenses",
+    "register_subtitle": "Smart financial management with a personal touch",
+    "register_heading": "Create a new account",
+    "create_account": "Create account",
+    "full_name": "Full name",
+    "full_name_hint": "Enter your full name",
+    "account_type": "Account type",
+    "parent": "Parent",
+    "family_member": "Family member",
+    "confirm_password": "Confirm password",
+    "accept_terms_prefix": "I agree to the ",
+    "terms_of_use": "Terms of Use",
+    "accept_terms_separator": " and ",
+    "privacy_policy": "Privacy Policy",
+    "accept_terms_suffix": ".",
+    "terms_page_soon": "Terms and privacy pages will be added later",
+    "already_have_account": "Already have an account? ",
+    "login_now": "Log in",
+    "register_success": "Your account was created successfully",
+
+    "error_name_required": "Please enter your full name",
+    "error_email_required": "Please enter your email",
+    "error_email_invalid": "Invalid email address",
+    "error_password_required": "Please enter your password",
+    "error_password_short": "Password is too short",
+    "error_password_confirm_required": "Please confirm your password",
+    "error_passwords_not_match": "Passwords do not match",
+    "error_terms_required": "You must accept the terms of use"
+  },
+
+  "dashboard": {
+    "title": "Expenses",
+
+    "total_balance": "Total balance",
+    "currency_sar": "SAR",
+    "family_account_number": "Family account number",
+
+    "add_transaction": "Add transaction",
+    "transfer": "Transfer",
+
+    "income": "Income",
+    "expenses": "Expenses",
+    "remaining": "Remaining",
+
+    "spending_distribution": "Spending breakdown",
+    "total": "Total",
+    "other": "Other",
+    "no_expenses": "No expenses in this period",
+
+    "recent_transactions": "Recent transactions",
+    "view_all": "View all",
+    "no_transactions": "No transactions yet",
+    "untitled": "Transaction",
+
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "am": "AM",
+    "pm": "PM",
+
+    "coming_soon": "Coming soon",
+    "retry": "Try again"
+  },
+
+  "transactions": {
+    "search_hint": "Search for a transaction...",
+    "clear_search": "Clear search",
+
+    "filter_all": "All",
+    "filter_this_month": "This month",
+
+    "undated": "No date",
+
+    "empty_title": "No transactions yet",
+    "empty_body": "Start by adding your first transaction",
+    "empty_filtered_title": "No results",
+    "empty_filtered_body": "Try adjusting your search or filters",
+    "clear_filters": "Clear filters",
+
+    "add_title": "Add transaction",
+    "edit_title": "Edit transaction",
+
+    "total_amount": "Total amount",
+    "type_expense": "Expense",
+    "type_income": "Income",
+
+    "account": "Account",
+    "category": "Category",
+    "date": "Date",
+    "description": "Description",
+    "description_hint": "Add a short note...",
+
+    "select_account": "Select account",
+    "select_category": "Select category",
+    "select_date": "Select date",
+    "no_accounts": "No accounts available",
+    "no_categories": "No categories available",
+
+    "backspace": "Backspace",
+    "save": "Save transaction",
+    "created": "Transaction added successfully",
+    "updated": "Transaction updated successfully",
+
+    "error_amount_required": "Please enter an amount",
+    "error_amount_positive": "Amount must be greater than zero",
+    "error_account_required": "Please select an account",
+    "error_category_required": "Please select a category",
+    "error_date_future": "The date cannot be in the future",
+    "error_description_long": "Description is too long (255 characters max)",
+    "error_no_user": "Could not determine the current user",
+    "error_invalid_selection": "The selected account or category is invalid",
+    "error_not_found": "Transaction not found"
+  },
+
+  "budgets": {
+    "previous_month": "Previous month",
+    "next_month": "Next month",
+
+    "total_limit": "Total budget",
+    "spent": "Spent",
+    "remaining": "Remaining",
+
+    "by_category": "Budgets by category",
+    "limit": "Limit",
+    "footer_spent": "Spent",
+    "footer_remaining": "Remaining",
+    "over_by": "Over by",
+    "untitled": "Budget",
+
+    "status_early": "Good start ({percent})",
+    "status_on_track": "{percent} used",
+    "status_near_limit": "Close to the limit ({percent})",
+    "status_exceeded": "Over budget by {amount}",
+
+    "empty_title": "No budgets yet",
+    "empty_body": "Start by setting a budget for your first category",
+    "empty_month_title": "No budgets for this month",
+    "empty_month_body": "Try another month, or add a new budget",
+    "go_to_current_month": "Back to the current month",
+
+    "add_title": "Add budget",
+    "edit_title": "Edit budget",
+
+    "hint_title": "Set your budget wisely",
+    "hint_body": "Allocating a set amount to each category helps the family stay on the right financial track.",
+
+    "select_category": "Select category",
+    "limit_label": "Budget limit",
+    "limit_hint": "0",
+    "start_date": "Start date",
+    "end_date": "End date",
+    "no_categories": "No categories available",
+
+    "preview": "Budget preview",
+    "preview_caption": "\"{category}\" budget from {start} to {end}",
+    "preview_placeholder": "Pick a category and an amount to preview the budget",
+
+    "save": "Save budget",
+    "created": "Budget added successfully",
+    "updated": "Budget updated successfully",
+
+    "error_category_required": "Please select a category",
+    "error_limit_required": "Please enter a budget limit",
+    "error_limit_positive": "Amount must be greater than zero",
+    "error_end_before_start": "The end date must be after the start date",
+    "error_invalid_category": "The selected category is invalid",
+    "error_not_found": "Budget not found"
+  },
+
+  "months": {
+    "1": "January",
+    "2": "February",
+    "3": "March",
+    "4": "April",
+    "5": "May",
+    "6": "June",
+    "7": "July",
+    "8": "August",
+    "9": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December"
+  },
+
+  "tabs": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "budgets": "Budget",
+    "accounts": "Accounts",
+    "categories": "Categories"
+  },
+
+  "required": "This field is required",
+  "or": "or",
+  "login": "Log in",
+  "signup": "Sign up",
+  "username": "Username",
+  "password": "Password",
+  "confirm_password": "Confirm password",
+  "email": "Email",
+  "phone": "Phone",
+  "full_name": "Full name",
+  "referral_code": "Referral code",
+  "create_account": "Create account",
+  "fill_info": "Please fill in the following information",
+  "enter_username_password": "Enter your username and password",
+  "welcome_screen_message": "Welcome, log in to continue",
+  "continue_google": "Continue with Google",
+  "continue_apple": "Continue with Apple",
+  "use_phone_instead": "Use phone number instead",
+  "use_email_instead": "Use email instead",
+  "i_agree": "I agree to the ",
+  "terms": "Terms of Use",
+  "invalid_email": "Invalid email address",
+  "invalid_password": "Invalid password",
+  "invalid_format": "Invalid format",
+  "passwords_not_match": "Passwords do not match",
+  "notifications": "Notifications",
+  "no_notifications": "No notifications",
+  "no_items": "No items",
+  "exit_warning": "Press again to exit",
+  "unknown": "Unknown",
+  "free": "Free",
+  "pick_file": "Pick a file",
+  "photo_access_denied": "Photo access denied",
+  "photo_req_message": "Please allow access to photos",
+  "server_error": "A server error occurred, please try again later",
+  "connection_error": "No internet connection",
+  "errorglobal": "Something went wrong, please try again"
+}

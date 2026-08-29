@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>المصاريف العائلية - بريميوم</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff; /* Light surface from the new theme */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .m3-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5eeff;
+        }
+        .chart-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+        .scroll-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scroll-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006c49", /* Emerald accent for green actions */
+                        "on-secondary": "#ffffff",
+                        "background": "#f8f9ff",
+                        "surface": "#ffffff",
+                        "on-surface": "#0b1c30", /* Dark navy text */
+                        "on-surface-variant": "#424754",
+                        "outline": "#727785",
+                        "outline-variant": "#c2c6d6",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container": "#e5eeff",
+                        "surface-container-high": "#dce9ff",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap-sm": "0.5rem",
+                        "section-margin": "2rem",
+                        "stack-gap-md": "1rem",
+                        "stack-gap-lg": "1.5rem",
+                        "container-padding": "1.25rem",
+                        "margin-mobile": "1.25rem"
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-md-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface mb-24 antialiased">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-outline-variant/30 h-16 flex flex-row-reverse justify-between items-center px-margin-mobile">
+<div class="flex items-center gap-3 flex-row-reverse">
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden active:scale-95 transition-transform duration-200">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3mba1nWW3eI7Mm7yt1Z7TyHDVmG5XA4pS_4lJYQbxFAg5nNhC9-TgelWkgTkgYLGKqXZXqz5E6bOabJGVG5jouCaSdnhmQGuDdD538_iKCMGOqEk4T-Oyj016y25fqbdt-JoUhTGaWbNnfycuwyck_usNRnxHNFrro5uXH32pyPmFsDUnpu2Nnx_BZkSMwkr53ydC1CTs2AgatzQMNzIZxahphPjiJI8k5a1xqixXSoSIzA-rzBv8KolvWQBv7yqAT_9fVIgd36o"/>
+</button>
+<h1 class="text-xl font-bold text-on-surface">المصاريف</h1>
+</div>
+<div class="flex items-center">
+<button class="p-2 text-on-surface hover:bg-surface-container transition-colors active:scale-95 duration-200 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-md mx-auto px-container-padding space-y-6 pt-20">
+<!-- Total Balance Card (Minimal M3 Style) -->
+<section class="m3-card p-6">
+<div class="flex justify-between items-start mb-6">
+<div>
+<p class="text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1">الرصيد الإجمالي</p>
+<div class="flex items-baseline gap-2">
+<h2 class="text-3xl font-bold text-on-surface">12,450.00</h2>
+<span class="text-sm font-semibold text-secondary">ر.س</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/30">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant mb-0.5">رقم الحساب العائلي</span>
+<span class="font-mono text-xs tracking-widest text-on-surface/70">**** 4421</span>
+</div>
+<div class="flex -space-x-2 space-x-reverse">
+<img alt="User 1" class="w-7 h-7 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3mba1nWW3eI7Mm7yt1Z7TyHDVmG5XA4pS_4lJYQbxFAg5nNhC9-TgelWkgTkgYLGKqXZXqz5E6bOabJGVG5jouCaSdnhmQGuDdD538_iKCMGOqEk4T-Oyj016y25fqbdt-JoUhTGaWbNnfycuwyck_usNRnxHNFrro5uXH32pyPmFsDUnpu2Nnx_BZkSMwkr53ydC1CTs2AgatzQMNzIZxahphPjiJI8k5a1xqixXSoSIzA-rzBv8KolvWQBv7yqAT_9fVIgd36o"/>
+<img alt="User 2" class="w-7 h-7 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqEEc5ANJamxmYnVoF0qjsIh4QlELHrsoZgLs7YvZ8unMlkLmkiWC12HGqJTjRWXj09MN1oZD8qTb1AlQP5qYadk5uzdBJr_DQV0_QZI-8JsFoDLhuslaXW1z2WP_h_IiW5jTvWM0iYLJpzKY1z5RihMY7iv31GiVskgb-l8ipElh59URNJamUXk_2EGuzqS6G8ILQaA-UbByX-_F1xYAX0qZ5bHgge5QE4nEQt6zn0PyVPRWGvsI6FgVHw_dpOB-a7dMUfJJAbDU"/>
+</div>
+</div>
+</section>
+<!-- Quick Actions -->
+<section class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 bg-secondary text-white py-3.5 px-4 rounded-2xl font-bold active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-xl">add_circle</span>
+<span class="text-sm">إضافة معاملة</span>
+</button>
+<button class="flex items-center justify-center gap-2 bg-white text-on-surface py-3.5 px-4 rounded-2xl border border-outline-variant/50 active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-xl text-secondary">sync_alt</span>
+<span class="text-sm">تحويل</span>
+</button>
+</section>
+<!-- Financial Summary Cards -->
+<section class="overflow-x-auto scroll-hide">
+<div class="flex gap-4 min-w-max pb-2">
+<!-- Income -->
+<div class="w-36 p-4 rounded-2xl bg-white border border-outline-variant/30">
+<div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-1">الدخل</p>
+<p class="text-lg font-bold text-on-surface">8,500</p>
+</div>
+<!-- Expenses -->
+<div class="w-36 p-4 rounded-2xl bg-white border border-outline-variant/30">
+<div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center text-error mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-1">المصاريف</p>
+<p class="text-lg font-bold text-on-surface">3,250</p>
+</div>
+<!-- Budget -->
+<div class="w-36 p-4 rounded-2xl bg-white border border-outline-variant/30">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-1">المتبقي</p>
+<p class="text-lg font-bold text-on-surface">5,250</p>
+</div>
+</div>
+</section>
+<!-- Spending Visualization -->
+<section class="m3-card p-6">
+<h3 class="text-sm font-semibold text-on-surface mb-6">توزيع المصاريف</h3>
+<div class="flex items-center justify-between">
+<div class="chart-container">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#eff4ff" stroke-width="3"></circle>
+<!-- Food 40% -->
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#006c49" stroke-dasharray="40 60" stroke-dashoffset="0" stroke-width="3"></circle>
+<!-- Housing 30% -->
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#0058be" stroke-dasharray="30 70" stroke-dashoffset="-40" stroke-width="3"></circle>
+<!-- Transport 20% -->
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#ffb95f" stroke-dasharray="20 80" stroke-dashoffset="-70" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[9px] text-on-surface-variant uppercase font-bold">المجموع</span>
+<span class="text-lg font-bold text-on-surface">3,250</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+<span class="text-xs text-on-surface-variant">المطاعم</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+<span class="text-xs text-on-surface-variant">السكن</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2.5 h-2.5 rounded-full bg-[#ffb95f]"></div>
+<span class="text-xs text-on-surface-variant">النقل</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Transactions -->
+<section class="space-y-4 pb-12">
+<div class="flex justify-between items-center">
+<h3 class="text-sm font-semibold text-on-surface">آخر المعاملات</h3>
+<button class="text-xs text-secondary font-medium">عرض الكل</button>
+</div>
+<div class="space-y-2">
+<!-- Transaction 1 -->
+<div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface border border-outline-variant/20">
+<span class="material-symbols-outlined text-xl">shopping_cart</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">بنده للتجزئة</span>
+<span class="text-[10px] text-on-surface-variant">اليوم، 10:30 ص</span>
+</div>
+</div>
+<span class="text-sm font-bold text-error">-245.50</span>
+</div>
+<!-- Transaction 2 -->
+<div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface border border-outline-variant/20">
+<span class="material-symbols-outlined text-xl">restaurant</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">ستاربكس</span>
+<span class="text-[10px] text-on-surface-variant">أمس، 04:15 م</span>
+</div>
+</div>
+<span class="text-sm font-bold text-error">-32.00</span>
+</div>
+<!-- Transaction 3 -->
+<div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface border border-outline-variant/20">
+<span class="material-symbols-outlined text-xl">payments</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">تحويل من أحمد</span>
+<span class="text-[10px] text-on-surface-variant">أمس، 09:00 ص</span>
+</div>
+</div>
+<span class="text-sm font-bold text-secondary">+1,200.00</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center h-20 px-2 pb-safe bg-white/95 backdrop-blur-md border-t border-outline-variant/30 shadow-lg">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-secondary h-full px-4 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+</a>
+<!-- Transactions -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">المعاملات</span>
+</a>
+<!-- Budget -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">query_stats</span>
+<span class="font-label-sm text-label-sm mt-1">الميزانية</span>
+</a>
+<!-- Accounts -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">account_balance</span>
+<span class="font-label-sm text-label-sm mt-1">الحسابات</span>
+</a>
+<!-- Categories -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">grid_view</span>
+<span class="font-label-sm text-label-sm mt-1">الفئات</span>
+</a>
+</nav>
+<script>
+        // Visibility observer for subtle entry animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-4');
+                }
+            });
+        }, { threshold: 0.05 });
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-500', 'ease-out', 'opacity-0', 'translate-y-4');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

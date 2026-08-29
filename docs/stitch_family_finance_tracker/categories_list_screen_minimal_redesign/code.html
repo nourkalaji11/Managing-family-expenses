@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>الفئات - المصاريف العائلية</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f8f9ff;
+        }
+        .category-card {
+            background: #ffffff;
+            border: 1px solid #e5eeff;
+            transition: all 0.2s ease;
+        }
+        .category-card:active {
+            transform: scale(0.97);
+            background: #eff4ff;
+        }
+        .premium-gradient {
+            background: #0058be; /* Primary color from theme */
+        }
+        .accent-emerald {
+            color: #006c49;
+        }
+        .bg-accent-emerald {
+            background-color: #006c49;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006c49",
+                        "on-secondary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "on-surface-variant": "#424754",
+                        "outline": "#727785",
+                        "outline-variant": "#c2c6d6",
+                        "background": "#f8f9ff",
+                        "on-background": "#0b1c30",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container": "#e5eeff",
+                        "surface-container-high": "#dce9ff",
+                        "surface-container-highest": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.25rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "1.25rem",
+                        "stack-gap-sm": "0.5rem",
+                        "stack-gap-md": "1rem",
+                        "stack-gap-lg": "1.5rem",
+                        "container-padding": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "label-md": ["IBM Plex Sans Arabic"],
+                        "title-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-md-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+                        "title-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="bg-white/80 backdrop-blur-xl w-full sticky top-0 z-50 border-b border-surface-container flex flex-row-reverse justify-between items-center px-margin-mobile h-16">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-xl">person</span>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">الفئات</h1>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="px-container-padding pt-6">
+<!-- Search & Header Section -->
+<div class="flex flex-col gap-stack-gap-md mb-8">
+<p class="font-body-md text-on-surface-variant">تتبع وإدارة الفئات المالية لعائلتك</p>
+<div class="relative mt-2">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-white border border-outline-variant/30 rounded-2xl pr-12 pl-4 py-4 font-body-md text-on-surface placeholder:text-outline/60 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none shadow-sm" placeholder="بحث عن فئة..." type="text"/>
+</div>
+</div>
+<!-- Categories Minimal Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Category Item: Food -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-secondary group-hover:bg-secondary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">restaurant</span>
+</div>
+<span class="font-title-lg text-on-surface">طعام</span>
+<span class="font-label-sm text-on-surface-variant">12 معاملة</span>
+</div>
+<!-- Category Item: Transport -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface group-hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">directions_car</span>
+</div>
+<span class="font-title-lg text-on-surface">مواصلات</span>
+<span class="font-label-sm text-on-surface-variant">8 معاملات</span>
+</div>
+<!-- Category Item: Bills -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface group-hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">receipt_long</span>
+</div>
+<span class="font-title-lg text-on-surface">فواتير</span>
+<span class="font-label-sm text-on-surface-variant">4 معاملات</span>
+</div>
+<!-- Category Item: Salary -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-secondary group-hover:bg-secondary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">payments</span>
+</div>
+<span class="font-title-lg text-on-surface">راتب</span>
+<span class="font-label-sm text-on-surface-variant">1 معاملة</span>
+</div>
+<!-- Category Item: Health -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface group-hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">medical_services</span>
+</div>
+<span class="font-title-lg text-on-surface">صحة</span>
+<span class="font-label-sm text-on-surface-variant">3 معاملات</span>
+</div>
+<!-- Category Item: Education -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface group-hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">school</span>
+</div>
+<span class="font-title-lg text-on-surface">تعليم</span>
+<span class="font-label-sm text-on-surface-variant">2 معاملة</span>
+</div>
+<!-- Category Item: Shopping -->
+<div class="category-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer group">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface group-hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-2xl filled-icon">shopping_bag</span>
+</div>
+<span class="font-title-lg text-on-surface">تسوق</span>
+<span class="font-label-sm text-on-surface-variant">15 معاملة</span>
+</div>
+<!-- Add New Placeholder -->
+<div class="rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-outline-variant/50 hover:border-secondary/50 hover:bg-secondary/5 transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-outline group-hover:text-secondary group-hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<span class="font-title-lg text-on-surface-variant">فئة جديدة</span>
+</div>
+</div>
+<!-- Premium Insight Banner -->
+<div class="mt-8 rounded-2xl p-6 bg-white border border-surface-container shadow-sm flex items-center">
+<div class="w-full">
+<div class="flex items-center gap-2 mb-3 text-secondary">
+<span class="material-symbols-outlined text-xl filled-icon">insights</span>
+<h3 class="font-headline-md text-headline-md-mobile">رؤية ذكية</h3>
+</div>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                    لقد أنفقت العائلة <span class="text-secondary font-bold">٤٠٪</span> من الميزانية على "الطعام" هذا الشهر. حاول تقليل الطلبات الخارجية للحفاظ على التوازن المالي.
+                </p>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 left-6 w-14 h-14 bg-secondary text-white rounded-2xl shadow-xl flex items-center justify-center z-50 active:scale-90 transition-all hover:bg-opacity-90">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center h-20 px-2 pb-safe bg-white/90 backdrop-blur-md border-t border-surface-container shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all h-full px-2" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all h-full px-2" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm">المعاملات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all h-full px-2" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-label-sm">الميزانية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all h-full px-2" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-label-sm">الحسابات</span>
+</a>
+<!-- Active Tab: Categories -->
+<a class="flex flex-col items-center justify-center text-secondary h-full px-2 relative" href="#">
+<span class="material-symbols-outlined filled-icon">grid_view</span>
+<span class="font-label-sm font-semibold">الفئات</span>
+<div class="absolute top-0 w-8 h-1 bg-secondary rounded-full"></div>
+</a>
+</nav>
+</body></html>

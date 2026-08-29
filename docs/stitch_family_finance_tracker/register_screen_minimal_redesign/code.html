@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إنشاء حساب - المصاريف العائلية</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff; /* background from theme */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .floating-label-input:focus-within label,
+        .floating-label-input input:not(:placeholder-shown) + label {
+            transform: translateY(-1.5rem) scale(0.85);
+            color: #006c49; /* secondary / emerald */
+            background-color: transparent;
+        }
+        .role-chip.active {
+            background-color: #006c49;
+            color: #ffffff;
+            border-color: #006c49;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "background": "#f8f9ff",
+                        "surface": "#ffffff",
+                        "on-surface": "#0b1c30",
+                        "on-surface-variant": "#424754",
+                        "outline": "#727785",
+                        "outline-variant": "#c2c6d6",
+                        "secondary": "#006c49",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap-sm": "0.5rem",
+                        "section-margin": "2rem",
+                        "stack-gap-md": "1rem",
+                        "stack-gap-lg": "1.5rem",
+                        "container-padding": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["IBM Plex Sans Arabic"],
+                        "body": ["IBM Plex Sans Arabic"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex items-center justify-center p-4">
+<!-- Main Register Container -->
+<div class="relative z-10 w-full max-w-lg">
+<!-- Brand Identity -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-secondary text-on-secondary mb-4 shadow-sm">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">family_restroom</span>
+</div>
+<h1 class="text-2xl font-bold text-on-surface tracking-tight">المصاريف العائلية</h1>
+<p class="text-on-surface-variant mt-1 text-sm">إدارة مالية ذكية بلمسة فخامة</p>
+</div>
+<!-- Registration Form Card -->
+<div class="bg-surface rounded-2xl p-6 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-outline-variant/30 relative">
+<h2 class="text-xl font-semibold text-on-surface mb-8">إنشاء حساب جديد</h2>
+<form class="space-y-6" id="registerForm">
+<!-- Full Name Field -->
+<div class="relative floating-label-input group">
+<input class="w-full bg-transparent border-b border-outline-variant py-3 pr-10 focus:outline-none focus:border-secondary transition-all text-on-surface placeholder:text-transparent" id="fullname" name="fullname" placeholder="الاسم الكامل" required="" type="text"/>
+<label class="absolute right-10 top-3 text-on-surface-variant pointer-events-none transition-all duration-200 text-sm font-medium" for="fullname">الاسم الكامل</label>
+<span class="material-symbols-outlined absolute right-0 top-3 text-on-surface group-focus-within:text-secondary transition-colors">person</span>
+</div>
+<!-- Email Field -->
+<div class="relative floating-label-input group">
+<input class="w-full bg-transparent border-b border-outline-variant py-3 pr-10 focus:outline-none focus:border-secondary transition-all text-on-surface placeholder:text-transparent" id="email" name="email" placeholder="البريد الإلكتروني" required="" type="email"/>
+<label class="absolute right-10 top-3 text-on-surface-variant pointer-events-none transition-all duration-200 text-sm font-medium" for="email">البريد الإلكتروني</label>
+<span class="material-symbols-outlined absolute right-0 top-3 text-on-surface group-focus-within:text-secondary transition-colors">mail</span>
+</div>
+<!-- Role Selection -->
+<div class="space-y-3">
+<p class="text-xs font-semibold text-on-surface-variant pr-1">نوع الحساب</p>
+<div class="flex gap-3">
+<button class="role-chip active flex-1 py-2.5 px-4 rounded-lg border border-outline-variant flex items-center justify-center gap-2 transition-all text-sm font-medium" id="btn-parent" onclick="selectRole('parent')" type="button">
+<span class="material-symbols-outlined text-lg">supervisor_account</span>
+                        ولي أمر
+                    </button>
+<button class="role-chip flex-1 py-2.5 px-4 rounded-lg border border-outline-variant flex items-center justify-center gap-2 transition-all text-sm font-medium text-on-surface hover:bg-background" id="btn-member" onclick="selectRole('member')" type="button">
+<span class="material-symbols-outlined text-lg">person_add</span>
+                        عضو عائلة
+                    </button>
+</div>
+<input id="selectedRole" name="role" type="hidden" value="parent"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Password Field -->
+<div class="relative floating-label-input group">
+<input class="w-full bg-transparent border-b border-outline-variant py-3 pr-10 focus:outline-none focus:border-secondary transition-all text-on-surface placeholder:text-transparent" id="password" name="password" placeholder="كلمة المرور" required="" type="password"/>
+<label class="absolute right-10 top-3 text-on-surface-variant pointer-events-none transition-all duration-200 text-sm font-medium" for="password">كلمة المرور</label>
+<span class="material-symbols-outlined absolute right-0 top-3 text-on-surface group-focus-within:text-secondary transition-colors">lock</span>
+</div>
+<!-- Confirm Password Field -->
+<div class="relative floating-label-input group">
+<input class="w-full bg-transparent border-b border-outline-variant py-3 pr-10 focus:outline-none focus:border-secondary transition-all text-on-surface placeholder:text-transparent" id="confirm_password" name="confirm_password" placeholder="تأكيد المرور" required="" type="password"/>
+<label class="absolute right-10 top-3 text-on-surface-variant pointer-events-none transition-all duration-200 text-sm font-medium" for="confirm_password">تأكيد المرور</label>
+<span class="material-symbols-outlined absolute right-0 top-3 text-on-surface group-focus-within:text-secondary transition-colors">key</span>
+</div>
+</div>
+<!-- Terms and Conditions -->
+<div class="flex items-start gap-3 mt-2">
+<input class="mt-1 w-4 h-4 text-secondary bg-white border-outline-variant rounded focus:ring-secondary" id="terms" required="" type="checkbox"/>
+<label class="text-xs text-on-surface-variant leading-relaxed" for="terms">
+                    أوافق على <a class="text-secondary font-bold hover:underline" href="#">شروط الاستخدام</a> و <a class="text-secondary font-bold hover:underline" href="#">سياسة الخصوصية</a>.
+                </label>
+</div>
+<!-- Action Button -->
+<button class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-bold text-base shadow-sm hover:brightness-95 transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+                إنشاء حساب
+                <span class="material-symbols-outlined text-xl">arrow_back</span>
+</button>
+</form>
+<!-- Social/Login Link -->
+<div class="mt-8 text-center">
+<p class="text-sm text-on-surface-variant">
+                لديك حساب بالفعل؟ 
+                <a class="text-secondary font-bold hover:underline" href="#">تسجيل الدخول</a>
+</p>
+</div>
+</div>
+<!-- Footer Decoration -->
+<div class="mt-12 flex justify-center gap-8 opacity-40 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+<div class="w-20 h-10 flex items-center justify-center">
+<img alt="Partner Logo" class="h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx92aYb146kqEkNzUQOmecZPlQ_HrQWacyEV4dVwArsfjLO5PZNLvA9gdLMqVT82DxPIZqp4iHZ0m4i4U9rk949AIIPzLFNYdbP848O6mP35LRGpVfKOLqMxzxI4JKf5j8R3bLt11hifvpZy0aHzfjDDSIfZZq74dUx10f2P5poJETe4imKu4B72Zhc6XNNBOaCpwM75DiR_6-ICxZaMqxLJOTZnSBNzCEX5VrHSBgqfvMIUFTpJQuhFtcOzuEm7uifp8a2BVN-bM"/>
+</div>
+<div class="w-20 h-10 flex items-center justify-center border-x border-outline-variant/30 px-4">
+<img alt="Partner Logo" class="h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJ7rPcxdt4ZLVfP_nW8SDRoIFZF3GyW8FGcGjVzzQQTZtQIYFE6h45QfXCQB77ruPN3m48WYhX-aV3MT1xkkFFPoEyhWbxjyWOn8BanmfHhJyqfxe5dsG0mRTSS-w55W5lzbJjbRUunfD09TUWQVbG67NY7V1le9Xuusv7td-YzBwOEqslR5ioAWgNSKjoMFwJE5ZINR9OX66PtVUvtMDcnpoqoO1Zzv-bauyoa3GWVRq9WSoFZIunEZlNu293ea8_maumLxaY9L8"/>
+</div>
+<div class="w-20 h-10 flex items-center justify-center">
+<img alt="Partner Logo" class="h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1z8IvXS8v8gl-nEFUu1MqpQ3xYv-505UD2zNqwELryEBkPHwb7f3UDHnfuGf-lbZvQ6zPaLsLD4KRY3k2WzdJcWWX_Rdr9HjfruVL81LRvH4oIy_wcGn9J0DHmIYhJG5ZemrBgx1dCoDJ2uSckmgsG_UrBnsYoV264AS3PpH_VQUzK9eruJHU1Fy_SvRBhLjvDY7AWfKJ8D2lmx6J9GUULgu7oY3qvdhQIm1PMtkhKkjc9jG8v5WTv2utIsA2gnZZvhEW4SVe_hY"/>
+</div>
+</div>
+</div>
+<script>
+    function selectRole(role) {
+        const parentBtn = document.getElementById('btn-parent');
+        const memberBtn = document.getElementById('btn-member');
+        const roleInput = document.getElementById('selectedRole');
+        
+        if (role === 'parent') {
+            parentBtn.classList.add('active');
+            parentBtn.classList.remove('text-on-surface', 'hover:bg-background');
+            memberBtn.classList.remove('active');
+            memberBtn.classList.add('text-on-surface', 'hover:bg-background');
+            roleInput.value = 'parent';
+        } else {
+            memberBtn.classList.add('active');
+            memberBtn.classList.remove('text-on-surface', 'hover:bg-background');
+            parentBtn.classList.remove('active');
+            parentBtn.classList.add('text-on-surface', 'hover:bg-background');
+            roleInput.value = 'member';
+        }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalContent = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.classList.add('opacity-80');
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> جاري المعالجة...';
+        
+        setTimeout(() => {
+            btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> تم بنجاح!';
+            btn.classList.replace('bg-secondary', 'bg-emerald-700');
+            
+            setTimeout(() => {
+                alert('تم إنشاء حسابك بنجاح! نرحب بك في عائلة المصاريف.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                btn.classList.replace('bg-emerald-700', 'bg-secondary');
+                btn.classList.remove('opacity-80');
+            }, 1000);
+        }, 2000);
+    });
+</script>
+</body></html>

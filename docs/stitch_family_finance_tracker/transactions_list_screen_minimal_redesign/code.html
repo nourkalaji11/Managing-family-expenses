@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>المعاملات - المصاريف العائلية</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-primary": "#ffffff",
+                "inverse-primary": "#adc6ff",
+                "secondary-container": "#6cf8bb",
+                "inverse-on-surface": "#eaf1ff",
+                "surface-tint": "#005ac2",
+                "secondary-fixed-dim": "#4edea3",
+                "secondary-fixed": "#6ffbbe",
+                "surface-dim": "#cbdbf5",
+                "primary": "#0058be",
+                "surface-bright": "#f8f9ff",
+                "on-primary-container": "#fefcff",
+                "tertiary": "#825100",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#d8e2ff",
+                "on-secondary-fixed-variant": "#005236",
+                "on-tertiary": "#ffffff",
+                "on-secondary-fixed": "#002113",
+                "on-background": "#0b1c30",
+                "on-tertiary-fixed": "#2a1700",
+                "inverse-surface": "#213145",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface-container-high": "#dce9ff",
+                "on-primary-fixed-variant": "#004395",
+                "error": "#ba1a1a",
+                "primary-container": "#2170e4",
+                "tertiary-container": "#a36700",
+                "surface": "#f8f9ff",
+                "outline": "#727785",
+                "on-error": "#ffffff",
+                "on-tertiary-container": "#fffbff",
+                "tertiary-fixed": "#ffddb8",
+                "on-tertiary-fixed-variant": "#653e00",
+                "surface-variant": "#d3e4fe",
+                "background": "#f8f9ff",
+                "surface-container-low": "#eff4ff",
+                "on-secondary": "#ffffff",
+                "on-surface-variant": "#424754",
+                "primary-fixed-dim": "#adc6ff",
+                "outline-variant": "#c2c6d6",
+                "on-secondary-container": "#00714d",
+                "on-primary-fixed": "#001a42",
+                "error-container": "#ffdad6",
+                "surface-container-highest": "#d3e4fe",
+                "on-surface": "#0b1c30",
+                "surface-container": "#e5eeff",
+                "secondary": "#006c49"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "2xl": "1.5rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "stack-gap-sm": "0.5rem",
+                "section-margin": "2rem",
+                "stack-gap-md": "1rem",
+                "stack-gap-lg": "1.5rem",
+                "container-padding": "1.25rem",
+                "margin-mobile": "1rem"
+        },
+        "fontFamily": {
+                "headline": ["IBM Plex Sans Arabic"],
+                "display": ["IBM Plex Sans Arabic"],
+                "body": ["IBM Plex Sans Arabic"],
+                "label": ["IBM Plex Sans Arabic"]
+        },
+      },
+    },
+  }
+</script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8f9ff;
+            -webkit-tap-highlight-color: transparent;
+            color: #0b1c30;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .m3-card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid #e5eeff;
+        }
+        .premium-fab {
+            box-shadow: 0 4px 14px 0 rgba(0, 108, 73, 0.39);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .nav-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 w-full z-40 bg-white/80 nav-blur border-b border-surface-container-high h-16 flex flex-row-reverse justify-between items-center px-margin-mobile">
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-full active:scale-95 duration-200">notifications</button>
+<div class="w-8 h-8 rounded-full bg-surface-container border border-outline-variant/30 overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb5vMMv8j5DqPJe1jQ6k3dmKowB2WcivTya-c__1BLZwIrAALgua92uI8NDReFYD0nBRzbMUmpABZ_hstaGE_uRqv1w3LK56IACYraA8rZg0leKwO8XmDlQumtTzi85NKyHBWfuK2_WM5r694ybrDavn80GHb77BN1WhOw6vWbkAxEZcgerYPxcplTNIk8ZipphOALfVYVUve5PLPDnjX2bbkzahkXDRTHwHCmH898jJU47UpjjUWvOd-FaKlPXQeU4ZBiAayCtVQ"/>
+</div>
+</div>
+<h1 class="font-headline text-xl font-bold text-on-surface">المعاملات</h1>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-full active:scale-95 duration-200">menu_open</button>
+</header>
+<main class="pt-20 pb-32">
+<!-- Search Section -->
+<section class="px-container-padding pb-6">
+<div class="relative flex items-center group">
+<span class="material-symbols-outlined absolute right-4 text-outline group-focus-within:text-secondary transition-colors">search</span>
+<input class="w-full h-12 pr-12 pl-4 rounded-xl border border-outline-variant bg-white focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm transition-all outline-none text-on-surface placeholder:text-outline" placeholder="بحث عن معاملة..." type="text"/>
+</div>
+</section>
+<!-- Filter Chips -->
+<section class="px-container-padding flex flex-row-reverse gap-3 overflow-x-auto hide-scrollbar pb-6">
+<button class="flex items-center gap-2 bg-secondary text-on-primary px-6 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 whitespace-nowrap">
+<span>الكل</span>
+</button>
+<button class="flex items-center gap-2 bg-white text-on-surface-variant border border-outline-variant px-5 py-2 rounded-full text-xs font-medium transition-all hover:bg-surface-container active:scale-95 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+<span>الدخل</span>
+</button>
+<button class="flex items-center gap-2 bg-white text-on-surface-variant border border-outline-variant px-5 py-2 rounded-full text-xs font-medium transition-all hover:bg-surface-container active:scale-95 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">trending_down</span>
+<span>المصاريف</span>
+</button>
+<button class="flex items-center gap-2 bg-white text-on-surface-variant border border-outline-variant px-5 py-2 rounded-full text-xs font-medium transition-all hover:bg-surface-container active:scale-95 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>هذا الشهر</span>
+</button>
+</section>
+<!-- Date Header -->
+<div class="px-container-padding py-2 flex items-center gap-2">
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<p class="text-on-surface-variant text-[11px] font-bold tracking-wider uppercase">اليوم، 24 مايو</p>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+</div>
+<!-- Transactions List -->
+<section class="px-container-padding space-y-3 mt-4">
+<!-- Expense Item -->
+<div class="m3-card p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-xl bg-error/10 border border-error/5 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-on-surface">سوبر ماركت</h3>
+<p class="text-on-surface-variant text-xs mt-0.5">حساب البيت • 14:30</p>
+</div>
+</div>
+<div class="text-left">
+<span class="font-bold text-error">- 240.50 ر.س</span>
+</div>
+</div>
+<!-- Income Item -->
+<div class="m3-card p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-xl bg-secondary/10 border border-secondary/5 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-on-surface">الراتب الشهري</h3>
+<p class="text-on-surface-variant text-xs mt-0.5">الراجحي • 08:00</p>
+</div>
+</div>
+<div class="text-left">
+<span class="font-bold text-secondary">+ 12,000.00 ر.س</span>
+</div>
+</div>
+<!-- Expense Item -->
+<div class="m3-card p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-on-surface">بنزين السيارة</h3>
+<p class="text-on-surface-variant text-xs mt-0.5">حساب شخصي • 19:15</p>
+</div>
+</div>
+<div class="text-left">
+<span class="font-bold text-error">- 85.00 ر.س</span>
+</div>
+</div>
+</section>
+<!-- Date Header -->
+<div class="px-container-padding py-8 flex items-center gap-2">
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<p class="text-on-surface-variant text-[11px] font-bold tracking-wider uppercase">أمس، 23 مايو</p>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+</div>
+<section class="px-container-padding space-y-3">
+<!-- Expense Item -->
+<div class="m3-card p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-on-surface">عشاء عائلي</h3>
+<p class="text-on-surface-variant text-xs mt-0.5">حساب البيت • 21:00</p>
+</div>
+</div>
+<div class="text-left">
+<span class="font-bold text-error">- 450.00 ر.س</span>
+</div>
+</div>
+<!-- Expense Item -->
+<div class="m3-card p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-xl bg-error/10 border border-error/5 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">medical_services</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-on-surface">صيدلية</h3>
+<p class="text-on-surface-variant text-xs mt-0.5">حساب شخصي • 11:20</p>
+</div>
+</div>
+<div class="text-left">
+<span class="font-bold text-error">- 120.00 ر.س</span>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-secondary text-on-primary rounded-2xl premium-fab flex items-center justify-center active:scale-90 transition-all duration-200 z-50">
+<span class="material-symbols-outlined text-[28px] font-bold">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-white/90 nav-blur border-t border-surface-container-high h-20 px-2 pb-safe flex flex-row-reverse justify-around items-center rounded-t-2xl shadow-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium mt-1">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary h-full px-2 relative active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="text-[10px] font-bold mt-1">المعاملات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="text-[10px] font-medium mt-1">الميزانية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="text-[10px] font-medium mt-1">الحسابات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant h-full px-2 hover:text-secondary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-medium mt-1">الفئات</span>
+</a>
+</nav>
+<script>
+    // Micro-interactions for Filter Chips
+    document.querySelectorAll('section button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const container = this.closest('section');
+            if (container && container.querySelector('.bg-secondary')) {
+                container.querySelectorAll('button').forEach(c => {
+                    c.classList.remove('bg-secondary', 'text-on-primary');
+                    c.classList.add('bg-white', 'text-on-surface-variant', 'border', 'border-outline-variant');
+                    c.classList.remove('font-semibold');
+                    c.classList.add('font-medium');
+                });
+                this.classList.remove('bg-white', 'text-on-surface-variant', 'border', 'border-outline-variant');
+                this.classList.add('bg-secondary', 'text-on-primary', 'font-semibold');
+            }
+        });
+    });
+
+    // Handle search input focus effects
+    const searchInput = document.querySelector('input');
+    searchInput.addEventListener('focus', () => {
+        searchInput.parentElement.classList.add('ring-2', 'ring-secondary/10');
+    });
+    searchInput.addEventListener('blur', () => {
+        searchInput.parentElement.classList.remove('ring-2', 'ring-secondary/10');
+    });
+</script>
+</body></html>
