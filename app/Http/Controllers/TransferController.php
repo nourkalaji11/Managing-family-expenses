@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ScopesToFamily;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -20,16 +21,22 @@ use Illuminate\Support\Str;
  */
 class TransferController extends Controller
 {
+    use ScopesToFamily;
+
     /**
      * قائمة التحويلات، مجمَّعة — كل تحويل صفّان.
      */
     public function index(Request $request)
     {
-        $rows = Transaction::with(['account', 'category'])
-            ->whereNotNull('transfer_group_id')
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->get();
+        // كان الشرط `where('user_id', $request->user()->id)` ثابتاً، فولي الأمر
+        // لا يرى تحويلات أبنائه — بخلاف بقية الموارد كلها. scopeToViewer يوحّد
+        // القاعدة: ولي الأمر يرى العائلة، والابن يرى ما يخصه.
+        $rows = $this->scopeToViewer(
+            Transaction::with(['account', 'category'])
+                ->whereNotNull('transfer_group_id')
+                ->latest(),
+            $request->user()
+        )->get();
 
         // التجميع في PHP لا في SQL: المجموعة صفّان فقط، وكتابتها كاستعلام
         // ذاتي الربط تعقيد بلا مقابل.
@@ -125,11 +132,16 @@ class TransferController extends Controller
      */
     public function destroy(Request $request, string $groupId)
     {
-        $rows = Transaction::where('transfer_group_id', $groupId)
-            ->where('user_id', $request->user()->id)
-            ->get();
+        $rows = Transaction::where('transfer_group_id', $groupId)->get();
 
         if ($rows->isEmpty()) {
+            return response()->json(['message' => 'التحويل غير موجود!'], 404);
+        }
+
+        // نفس فحص الملكية المطبَّق في بقية الموارد: ولي الأمر يتراجع عن تحويلات
+        // العائلة، والابن عن تحويلاته وحده. 404 لا 403، حتى لا يؤكد الرد وجود
+        // تحويل لمستخدم آخر. طرفا التحويل يحملان نفس المالك، فيكفي فحص أحدهما.
+        if (! $this->viewerOwns($request->user(), $rows->first()->user_id)) {
             return response()->json(['message' => 'التحويل غير موجود!'], 404);
         }
 
