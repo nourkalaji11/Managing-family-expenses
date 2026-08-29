@@ -50,11 +50,40 @@ class User extends Authenticatable
         ];
     }
     /**
+     * الأدوار المعتبرة "ولي أمر".
+     *
+     * القيمتان موجودتان لأن الطرفين اختلفا: تطبيق الموبايل يرسل 'parent'
+     * (AccountRole في data/constant/enums.dart) بينما الكود القديم في
+     * DashboardController وsetSpendingLimit كان يفحص 'admin' حرفياً — فحساب
+     * ولي أمر أُنشئ من التطبيق كان يُعامل كابن ولا يستطيع تحديد سقف السحب.
+     *
+     * التوحيد هنا وليس بترحيل البيانات، حتى لا تتعطل صفوف 'admin' الموجودة
+     * أصلاً في قواعد بيانات الفريق.
+     */
+    public const PARENT_ROLES = ['admin', 'parent'];
+
+    /**
+     * هل هذا المستخدم ولي أمر؟ المرجع الوحيد لفحص الصلاحية في كل الكنترولرات.
+     */
+    public function isParent(): bool
+    {
+        return in_array(strtolower((string) $this->role), self::PARENT_ROLES, true);
+    }
+
+    /**
      * علاقة المستخدم مع حساباته المالية (كل مستخدم لديه عدة حسابات)
      */
     public function accounts()
     {
         return $this->hasMany(Account::class);
+    }
+
+    /**
+     * إشعارات المستخدم، الأحدث أولاً.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(AppNotification::class)->latest();
     }
 
     /**

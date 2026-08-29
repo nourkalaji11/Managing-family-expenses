@@ -7,6 +7,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TransferController;
 /*
 |--------------------------------------------------------------------------
 | Public Routes (المسارات العامة)
@@ -25,8 +27,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // الروابط الأساسية البروفايل والخروج
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'me']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+
+    // أفراد العائلة وسقف السحب. ولي الأمر يرى الجميع، والابن يرى نفسه فقط.
+    Route::get('/users', [AuthController::class, 'familyMembers']);
     Route::put('/users/{id}/limit', [AuthController::class, 'setSpendingLimit']);
-    
+
+    // الإشعارات داخل التطبيق
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+
+    // التحويل بين حسابين. طرفاه عمليتان في transactions تحملان نفس
+    // transfer_group_id — انظر TransferController.
+    Route::get('/transfers', [TransferController::class, 'index']);
+    Route::post('/transfers', [TransferController::class, 'store']);
+    Route::delete('/transfers/{group}', [TransferController::class, 'destroy']);
+
     // الداشبورد الإحصائي
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
@@ -44,6 +62,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // مسارات العمليات والفلترة (Transactions)
     Route::get('/transactions', [TransactionController::class, 'index']); // 👈 هاد يلي عدلنا دالته ليفلتر بالبوست مان
+    // show كانت مُنفَّذة كدالة فارغة بلا مسار أصلاً. أصبح لها الآن كلاهما.
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::put('/transactions/{id}', [TransactionController::class, 'update']);
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);

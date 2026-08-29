@@ -13,8 +13,10 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // 1. إذا كان المستخدم هو الأب (admin) -> يشوف الإحصائيات الكاملة والتنبيهات والرصيد
-        if (strtolower($user->role) === 'admin') {
+        // 1. إذا كان المستخدم ولي أمر -> يشوف الإحصائيات الكاملة والتنبيهات والرصيد.
+        //    كان الفحص `strtolower($user->role) === 'admin'`، وهو يرفض حساب ولي
+        //    الأمر المُنشأ من التطبيق لأنه يرسل 'parent'. انظر User::isParent.
+        if ($user->isParent()) {
             $totalBalance = Account::sum('balance');
             $totalSpent = Transaction::where('type', 'expense')->sum('amount');
             
