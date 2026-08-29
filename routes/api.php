@@ -31,6 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // أفراد العائلة وسقف السحب. ولي الأمر يرى الجميع، والابن يرى نفسه فقط.
     Route::get('/users', [AuthController::class, 'familyMembers']);
+
+    // ولي الأمر ينشئ حساب ابن. الدور مثبَّت داخل الكنترولر ولا يُقرأ من الطلب.
+    Route::post('/users', [AuthController::class, 'createMember']);
     Route::put('/users/{id}/limit', [AuthController::class, 'setSpendingLimit']);
 
     // الإشعارات داخل التطبيق

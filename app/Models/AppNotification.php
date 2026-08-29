@@ -52,6 +52,15 @@ class AppNotification extends Model
     /** ولي الأمر عدّل سقف سحب ابن — يذهب للابن. */
     public const TYPE_LIMIT_UPDATED = 'limit_updated';
 
+    /**
+     * اقترب الابن من نهاية مصروفه، ولم يتجاوزه بعد.
+     *
+     * الفرق عن TYPE_LIMIT_BLOCKED جوهري: هذا تحذير مسبق يصل قبل أن تُرفض أي
+     * عملية، وهو ما يتيح لولي الأمر أن يرفع السقف أو يسأل قبل أن يجد الابن
+     * نفسه عاجزاً عن الدفع. الرفض إشعار بما فات؛ هذا إشعار بما هو آتٍ.
+     */
+    public const TYPE_LIMIT_APPROACHING = 'limit_approaching';
+
     public function user()
     {
         return $this->belongsTo(User::class);

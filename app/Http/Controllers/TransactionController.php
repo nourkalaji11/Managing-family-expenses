@@ -90,10 +90,20 @@ class TransactionController extends Controller
         //    كان الشرط `role === 'member'` حرفياً، فأي دور آخر غير 'member'
         //    و'admin' كان يفلت من السقف تماماً. isParent يقلب الفحص: من ليس
         //    ولي أمر فهو مقيَّد — انظر User::isParent.
-        if (! $user->isParent() && $validated['type'] === 'expense') {
+        // مُهيَّأ خارج الشرط: يُقرأ مرة أخرى بعد الحفظ لتحذير "قارب على
+        // النهاية"، وربط قراءته بتنفيذ كتلة شرطية يجعل أي تعديل على أحد
+        // الشرطين يكسر الآخر بصمت.
+        $totalSpent = 0.0;
+
+        // null تعني "لم يُحدَّد سقف" لا "سقف صفر": المقارنة مع null كانت تعامله
+        // كصفر فتمنع كل مصروف على ابن لم يضع له أحد سقفاً بعد. من أراد تجميد
+        // الصرف يضع 0 صراحةً، وهو ما يفحصه الشرط أدناه كأي رقم آخر.
+        if (! $user->isParent()
+            && $validated['type'] === 'expense'
+            && $user->spending_limit !== null) {
             // التحويلات مستثناة: نقل المال بين حسابَي العائلة ليس إنفاقاً،
             // وعدّه ضمن السقف كان سيستهلكه دون أن يخرج ريال واحد.
-            $totalSpent = Transaction::where('user_id', $user->id)
+            $totalSpent = (float) Transaction::where('user_id', $user->id)
                 ->where('type', 'expense')
                 ->whereNull('transfer_group_id')
                 ->sum('amount');
@@ -148,6 +158,20 @@ class TransactionController extends Controller
         // عملية مالية سليمة.
         $notifier->memberSpent($user, $response);
         $notifier->checkBudget($response, $spentBefore);
+
+        // تحذير "قارب المصروف على النهاية". يُحسب من $totalSpent المقروء قبل
+        // الحفظ في فحص السقف أعلاه — لا من استعلام جديد، وإلا لصار الرقم
+        // المقارَن به شاملاً للعملية نفسها ولتعذّر معرفة أن العتبة عُبرت الآن.
+        if (! $user->isParent()
+            && $validated['type'] === 'expense'
+            && $user->spending_limit !== null) {
+            $notifier->limitApproaching(
+                $user,
+                (float) $totalSpent,
+                (float) $totalSpent + (float) $validated['amount'],
+                (float) $user->spending_limit
+            );
+        }
 
         return response()->json([
             'message' => 'تم تسجيل العملية وتحديث الرصيد بنجاح',
@@ -230,8 +254,10 @@ class TransactionController extends Controller
         // حد السحب يُفحص هنا أيضاً، وإلا صار بإمكان الابن تجاوزه بتعديل عملية
         // قديمة بدل إنشاء عملية جديدة. المبلغ القديم لنفس العملية يُستثنى من
         // المجموع، لأنه سيُستبدل وليس يُضاف إليه.
-        if (! $user->isParent() && $validated['type'] === 'expense') {
-            $totalSpent = Transaction::where('user_id', $user->id)
+        if (! $user->isParent()
+            && $validated['type'] === 'expense'
+            && $user->spending_limit !== null) {
+            $totalSpent = (float) Transaction::where('user_id', $user->id)
                 ->where('type', 'expense')
                 ->whereNull('transfer_group_id')
                 ->where('id', '!=', $transaction->id)

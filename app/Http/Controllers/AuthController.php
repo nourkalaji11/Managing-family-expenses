@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaction;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -151,10 +152,81 @@ class AuthController extends Controller
             ? User::orderBy('name')->get()
             : User::where('id', $user->id)->get();
 
+        // ما صرفه كل فرد فعلياً، لا سقفه فقط. السقف وحده يقول ما هو مسموح؛
+        // ولي الأمر يحتاج أن يرى ما صُرف منه — وهو سبب وجود الشاشة.
+        //
+        // نفس قاعدة TransactionController::store: مصاريف فقط، دون التحويلات،
+        // وعلى كامل التاريخ. أي اختلاف هنا يعني رقماً معروضاً لا يطابق الرقم
+        // الذي يمنع العملية التالية.
+        $spentByUser = Transaction::where('type', 'expense')
+            ->whereNull('transfer_group_id')
+            ->whereIn('user_id', $members->pluck('id'))
+            ->selectRaw('user_id, SUM(amount) as total')
+            ->groupBy('user_id')
+            ->pluck('total', 'user_id');
+
+        $members->each(function (User $member) use ($spentByUser) {
+            $spent = (float) ($spentByUser[$member->id] ?? 0);
+            $limit = $member->spending_limit === null
+                ? null
+                : (float) $member->spending_limit;
+
+            $member->spent = round($spent, 2);
+            // null لا صفر حين لا سقف: "بلا حد" و"لم يبقَ شيء" حالتان متعاكستان،
+            // وتمثيلهما برقم واحد يقلب معنى الشاشة.
+            $member->remaining = $limit === null ? null : round(max(0, $limit - $spent), 2);
+        });
+
         return response()->json([
             'message' => 'تم جلب أفراد العائلة بنجاح',
             'data'    => $members
         ], 200);
+    }
+
+    /**
+     * ولي الأمر ينشئ حساب ابن.
+     *
+     * ---------------------------------------------------------------------
+     * التسجيل الذاتي عبر /register يبقى قائماً لولي الأمر الأول، لكنه لا يصلح
+     * لإضافة الأبناء: كان على الابن أن يسجّل بنفسه ثم ينتظر أن يجده والده في
+     * القائمة ويحدّد له سقفاً. هذه النقطة تجعلها خطوة واحدة يقوم بها من يملك
+     * القرار أصلاً.
+     *
+     * الدور مثبَّت على 'member' ولا يُقرأ من الطلب: نقطة تسمح لولي أمر بإنشاء
+     * ولي أمر آخر هي تصعيد صلاحيات بخطوة واحدة.
+     * ---------------------------------------------------------------------
+     */
+    public function createMember(Request $request)
+    {
+        if (! $request->user()->isParent()) {
+            return response()->json(['message' => 'غير مصرح لك بإضافة أفراد.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|string|email|max:255|unique:users,email',
+            'password'       => 'required|string|min:8',
+            'spending_limit' => 'nullable|numeric|min:0',
+        ]);
+
+        $member = User::create([
+            'name'           => $validated['name'],
+            'email'          => $validated['email'],
+            'password'       => Hash::make($validated['password']),
+            'role'           => 'member',
+            'spending_limit' => $validated['spending_limit'] ?? null,
+        ]);
+
+        // إشعار بالسقف عند تحديده مع الإنشاء، تماماً كما لو حُدِّد لاحقاً عبر
+        // setSpendingLimit — وإلا لاختفى السجل لمجرد أن التوقيت اختلف.
+        if (isset($validated['spending_limit'])) {
+            (new NotificationService())->limitUpdated($member, (float) $validated['spending_limit']);
+        }
+
+        return response()->json([
+            'message' => 'تم إنشاء الحساب بنجاح',
+            'data'    => $member
+        ], 201);
     }
 
     // 7. تحديد حد السحب المالي للابن (خاص بولي الأمر)

@@ -54,6 +54,72 @@ class NotificationService
      * ابن سجّل مصروفاً. يُبلَّغ أولياء الأمور فقط — لا معنى لإشعار المستخدم
      * بفعل قام به هو للتو.
      */
+    /**
+     * النسبة التي يبدأ عندها التحذير من قرب انتهاء المصروف.
+     *
+     * 0.8 وليس 0.9: التحذير الذي يصل ولم يبقَ إلا عُشر المبلغ يصل متأخراً —
+     * لا يكفي ولي الأمر ليقرر ويتصرف قبل أن تُرفض عملية الابن.
+     */
+    public const APPROACHING_RATIO = 0.8;
+
+    /**
+     * اقترب الابن من نهاية مصروفه.
+     *
+     * يُبلَّغ **الطرفان**، بخلاف memberSpent: الابن ليعرف أن ما تبقّى له قليل
+     * قبل أن يُفاجأ برفض، وولي الأمر ليقرر رفع السقف أو السؤال عن وجه الصرف.
+     * هذا هو الغرض الأساسي من الميزة — أن يصل التنبيه قبل المنع لا بعده.
+     *
+     * $spentBefore و$spentAfter يُمرَّران معاً لأن الشرط هو **العبور**: تنبيه
+     * عند كل مصروف تالٍ بعد تجاوز 80% يتحول إلى ضجيج يُتجاهَل، فيضيع التنبيه
+     * الوحيد الذي كان مهماً.
+     */
+    public function limitApproaching(User $member, float $spentBefore, float $spentAfter, float $limit): void
+    {
+        if ($member->isParent() || $limit <= 0) {
+            return;
+        }
+
+        $threshold = $limit * self::APPROACHING_RATIO;
+
+        // عبور العتبة الآن فقط. ولو تجاوز المبلغ السقف كاملاً فالعملية مرفوضة
+        // أصلاً ولن تصل إلى هنا، فلا تعارض مع limitBlocked.
+        if ($spentBefore >= $threshold || $spentAfter < $threshold) {
+            return;
+        }
+
+        $remaining = max(0, $limit - $spentAfter);
+        $remainingText = number_format($remaining, 2);
+        $limitText = number_format($limit, 2);
+        $percent = (int) round(($spentAfter / $limit) * 100);
+
+        $data = [
+            'member_id'   => $member->id,
+            'member_name' => $member->name,
+            'spent'       => $spentAfter,
+            'remaining'   => $remaining,
+            'limit'       => $limit,
+            'percent'     => $percent,
+        ];
+
+        $this->push(
+            $member->id,
+            AppNotification::TYPE_LIMIT_APPROACHING,
+            'اقتربت من نهاية مصروفك',
+            "صرفت {$percent}% من مصروفك. المتبقي لك {$remainingText} من أصل {$limitText}.",
+            $data
+        );
+
+        foreach ($this->parents() as $parent) {
+            $this->push(
+                $parent->id,
+                AppNotification::TYPE_LIMIT_APPROACHING,
+                'اقترب مصروف الابن من نهايته',
+                "صرف {$member->name} {$percent}% من مصروفه. المتبقي له {$remainingText} من أصل {$limitText}.",
+                $data
+            );
+        }
+    }
+
     public function memberSpent(User $member, Transaction $transaction): void
     {
         if ($member->isParent()) {

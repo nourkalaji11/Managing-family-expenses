@@ -304,4 +304,200 @@ class SpendingLimitAndNotificationsTest extends TestCase
 
         $this->assertSame(10000.0, (float) $this->account->fresh()->balance);
     }
+    // -------------------------------------------------------------------------
+    // "Nearly out of allowance" — the warning that arrives BEFORE a refusal
+    // -------------------------------------------------------------------------
+
+    public function test_crossing_eighty_percent_warns_both_the_member_and_the_parent(): void
+    {
+        // The ceiling is 300, so the threshold is 240. This one write takes the
+        // child from 0 to 250 — across it.
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', $this->payload(['amount' => 250]))
+            ->assertCreated();
+
+        $type = AppNotification::TYPE_LIMIT_APPROACHING;
+
+        $this->assertSame(1, AppNotification::where('user_id', $this->child->id)
+            ->where('type', $type)->count(), 'the member is warned');
+
+        $this->assertSame(1, AppNotification::where('user_id', $this->parent->id)
+            ->where('type', $type)->count(), 'the parent is warned too');
+
+        // The parent's copy has to name the child: a warning that does not say
+        // whose allowance is running out cannot be acted on.
+        $parentNote = AppNotification::where('user_id', $this->parent->id)
+            ->where('type', $type)->first();
+
+        $this->assertStringContainsString('Child', $parentNote->message);
+        $this->assertEqualsWithDelta(50, $parentNote->data['remaining'], 0.001);
+        $this->assertSame(83, $parentNote->data['percent']);
+    }
+
+    public function test_the_warning_fires_on_crossing_not_on_every_later_expense(): void
+    {
+        // 250 crosses the 240 threshold.
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', $this->payload(['amount' => 250]))
+            ->assertCreated();
+
+        // 40 more stays inside the ceiling (290 of 300) and past the threshold.
+        // Warning again here would turn the list into noise, and the one
+        // warning that mattered would be lost in it.
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', $this->payload(['amount' => 40]))
+            ->assertCreated();
+
+        $this->assertSame(1, AppNotification::where('user_id', $this->child->id)
+            ->where('type', AppNotification::TYPE_LIMIT_APPROACHING)->count());
+    }
+
+    public function test_staying_under_the_threshold_warns_nobody(): void
+    {
+        // 200 of 300 is 67% — below the 80% threshold.
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', $this->payload(['amount' => 200]))
+            ->assertCreated();
+
+        $this->assertSame(0, AppNotification::where('type', AppNotification::TYPE_LIMIT_APPROACHING)->count());
+    }
+
+    public function test_a_parent_is_never_warned_about_their_own_spending(): void
+    {
+        // A parent has no ceiling to approach.
+        $this->actingAs($this->parent)
+            ->postJson('/api/transactions', $this->payload(['amount' => 9000]))
+            ->assertCreated();
+
+        $this->assertSame(0, AppNotification::where('type', AppNotification::TYPE_LIMIT_APPROACHING)->count());
+    }
+
+    public function test_a_member_with_no_ceiling_is_never_warned(): void
+    {
+        $uncapped = User::create([
+            'name' => 'Uncapped',
+            'email' => 'uncapped@test.local',
+            'password' => Hash::make('password123'),
+            'role' => 'member',
+        ]);
+
+        $this->actingAs($uncapped)
+            ->postJson('/api/transactions', $this->payload(['amount' => 5000]))
+            ->assertCreated();
+
+        $this->assertSame(0, AppNotification::where('type', AppNotification::TYPE_LIMIT_APPROACHING)->count());
+    }
+
+    // -------------------------------------------------------------------------
+    // A parent adding a child, and seeing what each child spent
+    // -------------------------------------------------------------------------
+
+    public function test_a_parent_creates_a_member_account(): void
+    {
+        $response = $this->actingAs($this->parent)
+            ->postJson('/api/users', [
+                'name' => 'New Child',
+                'email' => 'new@test.local',
+                'password' => 'password123',
+                'spending_limit' => 500,
+            ])
+            ->assertCreated();
+
+        $this->assertSame('member', $response->json('data.role'));
+
+        $created = User::where('email', 'new@test.local')->first();
+        $this->assertNotNull($created);
+        $this->assertEqualsWithDelta(500, $created->spending_limit, 0.001);
+
+        // The password is hashed, never stored as typed.
+        $this->assertNotSame('password123', $created->password);
+        $this->assertTrue(Hash::check('password123', $created->password));
+
+        // Setting the ceiling at creation records the same notification that
+        // setting it afterwards would.
+        $this->assertSame(1, AppNotification::where('user_id', $created->id)
+            ->where('type', AppNotification::TYPE_LIMIT_UPDATED)->count());
+    }
+
+    public function test_a_parent_cannot_create_another_parent(): void
+    {
+        $this->actingAs($this->parent)
+            ->postJson('/api/users', [
+                'name' => 'Sneaky',
+                'email' => 'sneaky@test.local',
+                'password' => 'password123',
+                // Ignored: the role is fixed server-side. Honouring it would
+                // make this endpoint a one-step privilege escalation.
+                'role' => 'parent',
+            ])
+            ->assertCreated();
+
+        $this->assertSame('member', User::where('email', 'sneaky@test.local')->first()->role);
+    }
+
+    public function test_a_member_cannot_create_accounts(): void
+    {
+        $this->actingAs($this->child)
+            ->postJson('/api/users', [
+                'name' => 'Nope',
+                'email' => 'nope@test.local',
+                'password' => 'password123',
+            ])
+            ->assertForbidden();
+
+        $this->assertNull(User::where('email', 'nope@test.local')->first());
+    }
+
+    public function test_creating_a_member_rejects_a_duplicate_email(): void
+    {
+        $this->actingAs($this->parent)
+            ->postJson('/api/users', [
+                'name' => 'Clash',
+                'email' => $this->child->email,
+                'password' => 'password123',
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_the_family_list_reports_what_each_member_spent(): void
+    {
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', $this->payload(['amount' => 120]))
+            ->assertCreated();
+
+        $rows = collect($this->actingAs($this->parent)->getJson('/api/users')->assertOk()->json('data'))
+            ->keyBy('id');
+
+        $this->assertEqualsWithDelta(120, $rows[$this->child->id]['spent'], 0.001);
+        $this->assertEqualsWithDelta(180, $rows[$this->child->id]['remaining'], 0.001);
+
+        // A parent has no ceiling, so "remaining" is null rather than 0 — the
+        // two mean opposite things and one number cannot carry both.
+        $this->assertNull($rows[$this->parent->id]['remaining']);
+        $this->assertEqualsWithDelta(0, $rows[$this->parent->id]['spent'], 0.001);
+    }
+
+    public function test_a_transfer_leg_does_not_count_against_what_a_member_spent(): void
+    {
+        $other = Account::create([
+            'name' => 'Savings',
+            'balance' => 1000,
+            'user_id' => $this->parent->id,
+        ]);
+
+        $this->actingAs($this->child)->postJson('/api/transfers', [
+            'from_account_id' => $this->account->id,
+            'to_account_id' => $other->id,
+            'amount' => 200,
+            'category_id' => $this->category->id,
+            'date' => now()->toDateString(),
+        ])->assertCreated();
+
+        $rows = collect($this->actingAs($this->parent)->getJson('/api/users')->json('data'))->keyBy('id');
+
+        // Moving money between the family's own accounts is not spending, so
+        // the figure the parent reads matches the one that will block the next
+        // purchase.
+        $this->assertEqualsWithDelta(0, $rows[$this->child->id]['spent'], 0.001);
+    }
 }

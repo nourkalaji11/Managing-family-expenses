@@ -77,7 +77,11 @@ class DashboardController extends Controller
         if ($user->isParent()) {
             $data['alerts'] = $this->alerts();
         } else {
-            $limit = (float) $user->spending_limit;
+            // null يبقى null حتى الواجهة: الشاشة ترسم "لا يوجد سقف" بدل
+            // شريط ممتلئ عند 0، وهما رسالتان متعاكستان.
+            $limit = $user->spending_limit === null
+                ? null
+                : (float) $user->spending_limit;
             // ما يُحتسب على السقف: مصاريف هذا المستخدم، دون التحويلات — نفس
             // القاعدة التي يطبّقها TransactionController::store عند الفحص، وإلا
             // اختلف الرقم المعروض عن الرقم الذي يمنع العملية.
@@ -88,7 +92,9 @@ class DashboardController extends Controller
 
             $data['spending_limit'] = $limit;
             $data['spent_of_limit'] = round($spent, 2);
-            $data['remaining_limit'] = round(max(0, $limit - $spent), 2);
+            $data['remaining_limit'] = $limit === null
+                ? null
+                : round(max(0, $limit - $spent), 2);
         }
 
         return response()->json([
