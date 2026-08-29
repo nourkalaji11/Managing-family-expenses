@@ -16,7 +16,10 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         // 1. بناء الاستعلام وجلب العمليات مع فئات الصرف والحساب البنكي وترتيبها من الأحدث للأقدم
-        $query = \App\Models\Transaction::with(['account', 'category'])->latest();
+        // 'user' محمَّلة كي تعرف الشاشة **من** صرف، لا المبلغ وحده. ولي الأمر
+        // يرى عمليات العائلة كلها، فبلا اسم صاحب العملية تصير القائمة أرقاماً
+        // لا تُنسب إلى أحد — وهو بالضبط ما يفتحها من أجله.
+        $query = \App\Models\Transaction::with(['account', 'category', 'user'])->latest();
 
         // 1أ. قصر النتيجة على ما يحق للمستخدم رؤيته: ولي الأمر يرى الجميع
         //     والابن يرى عملياته وحده. كان الاستعلام بلا أي قيد، فيقرأ أي

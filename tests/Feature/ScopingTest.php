@@ -269,4 +269,51 @@ class ScopingTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['data' => ['total_balance', 'alerts']]);
     }
+    // -------------------------------------------------------------------------
+    // Who spent it
+    // -------------------------------------------------------------------------
+
+    public function test_each_transaction_carries_its_owner(): void
+    {
+        $this->transactionFor($this->child, 40);
+
+        $rows = $this->actingAs($this->parent)->getJson('/api/transactions')
+            ->assertOk()
+            ->json('data');
+
+        $mine = collect($rows)->firstWhere('user_id', $this->child->id);
+
+        // The name, not just the id: a parent opens this list to see who spent
+        // what, and an id is not an answer to that.
+        $this->assertNotNull($mine['user'] ?? null);
+        $this->assertSame($this->child->name, $mine['user']['name']);
+    }
+
+    public function test_the_owners_password_never_travels_with_the_row(): void
+    {
+        $this->transactionFor($this->child, 40);
+
+        $rows = $this->actingAs($this->parent)->getJson('/api/transactions')->json('data');
+        $mine = collect($rows)->firstWhere('user_id', $this->child->id);
+
+        // `User::$hidden` covers it, but eager-loading a relation onto a
+        // response is exactly where that protection gets lost by accident.
+        $this->assertArrayNotHasKey('password', $mine['user']);
+        $this->assertArrayNotHasKey('remember_token', $mine['user']);
+    }
+
+    public function test_a_member_still_only_ever_sees_their_own_rows(): void
+    {
+        $this->transactionFor($this->parent, 90);
+        $this->transactionFor($this->child, 10);
+
+        $rows = $this->actingAs($this->child)->getJson('/api/transactions')->json('data');
+
+        // Attaching the owner must not have widened what a member can read:
+        // otherwise the new field would hand every child a roster of the
+        // family's spending.
+        foreach ($rows as $row) {
+            $this->assertSame($this->child->id, $row['user_id']);
+        }
+    }
 }

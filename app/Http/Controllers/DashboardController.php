@@ -53,7 +53,7 @@ class DashboardController extends Controller
         $breakdown = $this->breakdown($scoped, $totals['expenses']);
 
         $recent = $this->scopeToViewer(
-            Transaction::with(['account', 'category'])->latest(),
+            Transaction::with(['account', 'category', 'user'])->latest(),
             $user
         )->limit(self::RECENT_LIMIT)->get();
 
