@@ -15,9 +15,8 @@ import 'package:family_expense_management/data/models/category.dart';
 ///
 ///     BudgetsMockSource  ->  MockStore  ->  BudgetsRepo
 ///
-/// To switch to the real API: flip `kUseMockData` in `mock_config.dart` to
-/// `false`, implement the requests in the repositories, and delete
-/// `lib/data/mock/`.
+/// To run against the real API: build with `--dart-define=USE_MOCK=false` and
+/// an `API_BASE_URL`. Nothing here has to be deleted for that.
 /// ---------------------------------------------------------------------------
 ///
 /// Two things are deliberately **not** declared here:

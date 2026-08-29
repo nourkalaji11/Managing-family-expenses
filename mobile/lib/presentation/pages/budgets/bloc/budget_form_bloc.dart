@@ -54,6 +54,8 @@ class BudgetFormBloc extends Bloc<BudgetFormEvent, BudgetFormState> {
         emit(_revalidated(state.copyWith(endDate: _atMidnight(event.date))));
       } else if (event is OnSubmitBudgetForm) {
         await _submit(emit);
+      } else if (event is OnDeleteBudget) {
+        await _delete(emit);
       }
     });
   }
@@ -96,9 +98,7 @@ class BudgetFormBloc extends Bloc<BudgetFormEvent, BudgetFormState> {
 
   /// Fetches the category options through the same domain contract the list
   /// uses, so there is one source for them.
-  Future<void> _loadOptions(
-    Emitter<BudgetFormState> emit,
-  ) async {
+  Future<void> _loadOptions(Emitter<BudgetFormState> emit) async {
     final result = await _repo.getBudgets();
     result.fold(
       (failure) => emit(
@@ -116,12 +116,10 @@ class BudgetFormBloc extends Bloc<BudgetFormEvent, BudgetFormState> {
   BudgetFormState _revalidated(BudgetFormState next) =>
       next.copyWith(errors: validate(next), status: BudgetFormStatus.editing);
 
-  Future<void> _submit(
-    Emitter<BudgetFormState> emit,
-  ) async {
-    // Guards double submission: a second tap while the first save is in flight
-    // is dropped rather than creating two rows.
-    if (state.isSubmitting) return;
+  Future<void> _submit(Emitter<BudgetFormState> emit) async {
+    // Guards double submission: a second tap while either write is in flight is
+    // dropped rather than creating two rows.
+    if (state.isBusy) return;
 
     final BudgetFormErrors errors = validate(state);
     if (errors.hasAny) {
@@ -155,9 +153,28 @@ class BudgetFormBloc extends Bloc<BudgetFormEvent, BudgetFormState> {
       (failure) => emit(
         state.copyWith(status: BudgetFormStatus.failure, failure: failure),
       ),
-      (saved) => emit(
-        state.copyWith(status: BudgetFormStatus.success, saved: saved),
+      (saved) =>
+          emit(state.copyWith(status: BudgetFormStatus.success, saved: saved)),
+    );
+  }
+
+  Future<void> _delete(Emitter<BudgetFormState> emit) async {
+    // Nothing to delete in Add mode, and a delete must not race a save.
+    if (state.isBusy || state.mode != BudgetFormMode.edit) return;
+
+    final int? id = state.id;
+    if (id == null) return;
+
+    emit(state.copyWith(status: BudgetFormStatus.deleting, clearFailure: true));
+
+    final result = await _repo.deleteBudget(id);
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(status: BudgetFormStatus.failure, failure: failure),
       ),
+      (_) =>
+          emit(state.copyWith(status: BudgetFormStatus.deleted, deletedId: id)),
     );
   }
 

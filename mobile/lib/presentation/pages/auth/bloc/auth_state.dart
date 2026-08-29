@@ -20,31 +20,8 @@ class AuthFailure extends AuthState {
   List<Object> get props => [error];
 }
 
-class SendOTPSuccess extends AuthState {
-  final LoginProvider provider;
-  final String emailORphone;
-  const SendOTPSuccess(this.provider, this.emailORphone);
-
-  @override
-  List<Object> get props => [provider, emailORphone];
-}
-
-class VerifyOTPSuccess extends AuthState {
-  const VerifyOTPSuccess();
-
-  @override
-  List<Object> get props => [];
-}
-
 class RegisterSuccess extends AuthState {
   const RegisterSuccess();
-
-  @override
-  List<Object> get props => [];
-}
-
-class SocialSignUpSuccess extends AuthState {
-  const SocialSignUpSuccess();
 
   @override
   List<Object> get props => [];

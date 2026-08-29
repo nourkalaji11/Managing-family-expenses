@@ -1,12 +1,16 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/mock/mock_config.dart';
 import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/models/account.dart';
+import 'package:family_expense_management/data/models/app_notification.dart';
 import 'package:family_expense_management/data/models/category.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
 import 'package:family_expense_management/data/models/transactions_data.dart';
+import 'package:family_expense_management/data/models/user.dart';
+import 'package:family_expense_management/data/repos/budgets_repo.dart';
 import 'package:family_expense_management/network/api_envelope.dart';
 import 'package:family_expense_management/network/failure.dart';
 import 'package:family_expense_management/network/global_api_endpoint.dart';
@@ -15,8 +19,9 @@ import 'package:family_expense_management/presentation/pages/transactions/domain
 
 /// The transactions feature's data source.
 ///
-/// Live against the Laravel API when [useMock] is `false`, which is the default.
-/// The mock path is kept compiling as a one-line rollback ([kUseMockData]).
+/// Mock or live, on [useMock] — see [kUseMockData], which defaults to the mock
+/// so the app runs with no backend. Both paths are maintained; neither is a
+/// leftover.
 ///
 /// Endpoint notes worth carrying at the call site:
 ///
@@ -112,10 +117,14 @@ class TransactionsRepo extends TransactionsDomain {
 
       final store = MockStore.instance;
 
-      // `MockStore.currentUserId` is derived from the seed and is nullable on
-      // purpose. Failing loudly beats writing a row with an invented owner.
-      final userId = store.currentUserId;
-      if (userId == null) return Left(ResultFailure('transactions.error_no_user'.tr()));
+      // `MockStore.currentUserId` is derived from the seeded family and is
+      // nullable on purpose. Failing loudly beats writing a row with an
+      // invented owner.
+      final viewer = store.signedInUser;
+      final userId = viewer?.id ?? store.currentUserId;
+      if (userId == null) {
+        return Left(ResultFailure('transactions.error_no_user'.tr()));
+      }
 
       final account = store.accountById(draft.accountId);
       final category = store.categoryById(draft.categoryId);
@@ -124,6 +133,13 @@ class TransactionsRepo extends TransactionsDomain {
         // `exists:categories,id`; the mock enforces the same rule locally.
         return Left(ResultFailure('transactions.error_invalid_selection'.tr()));
       }
+
+      // The spending ceiling, enforced where `TransactionController::store`
+      // enforces it: a member, an expense, and the whole history summed rather
+      // than this month's. Without this, the ceiling card a member's dashboard
+      // draws would be a number that never stops anything.
+      final block = _ceilingBlock(store, viewer, draft.type, draft.amount);
+      if (block != null) return Left(block);
 
       final transaction = TransactionModel(
         id: store.allocateId(),
@@ -142,6 +158,16 @@ class TransactionsRepo extends TransactionsDomain {
       );
 
       store.add(transaction);
+      // The balance moves with the row. The server does this inside the same
+      // `DB::transaction`; skipping it here left the dashboard's total balance
+      // frozen while its income and expense figures moved, so three numbers on
+      // one screen disagreed with each other.
+      store.adjustAccountBalance(
+        account.id,
+        MockStore.balanceEffectOf(transaction),
+      );
+
+      _notifyAfterWrite(store, viewer, transaction);
       return Right(transaction);
     } catch (e) {
       return Left(GlobalFailure());
@@ -190,10 +216,38 @@ class TransactionsRepo extends TransactionsDomain {
         category: category,
       );
 
+      // The ceiling is re-checked on edit, as it is server-side: without it a
+      // member could book a small expense and then edit it upwards to any
+      // amount, and the check on create would be decoration.
+      final block = _ceilingBlock(
+        store,
+        store.signedInUser,
+        draft.type,
+        draft.amount,
+        // The row's own current amount is already inside the total, so it is
+        // discounted — otherwise saving an expense without changing it could
+        // fail against its own contribution.
+        excluding: existing,
+      );
+      if (block != null) return Left(block);
+
       // Replaces in place, keyed by id, so an edit can never append a duplicate.
       if (!store.update(updated)) {
         return Left(ResultFailure('transactions.error_not_found'.tr()));
       }
+
+      // Old effect undone before the new one is applied, and on whichever
+      // account each belonged to — an edit that moves a row between accounts
+      // has to take its money with it.
+      store.adjustAccountBalance(
+        existing.accountId,
+        -MockStore.balanceEffectOf(existing),
+      );
+      store.adjustAccountBalance(
+        updated.accountId,
+        MockStore.balanceEffectOf(updated),
+      );
+
       return Right(updated);
     } catch (e) {
       return Left(GlobalFailure());
@@ -205,12 +259,136 @@ class TransactionsRepo extends TransactionsDomain {
       await Future.delayed(mockWriteDelay);
 
       final store = MockStore.instance;
-      if (!store.remove(id)) {
+
+      // Read before the removal: undoing the balance needs the row's amount,
+      // type and account.
+      TransactionModel? existing;
+      for (final t in store.transactions) {
+        if (t.id == id) {
+          existing = t;
+          break;
+        }
+      }
+      if (existing == null || !store.remove(id)) {
         return Left(ResultFailure('transactions.error_not_found'.tr()));
       }
+
+      store.adjustAccountBalance(
+        existing.accountId,
+        -MockStore.balanceEffectOf(existing),
+      );
       return const Right(true);
     } catch (e) {
       return Left(GlobalFailure());
+    }
+  }
+
+  /// The [Failure] to answer with when [amount] would put [viewer] over their
+  /// ceiling, or null when the write may proceed.
+  ///
+  /// Mirrors `TransactionController::store`: parents are unrestricted, income is
+  /// unrestricted, transfers are excluded from the total, and the comparison is
+  /// `spent + amount > limit` against the whole history. [excluding] discounts a
+  /// row that is being replaced, so an edit is measured against the others.
+  ///
+  /// Fires `limit_blocked` on the way out, as `NotificationService` does — a
+  /// refusal the family never hears about is one the parent cannot act on.
+  static Failure? _ceilingBlock(
+    MockStore store,
+    User? viewer,
+    TransactionType type,
+    num amount, {
+    TransactionModel? excluding,
+  }) {
+    if (viewer == null || viewer.isParent) return null;
+    if (type != TransactionType.expense) return null;
+
+    final limit = viewer.spendingLimit;
+    if (limit == null) return null;
+
+    var spent = store.spentAgainstLimitBy(viewer.id);
+    if (excluding != null && excluding.isExpense && !excluding.isTransfer) {
+      spent -= excluding.amount ?? 0;
+    }
+
+    if (spent + amount <= limit) return null;
+
+    final remaining = limit - spent;
+    store.addNotification(
+      AppNotification(
+        id: store.allocateNotificationId(),
+        rawType: NotificationType.limitBlocked.wire,
+        title: 'محاولة تجاوز سقف السحب',
+        message:
+            'مبلغ ${amount.toStringAsFixed(2)} يتجاوز سقف سحبك. '
+            'المتبقي لك ${(remaining < 0 ? 0 : remaining).toStringAsFixed(2)} '
+            'من أصل ${limit.toStringAsFixed(2)}.',
+        createdAt: DateTime.now(),
+      ),
+    );
+
+    return ResultFailure('transactions.error_limit_exceeded'.tr());
+  }
+
+  /// The notifications a successful write produces on the server.
+  ///
+  /// Two of `NotificationService`'s four types are generated here:
+  ///
+  ///   * `member_spent` — a member's expense, so the parent sees the spending
+  ///     as it happens.
+  ///   * `budget_exceeded` — fired only on **crossing** the limit, not on every
+  ///     write once over it, which is why the before-figure is recomputed by
+  ///     subtracting this row rather than read after the fact.
+  ///
+  /// The third, `limit_blocked`, belongs to the refusal path in [_ceilingBlock];
+  /// the fourth, `limit_updated`, to `ProfileRepo`.
+  static void _notifyAfterWrite(
+    MockStore store,
+    User? viewer,
+    TransactionModel written,
+  ) {
+    if (!written.isExpense || written.isTransfer) return;
+
+    if (viewer != null && !viewer.isParent) {
+      store.addNotification(
+        AppNotification(
+          id: store.allocateNotificationId(),
+          rawType: NotificationType.memberSpent.wire,
+          title: 'عملية صرف جديدة',
+          message:
+              'صرف ${viewer.name ?? ''} ${(written.amount ?? 0).toStringAsFixed(2)} '
+              'على ${written.category?.name ?? ''}.',
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
+    final all = store.transactions;
+    for (final budget in store.budgets) {
+      if (budget.categoryId != written.categoryId) continue;
+
+      // `limitAmount` is nullable; `limit` is the same value defaulted to 0.
+      final limit = budget.limitAmount;
+      if (limit == null || limit <= 0) continue;
+
+      final after = BudgetsRepo.spentFor(budget, all);
+      // This row's own contribution removed, giving the figure as it stood
+      // immediately before the write. If it was already over, the family has
+      // been told once and does not need telling again.
+      final before = after - (written.amount ?? 0);
+      if (before > limit || after <= limit) continue;
+
+      store.addNotification(
+        AppNotification(
+          id: store.allocateNotificationId(),
+          rawType: NotificationType.budgetExceeded.wire,
+          title: 'تجاوزت الميزانية',
+          message:
+              'تجاوز الصرف على ${written.category?.name ?? ''} '
+              'ميزانية ${limit.toStringAsFixed(2)}.',
+          createdAt: DateTime.now(),
+        ),
+      );
     }
   }
 
@@ -275,7 +453,8 @@ class TransactionsRepo extends TransactionsDomain {
             for (final json in unwrapList(responses[1])) Account.fromJson(json),
           ],
           categories: [
-            for (final json in unwrapList(responses[2])) Category.fromJson(json),
+            for (final json in unwrapList(responses[2]))
+              Category.fromJson(json),
           ],
         ),
       );

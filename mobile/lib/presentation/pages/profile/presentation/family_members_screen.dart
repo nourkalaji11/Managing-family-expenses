@@ -348,9 +348,7 @@ class _MemberCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  isParent
-                      ? 'auth.parent'.tr()
-                      : 'auth.family_member'.tr(),
+                  isParent ? 'auth.parent'.tr() : 'auth.family_member'.tr(),
                   style: TextStyleApp.budgetsPreviewBadge.copyWith(color: ink),
                 ),
               ),
@@ -375,8 +373,15 @@ class _MemberCard extends StatelessWidget {
                       ),
                       SizedBox(height: 2.h),
                       Text(
-                        '${DashboardFormatter.isolatedAmount(member.spendingLimit)} '
-                        '${'dashboard.currency_sar'.tr()}',
+                        // A null ceiling is "not capped", not "capped at
+                        // zero" — and `isolatedAmount` renders null as 0.00,
+                        // which reads as the opposite of what it means. The
+                        // server sends null for a member no parent has set a
+                        // limit for yet, which is where every member starts.
+                        member.spendingLimit == null
+                            ? 'profile.no_limit'.tr()
+                            : '${DashboardFormatter.isolatedAmount(member.spendingLimit)} '
+                                  '${'dashboard.currency_sar'.tr()}',
                         style: TextStyleApp.budgetsCardFooterValue,
                       ),
                     ],

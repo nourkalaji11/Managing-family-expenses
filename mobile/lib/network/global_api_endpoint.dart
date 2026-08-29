@@ -28,15 +28,18 @@ enum GlobalApiEndpoint {
     ),
   ),
 
-  //splash
-  initialSettings("settings/init"),
-
-  //auth
+  // ---------------------------------------------------------------------------
+  // Auth.
+  //
+  // `settings/init`, `social`, `sendOTP` and `verifyOTP` used to be declared
+  // here. None of them existed on the backend, and the only screen that reached
+  // them — a welcome screen carried over from the template this project started
+  // from — was not registered in `AppRoutes`, so nothing could open it. They
+  // have been removed along with that screen: an endpoint constant is a claim
+  // that a contract exists, and these four claimed four that did not.
+  // ---------------------------------------------------------------------------
   register("register"),
   login("login"),
-  social("social"),
-  verifyOTP("verifyOTP"),
-  sendOTP("sendOTP"),
 
   /// `POST`. Revokes the bearer token currently in use, so signing out on this
   /// device does not sign the family out everywhere.
@@ -79,7 +82,14 @@ enum GlobalApiEndpoint {
   // flat — see `AuthRepo`.
   // ---------------------------------------------------------------------------
 
-  /// `GET`/`POST`. `AccountController::index` orders newest-first.
+  /// `GET`. Everything the home tab draws, computed server-side: the totals,
+  /// the category breakdown, the recent rows and — for a member — their
+  /// spending ceiling. Replaces aggregating `/accounts` and `/transactions` on
+  /// the device.
+  dashboard("dashboard"),
+
+  /// `GET`/`POST`. `AccountController::index` orders newest-first and carries
+  /// `transactions_count`.
   accounts("accounts"),
 
   /// `PUT`/`DELETE`. `DELETE` answers 409, not 204, when the account still

@@ -143,8 +143,12 @@ class _LimitRow extends StatelessWidget {
         ),
         SizedBox(height: 4.h),
         Text(
-          '${DashboardFormatter.isolatedAmount(limit)} '
-          '${'dashboard.currency_sar'.tr()}',
+          // Null is "no ceiling set", which `isolatedAmount` would render as
+          // 0.00 — the same misreading the parent guard above exists to avoid.
+          limit == null
+              ? 'profile.no_limit'.tr()
+              : '${DashboardFormatter.isolatedAmount(limit)} '
+                    '${'dashboard.currency_sar'.tr()}',
           style: TextStyleApp.budgetsSummaryValue.copyWith(
             color: ColorsApp.white,
           ),

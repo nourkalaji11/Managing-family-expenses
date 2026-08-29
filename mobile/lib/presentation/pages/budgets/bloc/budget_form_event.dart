@@ -71,3 +71,11 @@ class OnBudgetEndDateChanged extends BudgetFormEvent {
 class OnSubmitBudgetForm extends BudgetFormEvent {
   const OnSubmitBudgetForm();
 }
+
+/// Deletes the budget being edited. Ignored in Add mode, and while a save or a
+/// delete is already in flight.
+///
+/// The screen confirms with the user before dispatching this.
+class OnDeleteBudget extends BudgetFormEvent {
+  const OnDeleteBudget();
+}

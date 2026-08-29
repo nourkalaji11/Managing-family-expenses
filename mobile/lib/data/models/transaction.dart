@@ -57,6 +57,14 @@ class TransactionModel {
   /// excludes them. See [DashboardSummary.from].
   final bool isTransfer;
 
+  /// The UUID shared by a transfer's two legs, or null for an ordinary row.
+  ///
+  /// The server sends this on `transactions.transfer_group_id` and uses it to
+  /// find the sibling leg when a transfer is undone. It is carried here for the
+  /// same reason: `TransfersRepo.deleteTransfer` is given a group id, not a
+  /// transaction id, and needs something to match both legs on.
+  final String? transferGroupId;
+
   const TransactionModel({
     this.id,
     this.amount,
@@ -70,6 +78,7 @@ class TransactionModel {
     this.account,
     this.category,
     this.isTransfer = false,
+    this.transferGroupId,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
@@ -100,6 +109,7 @@ class TransactionModel {
         // correctly as "not a transfer".
         isTransfer:
             json["is_transfer"] == true || json["transfer_group_id"] != null,
+        transferGroupId: json["transfer_group_id"]?.toString(),
       );
 
   /// Sentinel for [copyWith], so that `description: null` can mean "clear this"
@@ -143,6 +153,7 @@ class TransactionModel {
     // transfer is decided when it is created and can never be edited into or
     // out of. The server refuses to update a transfer leg at all.
     isTransfer: isTransfer,
+    transferGroupId: transferGroupId,
   );
 
   /// True when this row reduces the balance.

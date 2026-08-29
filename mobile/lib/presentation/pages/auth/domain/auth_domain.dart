@@ -16,27 +16,6 @@ abstract class AuthDomain {
     String? referralCode,
   });
 
-  Future<Either<Failure, bool>> sendOTP({
-    required LoginProvider provider,
-    required String emailORphone,
-  });
-
-  Future<Either<Failure, User>> verifyOTP({
-    required LoginProvider provider,
-    required String emailORphone,
-    required String otp,
-    required String deviceToken,
-  });
-
-  Future<Either<Failure, String>> social({
-    required LoginProvider provider,
-    required String token,
-    required String? fullName,
-    required String? secretToken,
-    required String? notificationToken,
-    String? referralCode,
-  });
-
   Future<Either<Failure, User>> login({
     required String? notificationToken,
     required String email,

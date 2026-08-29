@@ -14,24 +14,21 @@ import 'package:family_expense_management/presentation/pages/dashboard/domain/da
 /// The dashboard's data source.
 ///
 /// ---------------------------------------------------------------------------
-/// Live against the Laravel API when [useMock] is `false`, which is the default.
-/// The mock path is kept compiling as a one-line rollback ([kUseMockData]) and
-/// as the seed the widget tests read.
+/// Mock or live, on [useMock] — see [kUseMockData], which now defaults to the
+/// mock so that a build with no backend running is a working app rather than a
+/// wall of connection errors.
 ///
-/// There is deliberately **no** call to `GET /api/dashboard`. That endpoint
-/// exists, but it answers with a role-dependent summary — for an admin
-/// `{role, total_family_balance, total_family_spent, alerts}`, for a member
-/// `{role, my_spending_limit, my_total_spent, my_remaining_limit}` — and none
-/// of it is what this screen draws: no income figure, no per-category
-/// breakdown, no account to fill "رقم الحساب العائلي", and no transaction rows
-/// for "آخر المعاملات". Every one of those comes from `/accounts` and
-/// `/transactions`, which this repository has to fetch anyway, so calling
-/// `/dashboard` on top would be a third round trip that contributes nothing.
+/// The remote path makes **one** request, to `GET /dashboard`, and parses the
+/// server's own summary. It used to fetch `/accounts` and `/transactions` whole
+/// and aggregate them here, because the endpoint answered with something else
+/// entirely — a role summary with no income figure, no breakdown and no rows.
+/// `DashboardController` was rewritten to return what this screen draws, so
+/// that download is gone and the totals now cover every row rather than the
+/// ones the device happened to hold.
 ///
-/// TODO(backend): aggregating on-device means downloading every transaction the
-/// caller can see — `TransactionController::index` has no `paginate()`. A
-/// server-side summary shaped like [DashboardSummary] should replace
-/// [_aggregate] once the backend offers one.
+/// [_aggregate] survives for the mock path, which has no server to ask. Both
+/// paths produce the same totals and the same four slices on the seeded data —
+/// that equivalence is what the SQL version was checked against.
 /// ---------------------------------------------------------------------------
 class DashboardRepo extends DashboardDomain {
   static DioClient client = DioClient();
@@ -65,7 +62,25 @@ class DashboardRepo extends DashboardDomain {
       final List<Account> accounts = store.accounts;
       final List<TransactionModel> transactions = store.transactions;
 
-      return Right(_aggregate(accounts, transactions));
+      // A member's dashboard draws their ceiling where a parent's draws the
+      // alerts panel, so the mock has to know which one is signed in. Without
+      // this, signing in as a member offline would silently show the parent
+      // layout and the ceiling card would never render.
+      final viewer = store.signedInUser;
+      final num? limit = (viewer != null && !viewer.isParent)
+          ? viewer.spendingLimit
+          : null;
+
+      return Right(
+        _aggregate(
+          accounts,
+          transactions,
+          spendingLimit: limit,
+          spentOfLimit: limit == null
+              ? null
+              : store.spentAgainstLimitBy(viewer?.id),
+        ),
+      );
     } catch (e) {
       // Defensive only: the mock cannot realistically throw, but returning a
       // Left keeps the Either contract honest rather than letting an exception
@@ -81,11 +96,15 @@ class DashboardRepo extends DashboardDomain {
   /// change shape just because the source changed.
   DashboardData _aggregate(
     List<Account> accounts,
-    List<TransactionModel> transactions,
-  ) {
+    List<TransactionModel> transactions, {
+    num? spendingLimit,
+    num? spentOfLimit,
+  }) {
     final summary = DashboardSummary.from(
       accounts: accounts,
       transactions: transactions,
+      spendingLimit: spendingLimit,
+      spentOfLimit: spentOfLimit,
     );
 
     // Newest first. Rows without any timestamp sort last rather than throwing.
@@ -105,38 +124,33 @@ class DashboardRepo extends DashboardDomain {
     );
   }
 
-  /// Fetches the two collections the dashboard aggregates from.
+  /// Reads the server's summary.
   ///
-  /// Issued concurrently: neither depends on the other, and the screen cannot
-  /// render until both have landed, so serialising them would double the time
-  /// to first paint for no benefit. If either fails, `Future.wait` propagates
-  /// the first [Failure] thrown by [unwrapList] and the whole load fails —
-  /// which is the honest outcome. A dashboard built from accounts alone would
-  /// show a real balance next to a fabricated "0 ر.س" of expenses.
+  /// One request. This used to be two — `/accounts` and `/transactions` — whose
+  /// rows were then summed on the device. `GET /dashboard` now computes the
+  /// totals, the breakdown and the recent rows in SQL, which is both fewer
+  /// round trips and a more honest figure: an on-device sum can only see the
+  /// rows the client holds, and `/transactions` is now scoped by role and can
+  /// be paginated.
   Future<Either<Failure, DashboardData>> _getRemote() async {
     try {
-      final responses = await Future.wait([
-        client.request(
-          requestType: RequestType.get,
-          path: GlobalApiEndpoint.accounts.endpoint,
-        ),
-        client.request(
-          requestType: RequestType.get,
-          path: GlobalApiEndpoint.transactions.endpoint,
-        ),
-      ]);
+      final response = await client.request(
+        requestType: RequestType.get,
+        path: GlobalApiEndpoint.dashboard.endpoint,
+      );
 
-      final accounts = [
-        for (final json in unwrapList(responses[0])) Account.fromJson(json),
-      ];
-      final transactions = [
-        for (final json in unwrapList(responses[1]))
-          TransactionModel.fromJson(json),
-      ];
+      final Map<String, dynamic> data = unwrapObject(response);
 
-      // The same aggregation the mock path runs, so the screen cannot change
-      // shape just because the source changed.
-      return Right(_aggregate(accounts, transactions));
+      return Right(
+        DashboardData(
+          summary: DashboardSummary.fromJson(data),
+          recentTransactions: [
+            for (final json
+                in (data['recent_transactions'] as List? ?? const []))
+              if (json is Map<String, dynamic>) TransactionModel.fromJson(json),
+          ],
+        ),
+      );
     } on DioException catch (ex) {
       if (ex.type == DioExceptionType.connectionTimeout ||
           ex.type == DioExceptionType.sendTimeout ||

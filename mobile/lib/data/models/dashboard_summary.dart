@@ -4,8 +4,9 @@ import 'package:family_expense_management/data/models/transaction.dart';
 
 /// One slice of the "توزيع المصاريف" donut.
 ///
-/// [categoryId] is null for the aggregated "أخرى" slice, which is synthesised
-/// client-side and has no row in the `categories` table.
+/// [categoryId] is null for the aggregated "أخرى" slice, which the server
+/// synthesises from everything below the top three and which has no row in the
+/// `categories` table.
 class CategoryBreakdown {
   final int? categoryId;
   final String? categoryName;
@@ -24,35 +25,62 @@ class CategoryBreakdown {
     required this.fraction,
     this.isOther = false,
   });
+
+  factory CategoryBreakdown.fromJson(Map<String, dynamic> json) =>
+      CategoryBreakdown(
+        categoryId: json['category_id'],
+        categoryName: json['category'],
+        total: _toNum(json['total']) ?? 0,
+        fraction: (_toNum(json['fraction']) ?? 0).toDouble(),
+        // A null `category_id` is the same signal, but the server states it
+        // outright rather than making the client infer it.
+        isOther: json['is_other'] == true || json['category_id'] == null,
+      );
 }
 
-/// Everything the dashboard home tab renders, in one immutable value.
+/// Everything the dashboard home tab renders.
 ///
-/// This is a **client-side aggregate**, not a server DTO — there is no
-/// `/dashboard/summary` endpoint. See [DashboardSummary.from].
+/// ---------------------------------------------------------------------------
+/// This used to be a **client-side aggregate**: the app downloaded every
+/// account and every transaction the family had ever recorded, then summed
+/// them on the device to produce three numbers and a donut.
+///
+/// `GET /dashboard` now returns the whole thing computed in SQL. Two things
+/// improve, not one: it is a single request instead of two, and the figures
+/// cover every row rather than whatever the client happened to hold — which
+/// stopped being the same thing once `/transactions` became scoped by role and
+/// could be paginated.
+///
+/// [from] is kept for the mock path, which has no server to compute anything.
+/// ---------------------------------------------------------------------------
 class DashboardSummary {
-  /// Σ `accounts.balance`.
+  /// Σ `accounts.balance` across the family. Accounts are shared, so this is
+  /// the same figure for a parent and a member.
   final num totalBalance;
 
-  /// Σ `transactions.amount` where `type = 'income'` within the period.
+  /// Σ `transactions.amount` where `type = 'income'`, transfers excluded.
   final num income;
 
-  /// Σ `transactions.amount` where `type = 'expense'` within the period.
+  /// Σ `transactions.amount` where `type = 'expense'`, transfers excluded.
   final num expenses;
 
-  /// Expense slices: the top N categories plus an aggregated "other".
+  /// Expense slices: the top three categories plus an aggregated "other".
   final List<CategoryBreakdown> breakdown;
 
   /// Account used to fill the "رقم الحساب العائلي" row.
   ///
-  /// TODO(backend): this is a **temporary display fallback only** — it is
-  /// currently just the first account in the list, which is NOT the same thing
-  /// as the family's primary account. The schema has no way to identify one:
-  /// there is no `accounts.is_primary` flag, no account number column, and no
-  /// `families` table linking members to a shared account. Replace this once the
-  /// backend defines how the primary family account is identified; until then
-  /// the masked number rendered next to it is mock data, not real.
+  /// TODO(backend): a **display fallback only** — the server returns the newest
+  /// account, which is not the same thing as the family's primary one. The
+  /// schema has no way to identify one: no `accounts.is_primary`, no account
+  /// number, no `families` table. The masked number rendered beside it is mock
+  /// data until that changes.
   final Account? primaryAccount;
+
+  /// The signed-in member's ceiling, or null for a parent — a parent is not
+  /// capped, and the server omits these three fields for them entirely.
+  final num? spendingLimit;
+  final num? spentOfLimit;
+  final num? remainingLimit;
 
   const DashboardSummary({
     required this.totalBalance,
@@ -60,32 +88,57 @@ class DashboardSummary {
     required this.expenses,
     required this.breakdown,
     this.primaryAccount,
+    this.spendingLimit,
+    this.spentOfLimit,
+    this.remainingLimit,
   });
 
-  /// "المتبقي" — the design shows 8,500 − 3,250 = 5,250.
+  /// "المتبقي" — income minus expenses.
+  ///
+  /// Can go negative when the family overspent, which is the truthful figure;
+  /// the widget decides how to colour it.
   num get remaining => income - expenses;
 
+  /// True when the signed-in user is a capped member, so the screen can show
+  /// their allowance instead of family-wide figures.
+  bool get hasSpendingLimit => spendingLimit != null;
+
   /// How many slices the donut draws before grouping the rest into "أخرى".
-  /// The design shows three categories.
+  ///
+  /// Mirrors `DashboardController::TOP_CATEGORIES`. Kept here because the mock
+  /// path still aggregates locally.
   static const int topCategoryCount = 3;
+
+  factory DashboardSummary.fromJson(Map<String, dynamic> json) =>
+      DashboardSummary(
+        totalBalance: _toNum(json['total_balance']) ?? 0,
+        income: _toNum(json['income']) ?? 0,
+        expenses: _toNum(json['expenses']) ?? 0,
+        breakdown: [
+          for (final slice in (json['breakdown'] as List? ?? const []))
+            if (slice is Map<String, dynamic>)
+              CategoryBreakdown.fromJson(slice),
+        ],
+        primaryAccount: json['primary_account'] is Map<String, dynamic>
+            ? Account.fromJson(json['primary_account'])
+            : null,
+        // Absent for a parent, which reads correctly as "not capped".
+        spendingLimit: _toNum(json['spending_limit']),
+        spentOfLimit: _toNum(json['spent_of_limit']),
+        remainingLimit: _toNum(json['remaining_limit']),
+      );
 
   /// Aggregates raw rows into the shape the UI needs.
   ///
-  /// Kept here rather than in the repository so that the *same* arithmetic runs
-  /// whether the rows came from the mock source or, later, from the API.
-  ///
-  /// TODO(backend): aggregating on-device means downloading every transaction.
-  /// Verified against `TransactionController::index` on branch
-  /// `origin/souad-backend` (commit c93db70), whose body is
-  /// `Transaction::with(['account','category'])->latest()->get()` — no
-  /// `paginate()` and no `where('user_id', ...)`; `routes/api.php` applies no
-  /// middleware and `bootstrap/app.php`'s `withMiddleware` closure is empty. So
-  /// that endpoint returns every user's rows, unpaginated, and will not scale.
-  /// A server-side summary endpoint should replace this once the backend
-  /// contract is agreed — deliberately not invented here.
+  /// **Mock path only.** The remote path parses the server's own summary — see
+  /// [DashboardSummary.fromJson]. This stays because `MockStore` has no server,
+  /// and because it is the reference the SQL version was checked against: both
+  /// produce the same totals and the same four slices on the seeded data.
   factory DashboardSummary.from({
     required List<Account> accounts,
     required List<TransactionModel> transactions,
+    num? spendingLimit,
+    num? spentOfLimit,
   }) {
     num totalBalance = 0;
     for (final a in accounts) {
@@ -99,13 +152,11 @@ class DashboardSummary {
     final Map<int?, String?> categoryNames = {};
 
     for (final t in transactions) {
-      // Transfer legs are skipped entirely. Moving 500 from the cash wallet to
-      // the bank account writes a real expense row and a real income row —
-      // which is what keeps both balances right — but counting them here would
-      // add 500 to "الدخل" and 500 to "المصاريف" without a riyal entering or
-      // leaving the family, and would put the transfer's filler category into
-      // the spending donut. `totalBalance` is unaffected either way: it sums
-      // `accounts.balance`, and a transfer nets to zero across the two.
+      // Transfer legs are skipped entirely: moving money between two of the
+      // family's accounts writes a real expense row and a real income row —
+      // which is what keeps both balances right — but counting them would add
+      // the same amount to "الدخل" and "المصاريف" without a riyal entering or
+      // leaving, and would put the transfer's filler category into the donut.
       if (t.isTransfer) continue;
 
       final amount = t.amount ?? 0;
@@ -124,12 +175,18 @@ class DashboardSummary {
       income: income,
       expenses: expenses,
       breakdown: _buildBreakdown(perCategory, categoryNames, expenses),
-
-      // See the `primaryAccount` field doc: placeholder ordering, not a real
-      // "primary account" concept.
       primaryAccount: accounts.isEmpty ? null : accounts.first,
+      spendingLimit: spendingLimit,
+      spentOfLimit: spendingLimit == null ? null : (spentOfLimit ?? 0),
+      // Floored at zero, like `DashboardController`: a member who has already
+      // overshot has nothing left, not a negative allowance.
+      remainingLimit: spendingLimit == null
+          ? null
+          : _atLeastZero(spendingLimit - (spentOfLimit ?? 0)),
     );
   }
+
+  static num _atLeastZero(num value) => value < 0 ? 0 : value;
 
   /// Top [topCategoryCount] categories by spend, with the remainder folded into
   /// a single "other" slice so the ring always closes to 100%.
@@ -176,15 +233,24 @@ class DashboardSummary {
   }
 }
 
-/// The two lists the dashboard loads together.
+/// The two things the dashboard loads together.
 class DashboardData {
   final DashboardSummary summary;
 
-  /// Newest-first, already truncated to what "آخر المعاملات" shows.
+  /// Newest-first, already truncated to what "آخر المعاملات" shows. The server
+  /// applies the limit, so the client never receives rows it will not draw.
   final List<TransactionModel> recentTransactions;
 
   const DashboardData({
     required this.summary,
     required this.recentTransactions,
   });
+}
+
+/// Laravel returns `DECIMAL` columns as strings, and drops a zero fraction on
+/// computed floats, so both a string and a number have to be accepted.
+num? _toNum(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value;
+  return num.tryParse(value.toString());
 }

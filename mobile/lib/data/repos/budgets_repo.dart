@@ -16,8 +16,9 @@ import 'package:family_expense_management/presentation/pages/budgets/domain/budg
 
 /// The budgets feature's data source.
 ///
-/// Live against the Laravel API when [useMock] is `false`, which is the default.
-/// The mock path is kept compiling as a one-line rollback ([kUseMockData]).
+/// Mock or live, on [useMock] — see [kUseMockData], which defaults to the mock
+/// so the app runs with no backend. Both paths are maintained; neither is a
+/// leftover.
 ///
 /// Endpoint notes worth carrying at the call site:
 ///
@@ -71,6 +72,12 @@ class BudgetsRepo extends BudgetsDomain {
   ) async {
     if (useMock) return _mockUpdate(id, draft);
     return _remoteUpdate(id, draft);
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteBudget(int id) async {
+    if (useMock) return _mockDelete(id);
+    return _remoteDelete(id);
   }
 
   // ---------------------------------------------------------------------------
@@ -301,7 +308,8 @@ class BudgetsRepo extends BudgetsDomain {
           // No derivation: the server's figure is trusted as-is.
           budgets: sortedNewestFirst(budgets),
           categories: [
-            for (final json in unwrapList(responses[1])) Category.fromJson(json),
+            for (final json in unwrapList(responses[1]))
+              Category.fromJson(json),
           ],
         ),
       );
@@ -326,6 +334,44 @@ class BudgetsRepo extends BudgetsDomain {
       // rendered immediately. `current_spending` comes back as the column's
       // `0.00` default; the next list load derives the real figure.
       return Right(BudgetModel.fromJson(unwrapObject(response)));
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
+  }
+
+  Future<Either<Failure, bool>> _mockDelete(int id) async {
+    try {
+      await Future.delayed(mockWriteDelay);
+
+      // No guard and no balance to unwind: a budget owns nothing. Removing one
+      // changes only what the Budgets tab draws — the transactions it was
+      // measuring are untouched, which is why this is a plain removal where the
+      // account and category deletes need a 409 check.
+      if (!MockStore.instance.removeBudget(id)) {
+        return Left(ResultFailure('budgets.error_not_found'.tr()));
+      }
+      return const Right(true);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
+  }
+
+  Future<Either<Failure, bool>> _remoteDelete(int id) async {
+    try {
+      final response = await client.request(
+        requestType: RequestType.delete,
+        path: GlobalApiEndpoint.budgetById[[id]],
+      );
+
+      // 404 carries the server's Arabic message, which `ensureSuccess` raises
+      // as a `ResultFailure` — the same one a member gets for another family's
+      // budget, deliberately, so probing ids reveals nothing.
+      ensureSuccess(response);
+      return const Right(true);
     } on DioException catch (ex) {
       return Left(_mapDioException(ex));
     } on Failure catch (e) {

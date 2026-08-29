@@ -65,10 +65,7 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
 
     result.fold(
       (failure) => emit(
-        current.copyWith(
-          clearSavingMemberId: true,
-          writeFailure: failure,
-        ),
+        current.copyWith(clearSavingMemberId: true, writeFailure: failure),
       ),
       (updated) {
         // The row is replaced in place rather than the whole list refetched:

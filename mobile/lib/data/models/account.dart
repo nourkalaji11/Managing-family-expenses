@@ -26,13 +26,32 @@ class Account {
   final num? balance;
   final int? userId;
 
-  const Account({this.id, this.name, this.balance, this.userId});
+  /// `transactions_count`, added by `AccountController::index` with a
+  /// `withCount`.
+  ///
+  /// Null on payloads that do not carry it — `store` and `update` answer with
+  /// the row alone — which reads correctly as "not counted here" rather than
+  /// as zero. The app used to download every transaction just to produce this
+  /// number for the row's subtitle.
+  ///
+  /// Transfer legs are included: a transfer really does touch both accounts,
+  /// unlike its category, which is filler.
+  final int? transactionsCount;
+
+  const Account({
+    this.id,
+    this.name,
+    this.balance,
+    this.userId,
+    this.transactionsCount,
+  });
 
   factory Account.fromJson(Map<String, dynamic> json) => Account(
     id: json["id"],
     name: json["name"],
     balance: _toNum(json["balance"]),
     userId: json["user_id"],
+    transactionsCount: json["transactions_count"],
   );
 
   Map<String, dynamic> toJson() => {

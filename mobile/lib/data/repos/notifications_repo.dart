@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:family_expense_management/data/mock/mock_config.dart';
+import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/models/app_notification.dart';
 import 'package:family_expense_management/network/api_envelope.dart';
 import 'package:family_expense_management/network/failure.dart';
@@ -30,10 +33,17 @@ class NotificationsRepo extends NotificationsDomain {
   static DioClient client = DioClient();
 
   /// Matches the server's default. The server caps `per_page` at 50.
+  static const bool useMock = kUseMockData;
+
+  static const Duration mockDelay = Duration(milliseconds: 450);
+  static const Duration mockWriteDelay = Duration(milliseconds: 250);
+
   static const int pageSize = 20;
 
   @override
   Future<Either<Failure, NotificationsPage>> getNotifications(int page) async {
+    if (useMock) return _mockGet(page);
+
     try {
       final response = await client.request(
         requestType: RequestType.get,
@@ -72,26 +82,32 @@ class NotificationsRepo extends NotificationsDomain {
 
   @override
   Future<Either<Failure, bool>> markAsRead(int id) async {
-    return _write(
-      RequestType.post,
-      GlobalApiEndpoint.markAsRead[[id]],
-    );
+    if (useMock)
+      return _mockWrite(() => MockStore.instance.markNotificationRead(id));
+
+    return _write(RequestType.post, GlobalApiEndpoint.markAsRead[[id]]);
   }
 
   @override
   Future<Either<Failure, bool>> markAllAsRead() async {
-    return _write(
-      RequestType.post,
-      GlobalApiEndpoint.markAllAsRead.endpoint,
-    );
+    if (useMock) {
+      return _mockWrite(() {
+        MockStore.instance.markAllNotificationsRead();
+        // Always succeeds, including when nothing was unread — the server
+        // answers 200 in that case too rather than treating it as an error.
+        return true;
+      });
+    }
+
+    return _write(RequestType.post, GlobalApiEndpoint.markAllAsRead.endpoint);
   }
 
   @override
   Future<Either<Failure, bool>> delete(int id) async {
-    return _write(
-      RequestType.delete,
-      GlobalApiEndpoint.notificationById[[id]],
-    );
+    if (useMock)
+      return _mockWrite(() => MockStore.instance.removeNotification(id));
+
+    return _write(RequestType.delete, GlobalApiEndpoint.notificationById[[id]]);
   }
 
   /// The three write calls differ only in verb and path, so they share one body
@@ -108,6 +124,59 @@ class NotificationsRepo extends NotificationsDomain {
     } catch (e) {
       return Left(GlobalFailure());
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mock path. Paginated locally, because the page counters are what the list
+  // screen's infinite scroll reads — a mock that returned everything in one
+  // page would leave that path unexercised.
+  // ---------------------------------------------------------------------------
+
+  Future<Either<Failure, NotificationsPage>> _mockGet(int page) async {
+    await Future.delayed(mockDelay);
+
+    final store = MockStore.instance;
+    // Newest first. The store keeps insertion order and prepends, so this
+    // sort is what guarantees the seed and anything added since interleave
+    // correctly by time rather than by when they happened to be written.
+    final all = [...store.notifications]
+      ..sort((a, b) {
+        final x = a.createdAt, y = b.createdAt;
+        if (x == null && y == null) return 0;
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return y.compareTo(x);
+      });
+
+    final total = all.length;
+    // At least 1, so an empty list reports page 1 of 1 rather than 1 of 0 —
+    // `hasMore` would otherwise read as true forever on an empty inbox.
+    final lastPage = total == 0 ? 1 : ((total - 1) ~/ pageSize) + 1;
+    final current = page < 1 ? 1 : (page > lastPage ? lastPage : page);
+
+    final start = (current - 1) * pageSize;
+    final end = (start + pageSize) > total ? total : (start + pageSize);
+
+    return Right(
+      NotificationsPage(
+        items: start >= total ? const [] : all.sublist(start, end),
+        currentPage: current,
+        lastPage: lastPage,
+        total: total,
+        unreadCount: store.unreadNotificationCount,
+      ),
+    );
+  }
+
+  /// Runs [write] against the store and maps a false return to the server's
+  /// 404 — a notification id that matches nothing is an error, not a no-op.
+  Future<Either<Failure, bool>> _mockWrite(bool Function() write) async {
+    await Future.delayed(mockWriteDelay);
+
+    if (!write()) {
+      return Left(ResultFailure('notifications_page.error_not_found'.tr()));
+    }
+    return const Right(true);
   }
 
   static int _toInt(dynamic value, {int fallback = 0}) {

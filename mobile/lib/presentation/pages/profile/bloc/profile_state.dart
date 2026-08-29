@@ -32,12 +32,15 @@ class ProfileLoaded extends ProfileState {
     this.isLoggingOut = false,
   });
 
-  ProfileLoaded copyWith({User? user, bool? isRefreshing, bool? isLoggingOut}) =>
-      ProfileLoaded(
-        user: user ?? this.user,
-        isRefreshing: isRefreshing ?? this.isRefreshing,
-        isLoggingOut: isLoggingOut ?? this.isLoggingOut,
-      );
+  ProfileLoaded copyWith({
+    User? user,
+    bool? isRefreshing,
+    bool? isLoggingOut,
+  }) => ProfileLoaded(
+    user: user ?? this.user,
+    isRefreshing: isRefreshing ?? this.isRefreshing,
+    isLoggingOut: isLoggingOut ?? this.isLoggingOut,
+  );
 
   @override
   List<Object?> get props => <Object?>[

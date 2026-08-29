@@ -7,31 +7,6 @@ sealed class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class OnSendOTP extends AuthEvent {
-  final LoginProvider provider;
-  final String emailORphone;
-
-  const OnSendOTP({required this.provider, required this.emailORphone});
-
-  @override
-  List<Object> get props => [provider, emailORphone];
-}
-
-class OnVerifyOTP extends AuthEvent {
-  final LoginProvider provider;
-  final String emailORphone;
-  final String otp;
-
-  const OnVerifyOTP(
-    this.otp, {
-    required this.provider,
-    required this.emailORphone,
-  });
-
-  @override
-  List<Object> get props => [provider, emailORphone, otp];
-}
-
 class OnRegister extends AuthEvent {
   final String name;
   final String email;
@@ -73,31 +48,6 @@ class OnRegister extends AuthEvent {
     role,
     phone,
     username,
-    referralCode,
-  ];
-}
-
-class OnSocial extends AuthEvent {
-  final LoginProvider provider;
-  final String token;
-  final String? fullName;
-  final String? secretToken;
-  final String? referralCode;
-
-  const OnSocial({
-    required this.provider,
-    required this.token,
-    required this.fullName,
-    required this.secretToken,
-    this.referralCode,
-  });
-
-  @override
-  List<Object?> get props => [
-    provider,
-    token,
-    fullName,
-    secretToken,
     referralCode,
   ];
 }

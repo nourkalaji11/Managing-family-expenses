@@ -1,5 +1,7 @@
 {
   "auth": {
+    "error_invalid_credentials": "بيانات الدخول غير صحيحة.",
+    "error_email_taken": "هذا البريد الإلكتروني مستخدم بالفعل.",
     "app_name": "المصاريف العائلية",
 
     "splash_title": "تتبع مصاريف العائلة",
@@ -91,6 +93,7 @@
   },
 
   "transactions": {
+    "error_limit_exceeded": "عذراً، هذا المبلغ يتجاوز حد السحب المسموح لك به من قبل الأب.",
     "search_hint": "بحث عن معاملة...",
     "clear_search": "مسح البحث",
 
@@ -144,6 +147,9 @@
   },
 
   "budgets": {
+    "deleted": "تم حذف الميزانية",
+    "delete_title": "حذف الميزانية؟",
+    "delete_body": "سيتم حذف هذه الميزانية نهائياً. لن تتأثر أي معاملة.",
     "previous_month": "الشهر السابق",
     "next_month": "الشهر التالي",
 
@@ -261,6 +267,8 @@
   "errorglobal": "حدث خطأ ما، يرجى المحاولة مرة أخرى",
 
   "accounts": {
+    "error_not_found": "الحساب غير موجود!",
+    "error_has_transactions": "لا يمكن حذف هذا الحساب لأنه مرتبط بـ {count} عملية. احذف العمليات أولاً أو انقلها إلى حساب آخر.",
     "search_hint": "البحث في الحسابات...",
     "total_label": "إجمالي الأرصدة",
     "section_label": "حساباتك",
@@ -307,6 +315,9 @@
   },
 
   "categories": {
+    "error_not_found": "الفئة غير موجودة!",
+    "error_name_taken": "اسم الفئة مستخدم بالفعل.",
+    "error_in_use": "لا يمكن حذف هذه الفئة لأنها مستخدمة في {transactions} عملية و {budgets} ميزانية.",
     "search_hint": "بحث عن فئة...",
     "subtitle": "تتبع وإدارة الفئات المالية لعائلتك",
     "untitled": "فئة بدون اسم",
@@ -342,6 +353,12 @@
   },
 
   "profile": {
+    "no_limit": "لا يوجد سقف",
+    "error_wrong_password": "كلمة المرور الحالية غير صحيحة.",
+    "error_email_taken": "هذا البريد الإلكتروني مستخدم بالفعل.",
+    "error_member_not_found": "المستخدم غير موجود!",
+    "error_limit_forbidden": "غير مصرح لك بتحديد الحدود المالية.",
+    "error_limit_parent": "سقف السحب يُحدَّد للأبناء فقط.",
     "title": "الملف الشخصي",
     "unnamed": "بدون اسم",
     "my_limit": "سقف السحب الخاص بي",
@@ -376,6 +393,8 @@
   },
 
   "transfers": {
+    "error_not_found": "التحويل غير موجود!",
+    "error_invalid_selection": "الحساب أو الفئة المختارة غير موجودة.",
     "from": "من حساب",
     "to": "إلى حساب",
     "swap": "عكس الاتجاه",
@@ -399,6 +418,7 @@
   },
 
   "notifications_page": {
+    "error_not_found": "الإشعار غير موجود!",
     "untitled": "إشعار",
     "mark_all_read": "تعليم الكل كمقروء",
     "empty_title": "لا توجد إشعارات",

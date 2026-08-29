@@ -109,6 +109,54 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
     super.dispose();
   }
 
+  /// Confirms, then deletes.
+  ///
+  /// A budget is a ceiling the family set, not something other rows point at,
+  /// so the copy says what is and is not affected: the budget goes, the
+  /// transactions it was measuring stay.
+  Future<void> _confirmDelete() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: ColorsApp.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          'budgets.delete_title'.tr(),
+          style: TextStyleApp.dashboardSectionTitle,
+        ),
+        content: Text(
+          'budgets.delete_body'.tr(),
+          style: TextStyleApp.dashboardStatLabel,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'accounts.cancel'.tr(),
+              style: TextStyleApp.dashboardSectionAction,
+            ),
+          ),
+          TextButton(
+            key: const Key('budget_delete_confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'accounts.delete_confirm'.tr(),
+              style: TextStyleApp.dashboardSectionAction.copyWith(
+                color: ColorsApp.errorRed,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      _bloc.add(const OnDeleteBudget());
+    }
+  }
+
   Future<void> _pickDate({
     required DateTime initial,
     required ValueChanged<DateTime> onPicked,
@@ -138,12 +186,18 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
       listener: (context, state) {
         if (state.status == BudgetFormStatus.success) {
           EasyLoading.showToast(
-            state.isEditing
-                ? 'budgets.updated'.tr()
-                : 'budgets.created'.tr(),
+            state.isEditing ? 'budgets.updated'.tr() : 'budgets.created'.tr(),
             toastPosition: EasyLoadingToastPosition.bottom,
           );
           // `true` is the signal the list refreshes on.
+          Navigator.of(context).pop(true);
+        } else if (state.status == BudgetFormStatus.deleted) {
+          EasyLoading.showToast(
+            'budgets.deleted'.tr(),
+            toastPosition: EasyLoadingToastPosition.bottom,
+          );
+          // Same `true`: the list reloads either way, so it does not need to
+          // know whether the row was edited or removed.
           Navigator.of(context).pop(true);
         } else if (state.status == BudgetFormStatus.failure) {
           EasyLoading.showToast(
@@ -207,8 +261,7 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
                         ),
                         onPickEndDate: () => _pickDate(
                           initial: state.endDate,
-                          onPicked: (d) =>
-                              _bloc.add(OnBudgetEndDateChanged(d)),
+                          onPicked: (d) => _bloc.add(OnBudgetEndDateChanged(d)),
                         ),
                       ),
                       SizedBox(height: 20.h),
@@ -222,9 +275,12 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
                   ),
                 ),
                 _SaveBar(
-                  isSubmitting: state.isSubmitting,
+                  state: state,
                   horizontalPadding: horizontal,
                   onPressed: () => _bloc.add(const OnSubmitBudgetForm()),
+                  // Only in Edit mode: there is nothing to delete on a budget
+                  // that has not been created yet.
+                  onDelete: state.isEditing ? _confirmDelete : null,
                 ),
               ],
             ),
@@ -315,14 +371,18 @@ class _FormCard extends StatelessWidget {
 
 /// The pinned "حفظ الميزانية" button.
 class _SaveBar extends StatelessWidget {
-  final bool isSubmitting;
+  final BudgetFormState state;
   final double horizontalPadding;
   final VoidCallback onPressed;
 
+  /// Null in Add mode, which is what hides the trash button.
+  final VoidCallback? onDelete;
+
   const _SaveBar({
-    required this.isSubmitting,
+    required this.state,
     required this.horizontalPadding,
     required this.onPressed,
+    this.onDelete,
   });
 
   @override
@@ -336,52 +396,106 @@ class _SaveBar extends StatelessWidget {
         horizontalPadding,
         16.h,
       ),
-      child: SizedBox(
-        height: 56.h,
-        child: ElevatedButton(
-          key: const Key('budget_form_save'),
-          // Null while saving: this is what blocks a double submission at the
-          // UI layer. The bloc drops a duplicate event as well.
-          onPressed: isSubmitting ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorsApp.primaryGreenPressed,
-            disabledBackgroundColor: ColorsApp.primaryGreenPressed.withValues(
-              alpha: 0.6,
+      child: Row(
+        children: [
+          if (onDelete != null) ...[
+            _DeleteButton(
+              isDeleting: state.isDeleting,
+              // Both disable together while either write is in flight, so a
+              // delete cannot race a save.
+              onPressed: state.isBusy ? null : onDelete,
             ),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
+            SizedBox(width: 12.w),
+          ],
+          Expanded(
+            child: SizedBox(
+              height: 56.h,
+              child: ElevatedButton(
+                key: const Key('budget_form_save'),
+                // Null while saving: this is what blocks a double submission at the
+                // UI layer. The bloc drops a duplicate event as well.
+                onPressed: state.isBusy ? null : onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsApp.primaryGreenPressed,
+                  disabledBackgroundColor: ColorsApp.primaryGreenPressed
+                      .withValues(alpha: 0.6),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                ),
+                child: state.isSubmitting
+                    ? SizedBox(
+                        width: 22.r,
+                        height: 22.r,
+                        child: const CircularProgressIndicator(
+                          color: ColorsApp.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'budgets.save'.tr(),
+                              style: TextStyleApp.transactionsSaveButton,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(
+                            Icons.done_all,
+                            size: 22.r,
+                            color: ColorsApp.white,
+                          ),
+                        ],
+                      ),
+              ),
             ),
           ),
-          child: isSubmitting
-              ? SizedBox(
-                  width: 22.r,
-                  height: 22.r,
-                  child: const CircularProgressIndicator(
-                    color: ColorsApp.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'budgets.save'.tr(),
-                        style: TextStyleApp.transactionsSaveButton,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Icon(
-                      Icons.done_all,
-                      size: 22.r,
-                      color: ColorsApp.white,
-                    ),
-                  ],
-                ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The trash button beside "حفظ". Same shape and behaviour as the transaction
+/// form's, so the two edit screens do not teach different gestures for the same
+/// action.
+class _DeleteButton extends StatelessWidget {
+  final bool isDeleting;
+  final VoidCallback? onPressed;
+
+  const _DeleteButton({required this.isDeleting, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 56.h,
+      height: 56.h,
+      child: OutlinedButton(
+        key: const Key('budget_form_delete'),
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: ColorsApp.errorRed,
+          side: BorderSide(color: ColorsApp.errorRed.withValues(alpha: 0.4)),
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
         ),
+        child: isDeleting
+            ? SizedBox(
+                width: 20.r,
+                height: 20.r,
+                child: const CircularProgressIndicator(
+                  color: ColorsApp.errorRed,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Icon(Icons.delete_outline, size: 22.r),
       ),
     );
   }

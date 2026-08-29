@@ -4,7 +4,21 @@ part of 'budget_form_bloc.dart';
 /// and Edit.
 enum BudgetFormMode { add, edit }
 
-enum BudgetFormStatus { editing, submitting, success, failure }
+enum BudgetFormStatus {
+  editing,
+  submitting,
+
+  /// A delete is in flight. Distinct from [submitting] so the screen can spin
+  /// the trash button rather than the save button, and so one write in flight
+  /// blocks the other.
+  deleting,
+  success,
+
+  /// The row is gone. The screen pops with a different message from [success],
+  /// and the list has to drop the row rather than replace it.
+  deleted,
+  failure,
+}
 
 /// One localisation KEY per field, or null when the field is valid.
 ///
@@ -70,6 +84,10 @@ class BudgetFormState extends Equatable {
   /// Set when a save succeeds. The screen pops after this.
   final BudgetModel? saved;
 
+  /// The id of the budget that was deleted, so the list can drop that row.
+  /// Carried separately from [saved]: there is no row left to hand back.
+  final int? deletedId;
+
   const BudgetFormState({
     required this.mode,
     required this.startDate,
@@ -83,6 +101,7 @@ class BudgetFormState extends Equatable {
     this.showErrors = false,
     this.failure,
     this.saved,
+    this.deletedId,
   });
 
   /// Placeholder until `OnBudgetFormStarted` arrives. `add` is the safe default:
@@ -98,6 +117,11 @@ class BudgetFormState extends Equatable {
   }
 
   bool get isSubmitting => status == BudgetFormStatus.submitting;
+
+  bool get isDeleting => status == BudgetFormStatus.deleting;
+
+  /// True while either write is in flight, so a delete cannot race a save.
+  bool get isBusy => isSubmitting || isDeleting;
 
   bool get isEditing => mode == BudgetFormMode.edit;
 
@@ -128,6 +152,8 @@ class BudgetFormState extends Equatable {
     BudgetFormErrors? errors,
     Failure? failure,
     BudgetModel? saved,
+    int? deletedId,
+
     /// Explicitly drops a previous failure. Needed because `failure: null` in a
     /// `??`-based copyWith means "keep the old one".
     bool clearFailure = false,
@@ -144,6 +170,7 @@ class BudgetFormState extends Equatable {
     errors: errors ?? this.errors,
     failure: clearFailure ? null : (failure ?? this.failure),
     saved: saved ?? this.saved,
+    deletedId: deletedId ?? this.deletedId,
   );
 
   @override
@@ -160,5 +187,6 @@ class BudgetFormState extends Equatable {
     errors,
     failure?.message,
     saved?.id,
+    deletedId,
   ];
 }

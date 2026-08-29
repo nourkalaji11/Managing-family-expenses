@@ -10,11 +10,19 @@ import 'package:family_expense_management/style/text_style.dart';
 
 /// "توزيع المصاريف" — the donut plus its legend.
 ///
-/// Matches `docs/stitch_family_finance_tracker/dashboard_screen_minimal_redesign`:
-/// the ring draws only the named categories and the remainder shows the
-/// background track, exactly as the design's SVG does (40 + 30 + 20 = 90%, with
-/// `#eff4ff` visible for the last 10%). The "أخرى" bucket is therefore not
-/// drawn as its own arc and not listed in the legend.
+/// The ring draws every slice, "أخرى" included, and the legend lists all of
+/// them.
+///
+/// The design's SVG leaves the remainder as bare background track
+/// (`docs/stitch_family_finance_tracker/dashboard_screen_minimal_redesign`:
+/// 40 + 30 + 20 = 90%, with `#eff4ff` showing through for the last 10%), and
+/// this card used to reproduce that by filtering the "other" slice out of both.
+/// It read as a bug rather than as a choice: the ring visibly had a fourth
+/// segment that the legend refused to name, so the only way to find out what
+/// the pale arc was, was to add up the other three. It is now drawn in
+/// [CategoryVisuals.otherColor], a neutral grey deliberately darker than the
+/// empty track behind it: "spent on something small" and "nothing here" have to
+/// look different.
 class CategoryChartCard extends StatelessWidget {
   final DashboardSummary summary;
 
@@ -31,13 +39,12 @@ class CategoryChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only the named categories are drawn and listed. The index is carried
-    // along so the colour assignment stays tied to the slice's position in the
-    // full breakdown rather than its position after filtering.
+    // Every slice, in breakdown order — "أخرى" is last, because `_buildBreakdown`
+    // appends it after the named categories. The index is carried along because
+    // it is what picks the colour for a category the palette does not map.
     final slices = <({CategoryBreakdown slice, int index})>[
       for (int i = 0; i < summary.breakdown.length; i++)
-        if (!summary.breakdown[i].isOther)
-          (slice: summary.breakdown[i], index: i),
+        (slice: summary.breakdown[i], index: i),
     ];
 
     return DashboardCard(
@@ -160,12 +167,13 @@ class _LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `isOther` rows are filtered out before reaching the legend, so this only
-    // ever renders a named category.
+    // The "other" slice carries a null `categoryId`, which `colorFor` answers
+    // with `otherColor` — so its dot matches its arc without this row having to
+    // special-case it.
     final color = CategoryVisuals.colorFor(slice.categoryId, index: index);
 
-    // Unnamed categories fall back to the localised "أخرى" rather than showing
-    // a blank row.
+    // "أخرى" for the synthetic slice, which is built with a null name, and for
+    // any real category whose name did not arrive — better than a blank row.
     final name = slice.categoryName ?? 'dashboard.other'.tr();
 
     return Row(
