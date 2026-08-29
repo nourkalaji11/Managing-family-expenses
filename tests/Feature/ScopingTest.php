@@ -267,6 +267,6 @@ class ScopingTest extends TestCase
         $this->actingAs($created)
             ->getJson('/api/dashboard')
             ->assertOk()
-            ->assertJsonStructure(['data' => ['total_family_balance']]);
+            ->assertJsonStructure(['data' => ['total_balance', 'alerts']]);
     }
 }

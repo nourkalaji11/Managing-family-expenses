@@ -13,8 +13,15 @@ class AccountController extends Controller
      */
     public function index()
     {
-        // جلب الحسابات مرتبة من الأحدث للأقدم
-        $accounts = Account::latest()->get();
+        // withCount يضيف transactions_count بجملة فرعية واحدة.
+        //
+        // بدونه كان تطبيق الموبايل يجلب /transactions كاملة لمجرد عدّ عمليات كل
+        // حساب وعرض الرقم تحت اسمه — أي تنزيل كل عملية في تاريخ العائلة من أجل
+        // سطر فرعي. والعدّ هنا يشمل كل الصفوف، لا ما صادف أن حمّله العميل.
+        //
+        // أطراف التحويل محسوبة عمداً: التحويل يمسّ الحسابين فعلاً، بخلاف فئته
+        // التي هي حشو — انظر CategoryController::index.
+        $accounts = Account::withCount('transactions')->latest()->get();
 
         return response()->json([
             'message' => 'تم جلب الحسابات المالية بنجاح',

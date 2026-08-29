@@ -14,8 +14,23 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        // جلب الفئات مرتبة أبجدياً حسب الاسم
-        $categories = Category::orderBy('name', 'asc')->get();
+        // عدّادان يغنيان العميل عن جلب /transactions و/budgets كاملين:
+        //   transactions_count → الرقم تحت اسم الفئة في الشبكة.
+        //   budgets_count      → حارس الحذف؛ destroy يرد 409 إن أشار إليها أي
+        //                        منهما، والواجهة تخبر المستخدم قبل أن يضغط.
+        //
+        // أطراف التحويل مستثناة من عدّ العمليات: فئة التحويل يختارها النموذج
+        // اضطراراً لأن transactions.category_id غير قابل للإفراغ، فعدّها ينفخ
+        // فئة لا علاقة لها بالأمر. عدّ الحسابات يشملها، لأن التحويل يمسّ
+        // الحسابين فعلاً.
+        $categories = Category::query()
+            ->withCount([
+                'transactions as transactions_count' => fn ($query) =>
+                    $query->whereNull('transfer_group_id'),
+                'budgets as budgets_count',
+            ])
+            ->orderBy('name', 'asc')
+            ->get();
 
         return response()->json([
             'message' => 'تم جلب فئات المصاريف بنجاح',
