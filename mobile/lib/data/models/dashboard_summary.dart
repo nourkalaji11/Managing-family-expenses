@@ -99,6 +99,15 @@ class DashboardSummary {
     final Map<int?, String?> categoryNames = {};
 
     for (final t in transactions) {
+      // Transfer legs are skipped entirely. Moving 500 from the cash wallet to
+      // the bank account writes a real expense row and a real income row —
+      // which is what keeps both balances right — but counting them here would
+      // add 500 to "الدخل" and 500 to "المصاريف" without a riyal entering or
+      // leaving the family, and would put the transfer's filler category into
+      // the spending donut. `totalBalance` is unaffected either way: it sums
+      // `accounts.balance`, and a transfer nets to zero across the two.
+      if (t.isTransfer) continue;
+
       final amount = t.amount ?? 0;
       if (t.type == TransactionType.income) {
         income += amount;

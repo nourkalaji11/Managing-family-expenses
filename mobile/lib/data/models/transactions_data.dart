@@ -62,13 +62,11 @@ class TransactionDraft {
 
   /// The exact JSON body the backend's validator accepts.
   ///
-  /// TODO(backend): unused for now, and intentionally so. `store()` calls
-  /// `Transaction::create($validated)` without ever setting the NOT NULL
-  /// `user_id` column, so posting this body fails on an integrity constraint;
-  /// `update()` is an empty stub that returns 200 and changes nothing. This
-  /// method exists as the single documented place the contract lives, so that
-  /// enabling the real calls does not require re-deriving it. See
-  /// `TransactionsRepo`.
+  /// Sent as-is by both `TransactionsRepo._remoteCreate` (`POST /transactions`)
+  /// and `_remoteUpdate` (`PUT /transactions/{id}`), whose validators are
+  /// identical. `user_id` is absent on purpose: the server reads it from the
+  /// bearer token on create and preserves the existing owner on update, so a
+  /// client cannot book a transaction against somebody else.
   Map<String, dynamic> toRequestJson() => {
     'account_id': accountId,
     'category_id': categoryId,

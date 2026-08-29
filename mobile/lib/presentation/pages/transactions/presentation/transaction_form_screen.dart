@@ -111,6 +111,55 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     super.dispose();
   }
 
+  /// Confirms before deleting.
+  ///
+  /// Not a formality: the row is gone for good, and the account balance moves
+  /// with it. There is no "in use" guard to warn about here, unlike accounts
+  /// and categories — nothing references a transaction — so the only thing to
+  /// say is that it cannot be undone.
+  Future<void> _confirmDelete() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: ColorsApp.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          'transactions.delete_title'.tr(),
+          style: TextStyleApp.dashboardSectionTitle,
+        ),
+        content: Text(
+          'transactions.delete_body'.tr(),
+          style: TextStyleApp.dashboardStatLabel,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'accounts.cancel'.tr(),
+              style: TextStyleApp.dashboardSectionAction,
+            ),
+          ),
+          TextButton(
+            key: const Key('transaction_delete_confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'accounts.delete_confirm'.tr(),
+              style: TextStyleApp.dashboardSectionAction.copyWith(
+                color: ColorsApp.errorRed,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      _bloc.add(const OnDeleteTransaction());
+    }
+  }
+
   Future<void> _pickDate(TransactionFormState state) async {
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
@@ -280,9 +329,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ),
                 ),
                 _SaveBar(
-                  isSubmitting: state.isSubmitting,
+                  state: state,
                   horizontalPadding: horizontal,
                   onPressed: () => _bloc.add(const OnSubmitForm()),
+                  // Edit mode only: an unsaved draft has nothing to delete.
+                  onDelete: state.isEditing ? _confirmDelete : null,
                 ),
               ],
             ),
@@ -473,15 +524,21 @@ class _DescriptionFieldState extends State<_DescriptionField> {
 
 /// The pinned "حفظ المعاملة" button.
 class _SaveBar extends StatelessWidget {
-  final bool isSubmitting;
+  final TransactionFormState state;
   final double horizontalPadding;
   final VoidCallback onPressed;
 
+  /// Null in Add mode: an unsaved draft has nothing to delete.
+  final VoidCallback? onDelete;
+
   const _SaveBar({
-    required this.isSubmitting,
+    required this.state,
     required this.horizontalPadding,
     required this.onPressed,
+    this.onDelete,
   });
+
+  bool get isSubmitting => state.isSubmitting;
 
   @override
   Widget build(BuildContext context) {
@@ -494,13 +551,25 @@ class _SaveBar extends StatelessWidget {
         horizontalPadding,
         16.h,
       ),
-      child: SizedBox(
+      child: Row(
+        children: [
+          if (onDelete != null) ...[
+            _DeleteButton(
+              isDeleting: state.isDeleting,
+              // Both disable together while either write is in flight, so a
+              // delete cannot race a save.
+              onPressed: state.isBusy ? null : onDelete,
+            ),
+            SizedBox(width: 12.w),
+          ],
+          Expanded(
+            child: SizedBox(
         height: 56.h,
         child: ElevatedButton(
           key: const Key('transaction_form_save'),
           // Null while saving: this is what blocks a double submission at the
           // UI layer. The bloc drops a duplicate event as well.
-          onPressed: isSubmitting ? null : onPressed,
+          onPressed: state.isBusy ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: ColorsApp.primaryGreenPressed,
             disabledBackgroundColor: ColorsApp.primaryGreenPressed.withValues(
@@ -540,6 +609,50 @@ class _SaveBar extends StatelessWidget {
                   ],
                 ),
         ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The square trash button, left of Save in Edit mode.
+///
+/// Identical in shape to the one on the account and category forms — the four
+/// edit forms are the same control in four places, so they look the same.
+class _DeleteButton extends StatelessWidget {
+  final bool isDeleting;
+  final VoidCallback? onPressed;
+
+  const _DeleteButton({required this.isDeleting, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 56.h,
+      height: 56.h,
+      child: OutlinedButton(
+        key: const Key('transaction_form_delete'),
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: ColorsApp.errorRed,
+          side: BorderSide(color: ColorsApp.errorRed.withValues(alpha: 0.4)),
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+        ),
+        child: isDeleting
+            ? SizedBox(
+                width: 20.r,
+                height: 20.r,
+                child: const CircularProgressIndicator(
+                  color: ColorsApp.errorRed,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Icon(Icons.delete_outline, size: 22.r),
       ),
     );
   }

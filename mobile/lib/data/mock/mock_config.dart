@@ -1,23 +1,23 @@
 /// The single switch between fake and real data for the whole app.
 ///
 /// ---------------------------------------------------------------------------
-/// There is deliberately **one** flag, not one per repository. `DashboardRepo`
-/// and `TransactionsRepo` both read it, so the app can never end up in a
-/// half-mocked state where one screen shows seeded rows and another shows live
-/// ones.
+/// There is deliberately **one** flag, not one per repository. `DashboardRepo`,
+/// `TransactionsRepo` and `BudgetsRepo` all read it, so the app can never end up
+/// in a half-mocked state where one screen shows seeded rows and another shows
+/// live ones.
 ///
-/// Why it is still `true`:
-///   * `GlobalApiEndpoint.base` is the placeholder `https://domain/api/v1`, and
-///     the Laravel backend on the unmerged branch `origin/souad-backend` serves
-///     `/api/transactions` — the `/v1` prefix does not even exist there.
-///   * `routes/api.php` applies no middleware and `bootstrap/app.php`'s
-///     `withMiddleware` closure is empty, so nothing scopes rows to the signed-in
-///     user and there are no login/register routes.
-///   * Of the three transaction write operations, only `destroy()` is
-///     implemented. `store()` never sets the NOT NULL `user_id` column, and
-///     `update()` is an empty stub — see `TransactionsRepo` for the details.
+/// It is now `false`: every repository calls the Laravel API. The mock path is
+/// deliberately **kept compiling** rather than deleted — with the flag off it is
+/// dead code that costs nothing, and it buys a one-line rollback if the backend
+/// is unreachable during a demo.
 ///
-/// To go live: implement the `_remote*` methods in the repositories, flip this
-/// to `false`, and delete `lib/data/mock/`.
+/// Running against a local server also needs the base URL, which is supplied at
+/// build time so a developer's address never has to be committed:
+///
+///     flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+///
+/// See `GlobalApiEndpoint.base`. With no `--dart-define` the app points at the
+/// `https://domain/api` placeholder and fails loudly, which is the intended
+/// behaviour — it must not silently talk to whoever last edited that file.
 /// ---------------------------------------------------------------------------
-const bool kUseMockData = true;
+const bool kUseMockData = false;

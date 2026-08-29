@@ -9,7 +9,7 @@ import 'package:family_expense_management/style/text_style.dart';
 /// Two distinct messages, because "you have no transactions yet" and "nothing
 /// matched your filters" call for different next actions from the user. The
 /// design does not specify an empty state, so this follows the existing
-/// `PlaceholderTab` / `_FailureView` composition (icon, title, body) rather
+/// `_FailureView` composition (icon, title, body) rather
 /// than inventing a new visual language.
 class TransactionsEmptyState extends StatelessWidget {
   /// True when rows exist but the search or filters excluded all of them.

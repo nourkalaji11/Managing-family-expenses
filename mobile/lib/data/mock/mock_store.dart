@@ -165,6 +165,17 @@ class MockStore {
     return true;
   }
 
+  /// Removes the row with [id]. Returns false when no such row exists, so the
+  /// caller surfaces a failure rather than reporting a delete that did nothing
+  /// — the same contract as [update].
+  bool remove(int id) {
+    final index = _transactions.indexWhere((t) => t.id == id);
+    if (index < 0) return false;
+
+    _transactions.removeAt(index);
+    return true;
+  }
+
   /// Returns a budget id that no row currently holds, and never returns it
   /// twice. Same collision walk as [allocateId], over the budgets table.
   int allocateBudgetId() {

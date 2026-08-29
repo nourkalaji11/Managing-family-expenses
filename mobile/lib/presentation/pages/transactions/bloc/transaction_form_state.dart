@@ -4,7 +4,14 @@ part of 'transaction_form_bloc.dart';
 /// and Edit.
 enum TransactionFormMode { add, edit }
 
-enum TransactionFormStatus { editing, submitting, success, failure }
+enum TransactionFormStatus {
+  editing,
+  submitting,
+  deleting,
+  success,
+  deleted,
+  failure,
+}
 
 /// One localisation KEY per field, or null when the field is valid.
 ///
@@ -106,6 +113,12 @@ class TransactionFormState extends Equatable {
   }
 
   bool get isSubmitting => status == TransactionFormStatus.submitting;
+
+  bool get isDeleting => status == TransactionFormStatus.deleting;
+
+  /// True while either write is in flight, so a delete cannot race a save.
+  /// Same contract as `AccountFormState.isBusy`.
+  bool get isBusy => isSubmitting || isDeleting;
 
   bool get isEditing => mode == TransactionFormMode.edit;
 

@@ -42,20 +42,15 @@ class BudgetDraft {
     required this.endDate,
   });
 
-  /// The JSON body a working `budgets` endpoint would accept.
+  /// The JSON body the `budgets` endpoints accept.
   ///
-  /// TODO(backend): unused for now, and intentionally so. `BudgetController`
-  /// implements only `index` and `store`; `store` validates just `category_id`
-  /// and `limit_amount` and then calls
-  /// `Budget::updateOrCreate(['category_id' => ...], ['limit_amount' => ...])`,
-  /// which (a) never sets the NOT NULL `user_id`, `start_date` and `end_date`
-  /// columns, so the insert fails on an integrity constraint, and (b) matches
-  /// on category alone with no user scope, so one family's budget would
-  /// silently overwrite another's. There is no `update`, `show` or `destroy`
-  /// method at all, even though `Route::apiResource('budgets', ...)` registers
-  /// those routes. This method exists as the single documented place the
-  /// contract lives, so that enabling the real calls does not require
-  /// re-deriving it. See `BudgetsRepo`.
+  /// Sent as-is by both `BudgetsRepo._remoteCreate` (`POST /budgets`) and
+  /// `_remoteUpdate` (`PUT /budgets/{id}`), whose validators are identical.
+  /// `user_id` is absent on purpose: the server reads it from the bearer token
+  /// on create and preserves the existing owner on update.
+  ///
+  /// `current_spending` is absent too — see `BudgetsRepo`: no controller writes
+  /// that column, so the client derives it rather than sending it.
   Map<String, dynamic> toRequestJson() => {
     'category_id': categoryId,
     'limit_amount': limitAmount,

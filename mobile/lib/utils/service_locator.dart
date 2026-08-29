@@ -3,7 +3,13 @@ import 'package:family_expense_management/blocs/local_user_cubit.dart';
 import 'package:family_expense_management/blocs/locale_cubit.dart';
 import 'package:family_expense_management/blocs/password_cubit.dart';
 import 'package:family_expense_management/blocs/toggle_cubit.dart';
+import 'package:family_expense_management/presentation/pages/accounts/bloc/account_form_bloc.dart';
+import 'package:family_expense_management/presentation/pages/accounts/bloc/accounts_bloc.dart';
 import 'package:family_expense_management/presentation/pages/auth/bloc/auth_bloc.dart';
+import 'package:family_expense_management/presentation/pages/budgets/bloc/budget_form_bloc.dart';
+import 'package:family_expense_management/presentation/pages/budgets/bloc/budgets_bloc.dart';
+import 'package:family_expense_management/presentation/pages/categories/bloc/categories_bloc.dart';
+import 'package:family_expense_management/presentation/pages/categories/bloc/category_form_bloc.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/bloc/dashboard_bloc.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/bloc/dashboard_cubit.dart';
 import 'package:family_expense_management/presentation/pages/notifications/bloc/notifications_bloc.dart';
@@ -44,4 +50,17 @@ void setupServiceLocator() {
   // container complete and give tests an injection point.
   getIt.registerFactory<TransactionsBloc>(() => TransactionsBloc());
   getIt.registerFactory<TransactionFormBloc>(() => TransactionFormBloc());
+
+  // Budgets, accounts and categories. Factories for the same reason as the
+  // transactions pair: each list bloc is owned by its tab and each form bloc by
+  // the pushed form, so every instance must be fresh. The screens construct
+  // their own, exactly as `HomeScreen` does with `DashboardBloc`; these
+  // registrations keep the container complete and give tests an injection
+  // point.
+  getIt.registerFactory<BudgetsBloc>(() => BudgetsBloc());
+  getIt.registerFactory<BudgetFormBloc>(() => BudgetFormBloc());
+  getIt.registerFactory<AccountsBloc>(() => AccountsBloc());
+  getIt.registerFactory<AccountFormBloc>(() => AccountFormBloc());
+  getIt.registerFactory<CategoriesBloc>(() => CategoriesBloc());
+  getIt.registerFactory<CategoryFormBloc>(() => CategoryFormBloc());
 }

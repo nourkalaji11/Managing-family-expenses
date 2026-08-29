@@ -150,6 +150,23 @@ class DashboardFormatter {
     return '$monthName \u2066$year\u2069';
   }
 
+  // ---------------------------------------------------------------------------
+  // Accounts feature. APPEND-ONLY, same reasoning as the blocks above.
+  // ---------------------------------------------------------------------------
+
+  /// [amount], wrapped in an LTR isolate.
+  ///
+  /// Needed wherever a balance is rendered on its own rather than through
+  /// [signedAmount]. An account balance carries its minus sign from the data,
+  /// not from a `isExpense` flag, and in an RTL paragraph a leading "-" is
+  /// otherwise reordered to the visual right of the digits — which reads as a
+  /// completely different number.
+  ///
+  /// The isolate characters are written as escapes rather than pasted in
+  /// literally, so they stay visible in a diff and the analyzer does not flag
+  /// invisible direction marks in source.
+  static String isolatedAmount(num? value) => '\u2066${amount(value)}\u2069';
+
   /// A plain calendar date: "24 مايو 2025".
   ///
   /// Unlike [fullDate] this never prefixes "اليوم" or "أمس". The budget form's

@@ -1,50 +1,41 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:family_expense_management/data/mock/mock_config.dart';
 import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/dashboard_summary.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/network/api_envelope.dart';
 import 'package:family_expense_management/network/failure.dart';
+import 'package:family_expense_management/network/global_api_endpoint.dart';
+import 'package:family_expense_management/network/network_client.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/domain/dashboard_domain.dart';
 
 /// The dashboard's data source.
 ///
 /// ---------------------------------------------------------------------------
-/// MOCK-ONLY FOR NOW. [useMock] is `true` and this class makes **no network
-/// calls at all** — `DioClient` is deliberately not even imported.
+/// Live against the Laravel API when [useMock] is `false`, which is the default.
+/// The mock path is kept compiling as a one-line rollback ([kUseMockData]) and
+/// as the seed the widget tests read.
 ///
-/// Why: `GlobalApiEndpoint.base` is still the placeholder
-/// `https://domain/api/v1`, and the Laravel backend lives on the unmerged
-/// branch `origin/souad-backend`, where `routes/api.php` applies no middleware
-/// and does not implement the login/register routes this app calls.
+/// There is deliberately **no** call to `GET /api/dashboard`. That endpoint
+/// exists, but it answers with a role-dependent summary — for an admin
+/// `{role, total_family_balance, total_family_spent, alerts}`, for a member
+/// `{role, my_spending_limit, my_total_spent, my_remaining_limit}` — and none
+/// of it is what this screen draws: no income figure, no per-category
+/// breakdown, no account to fill "رقم الحساب العائلي", and no transaction rows
+/// for "آخر المعاملات". Every one of those comes from `/accounts` and
+/// `/transactions`, which this repository has to fetch anyway, so calling
+/// `/dashboard` on top would be a third round trip that contributes nothing.
 ///
-/// To go live later:
-///   1. Set a real `GlobalApiEndpoint.base`.
-///   2. Add the resource endpoints to `GlobalApiEndpoint` (intentionally not
-///      added yet, so no unused/invented contract sits in the codebase).
-///   3. Implement [_getRemote] following the exact try/catch shape used by
-///      `NotificationsRepo` / `AuthRepo`.
-///   4. Flip [useMock] to `false` and delete `lib/data/mock/`.
-///
-/// TODO(backend): no `/dashboard/summary` endpoint is assumed or referenced
-/// anywhere. Whether the totals stay client-side (as [DashboardSummary.from]
-/// does) or move server-side is a decision for when the backend contract is
-/// confirmed.
-///
-/// TODO(backend): account balances do not move when a transaction is written.
-/// `accounts.balance` keeps its seeded value for the whole session, so adding
-/// an expense changes "المصاريف", "المتبقي" and the category breakdown but
-/// leaves "الرصيد الإجمالي" untouched. This is deliberate: the backend defines
-/// no balance mutation or recalculation contract for transaction writes —
-/// `TransactionController::store` never touches the `accounts` table, and there
-/// is no trigger, observer or recompute endpoint anywhere on
-/// `origin/souad-backend`. Inventing the arithmetic here would be fabricating
-/// accounting behaviour the server does not have, and would silently disagree
-/// with it the moment the real API is wired up. Decide server-side first: either
-/// `store()`/`update()`/`destroy()` adjust `accounts.balance` transactionally,
-/// or balance becomes a derived sum rather than a stored column.
+/// TODO(backend): aggregating on-device means downloading every transaction the
+/// caller can see — `TransactionController::index` has no `paginate()`. A
+/// server-side summary shaped like [DashboardSummary] should replace
+/// [_aggregate] once the backend offers one.
 /// ---------------------------------------------------------------------------
 class DashboardRepo extends DashboardDomain {
+  static DioClient client = DioClient();
+
   /// The single switch between fake and real data, shared with every other
   /// repository so the app can never be half-mocked.
   static const bool useMock = kUseMockData;
@@ -114,13 +105,51 @@ class DashboardRepo extends DashboardDomain {
     );
   }
 
-  /// TODO(backend): unimplemented on purpose.
+  /// Fetches the two collections the dashboard aggregates from.
   ///
-  /// Filling this in requires endpoints that either do not exist yet or are not
-  /// safe to call (see the class doc). Returning a `ServerFailure` is the honest
-  /// behaviour — it must never silently return empty data that the UI would
-  /// render as a real, zeroed-out dashboard.
+  /// Issued concurrently: neither depends on the other, and the screen cannot
+  /// render until both have landed, so serialising them would double the time
+  /// to first paint for no benefit. If either fails, `Future.wait` propagates
+  /// the first [Failure] thrown by [unwrapList] and the whole load fails —
+  /// which is the honest outcome. A dashboard built from accounts alone would
+  /// show a real balance next to a fabricated "0 ر.س" of expenses.
   Future<Either<Failure, DashboardData>> _getRemote() async {
-    return Left(ServerFailure());
+    try {
+      final responses = await Future.wait([
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.accounts.endpoint,
+        ),
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.transactions.endpoint,
+        ),
+      ]);
+
+      final accounts = [
+        for (final json in unwrapList(responses[0])) Account.fromJson(json),
+      ];
+      final transactions = [
+        for (final json in unwrapList(responses[1]))
+          TransactionModel.fromJson(json),
+      ];
+
+      // The same aggregation the mock path runs, so the screen cannot change
+      // shape just because the source changed.
+      return Right(_aggregate(accounts, transactions));
+    } on DioException catch (ex) {
+      if (ex.type == DioExceptionType.connectionTimeout ||
+          ex.type == DioExceptionType.sendTimeout ||
+          ex.type == DioExceptionType.receiveTimeout ||
+          ex.type == DioExceptionType.unknown) {
+        return Left(ConnectionFailure());
+      } else {
+        return Left(GlobalFailure());
+      }
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
   }
 }

@@ -57,6 +57,8 @@ class TransactionFormBloc
         emit(_revalidated(state.copyWith(description: event.description)));
       } else if (event is OnSubmitForm) {
         await _submit(emit);
+      } else if (event is OnDeleteTransaction) {
+        await _delete(emit);
       }
     });
   }
@@ -181,6 +183,42 @@ class TransactionFormBloc
       (saved) => emit(
         state.copyWith(status: TransactionFormStatus.success, saved: saved),
       ),
+    );
+  }
+
+  /// Deletes the row being edited, reversing its effect on the account balance.
+  ///
+  /// The server refuses (422) when the row is one leg of a transfer, and its
+  /// message names the right action — reversing the whole transfer. That is
+  /// surfaced verbatim rather than re-worded here.
+  Future<void> _delete(Emitter<TransactionFormState> emit) async {
+    if (state.isBusy) return;
+
+    // Add mode has nothing to delete. Guarding here rather than only hiding the
+    // button means a stray event cannot fire a request with a null id.
+    final int? id = state.id;
+    if (id == null) return;
+
+    emit(
+      state.copyWith(
+        status: TransactionFormStatus.deleting,
+        clearFailure: true,
+      ),
+    );
+
+    final result = await _repo.deleteTransaction(id);
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: TransactionFormStatus.failure,
+          failure: failure,
+        ),
+      ),
+      // A distinct terminal status, not `success`: the screen pops with a
+      // different result so the list knows a row disappeared rather than
+      // changed.
+      (_) => emit(state.copyWith(status: TransactionFormStatus.deleted)),
     );
   }
 

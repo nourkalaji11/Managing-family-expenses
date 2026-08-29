@@ -90,3 +90,11 @@ class OnDescriptionChanged extends TransactionFormEvent {
 class OnSubmitForm extends TransactionFormEvent {
   const OnSubmitForm();
 }
+
+/// Deletes the transaction being edited. Ignored in Add mode, and while a save
+/// or delete is already in flight.
+///
+/// The screen confirms with the user before dispatching this.
+class OnDeleteTransaction extends TransactionFormEvent {
+  const OnDeleteTransaction();
+}

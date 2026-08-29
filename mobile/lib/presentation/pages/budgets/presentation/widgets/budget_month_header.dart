@@ -43,33 +43,60 @@ class BudgetMonthHeader extends StatelessWidget {
           color: ColorsApp.outlineVariant.withValues(alpha: 0.4),
         ),
       ),
+      // Two flexible groups and no `Spacer`.
+      //
+      // The previous layout put a `Spacer` between them. A `Spacer` is
+      // `Expanded(flex: 1)`, so it competed with the two `Flexible` children
+      // for the free space and took roughly a third of it — which was enough to
+      // ellipsise both "أغسطس ٢٠٢٦" and the total on a 1080px screen ("August…"
+      // and "1,950 …"). A truncated figure is worse than a tight one on a
+      // screen whose whole job is reporting numbers.
+      //
+      // The 5:4 split gives the month cluster slightly more, because it carries
+      // two 32px buttons as well as its label.
       child: Row(
         children: [
-          _StepButton(
-            key: const Key('budgets_previous_month'),
-            icon: isRtl ? Icons.chevron_right : Icons.chevron_left,
-            tooltip: 'budgets.previous_month'.tr(),
-            onPressed: onPreviousMonth,
-          ),
           Flexible(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: Text(
-                DashboardFormatter.monthYear(month),
-                style: TextStyleApp.budgetsMonthLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+            flex: 5,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _StepButton(
+                  key: const Key('budgets_previous_month'),
+                  icon: isRtl ? Icons.chevron_right : Icons.chevron_left,
+                  tooltip: 'budgets.previous_month'.tr(),
+                  onPressed: onPreviousMonth,
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    // Scales down rather than ellipsising, for the same reason
+                    // as the total: "August 2…" hides the year, and the year is
+                    // half of what a month stepper is for. A longer month name
+                    // ("September 2026") shrinks a step instead of losing its
+                    // tail.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        DashboardFormatter.monthYear(month),
+                        style: TextStyleApp.budgetsMonthLabel,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                _StepButton(
+                  key: const Key('budgets_next_month'),
+                  icon: isRtl ? Icons.chevron_left : Icons.chevron_right,
+                  tooltip: 'budgets.next_month'.tr(),
+                  onPressed: onNextMonth,
+                ),
+              ],
             ),
           ),
-          _StepButton(
-            key: const Key('budgets_next_month'),
-            icon: isRtl ? Icons.chevron_left : Icons.chevron_right,
-            tooltip: 'budgets.next_month'.tr(),
-            onPressed: onNextMonth,
-          ),
-          const Spacer(),
+          SizedBox(width: 8.w),
           Flexible(
+            flex: 4,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
@@ -81,12 +108,18 @@ class BudgetMonthHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  '${DashboardFormatter.compactAmount(totalLimit)} '
-                  '${'dashboard.currency_sar'.tr()}',
-                  style: TextStyleApp.budgetsSummaryValue,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // `FittedBox` shrinks the figure rather than clipping it: a
+                // seven-digit total on a narrow screen must stay readable, and
+                // "1,234,567 …" tells the user nothing.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    '${DashboardFormatter.compactAmount(totalLimit)} '
+                    '${'dashboard.currency_sar'.tr()}',
+                    style: TextStyleApp.budgetsSummaryValue,
+                    maxLines: 1,
+                  ),
                 ),
               ],
             ),

@@ -76,6 +76,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Opens the transfer screen, then reloads on success.
+  ///
+  /// A transfer moves two account balances, so every figure on this screen that
+  /// derives from `accounts.balance` changes — while the income and expense
+  /// totals deliberately do not, because nothing entered or left the family.
+  /// See `DashboardSummary.from`.
+  Future<void> _openTransfer() async {
+    final Object? result = await Navigator.of(
+      context,
+    ).pushNamed(AppRoutes.transfer);
+
+    if (result == true && mounted) {
+      _bloc.add(const OnRefreshDashboard());
+    }
+  }
+
   /// "عرض الكل" and the transactions tab are the same destination, so this
   /// switches tabs inside the shell rather than pushing a route.
   void _openTransactionsTab() {
@@ -97,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Column(
           children: [
-            DashboardAppBar(onNotificationsPressed: _showSoon),
+            const DashboardAppBar(),
             Expanded(
               child: BlocBuilder<DashboardBloc, DashboardState>(
                 bloc: _bloc,
@@ -115,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onRefresh: () async =>
                           _bloc.add(const OnRefreshDashboard()),
                       onAddTransaction: _openAddTransaction,
-                      onTransfer: _showSoon,
+                      onTransfer: _openTransfer,
                       onViewAll: _openTransactionsTab,
                     ),
                   };

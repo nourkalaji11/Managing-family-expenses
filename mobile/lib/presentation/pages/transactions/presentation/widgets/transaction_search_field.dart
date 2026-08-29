@@ -12,15 +12,26 @@ import 'package:family_expense_management/style/text_style.dart';
 /// visual property it sets.
 ///
 /// Stateful only to own its `TextEditingController`. The query itself lives in
-/// `TransactionsBloc`; this widget just reports changes upward.
+/// the owning bloc; this widget just reports changes upward.
+///
+/// Also used by the accounts and categories screens, which draw the same field.
+/// It keeps its name and its location for now: renaming it and moving it into
+/// `presentation/widgets/` is a cleanup of its own, and the transactions feature
+/// is finished — the same reasoning already recorded on `MainTabAppBar`.
 class TransactionSearchField extends StatefulWidget {
   final String initialValue;
   final ValueChanged<String> onChanged;
+
+  /// Translation key of the placeholder. Defaults to the transactions wording,
+  /// so the original call site is unchanged; the other two screens pass their
+  /// own, because "بحث عن معاملة..." over a list of accounts is simply wrong.
+  final String hintKey;
 
   const TransactionSearchField({
     super.key,
     required this.initialValue,
     required this.onChanged,
+    this.hintKey = 'transactions.search_hint',
   });
 
   @override
@@ -63,7 +74,7 @@ class _TransactionSearchFieldState extends State<TransactionSearchField> {
           isDense: true,
           filled: true,
           fillColor: ColorsApp.white,
-          hintText: 'transactions.search_hint'.tr(),
+          hintText: widget.hintKey.tr(),
           hintStyle: TextStyleApp.transactionsSearchHint,
           // `prefixIcon` rather than a positioned child, so the glyph flips to
           // the correct side automatically in LTR.

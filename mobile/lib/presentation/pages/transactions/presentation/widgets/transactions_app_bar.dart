@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/presentation/widgets/profile_avatar.dart';
 import 'package:family_expense_management/style/colors.dart';
 import 'package:family_expense_management/style/text_style.dart';
@@ -13,9 +14,18 @@ import 'package:family_expense_management/style/text_style.dart';
 /// than an absent one.
 class TransactionsAppBar extends StatelessWidget
     implements PreferredSizeWidget {
+  /// Overrides the bell's default navigation. Left for tests and for any caller
+  /// that needs to intercept; the tab passes nothing.
   final VoidCallback? onNotificationsPressed;
 
-  const TransactionsAppBar({super.key, this.onNotificationsPressed});
+  /// Overrides the avatar's default navigation, for the same reason.
+  final VoidCallback? onProfilePressed;
+
+  const TransactionsAppBar({
+    super.key,
+    this.onNotificationsPressed,
+    this.onProfilePressed,
+  });
 
   @override
   Size get preferredSize => Size.fromHeight(64.h);
@@ -37,9 +47,18 @@ class TransactionsAppBar extends StatelessWidget
         children: [
           // 32px here, against the dashboard's 40px — the design draws this
           // avatar smaller (`w-8 h-8`).
-          const ProfileAvatar(size: 32),
+          InkWell(
+            onTap: onProfilePressed ??
+                () => Navigator.of(context).pushNamed(AppRoutes.profile),
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: EdgeInsets.all(6.r),
+              child: const ProfileAvatar(size: 32),
+            ),
+          ),
           IconButton(
-            onPressed: onNotificationsPressed,
+            onPressed: onNotificationsPressed ??
+                () => Navigator.of(context).pushNamed(AppRoutes.notifications),
             iconSize: 22.r,
             color: ColorsApp.onSurfaceVariant,
             icon: const Icon(Icons.notifications_none),

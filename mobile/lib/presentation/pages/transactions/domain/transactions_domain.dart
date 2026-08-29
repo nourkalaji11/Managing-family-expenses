@@ -9,10 +9,12 @@ import 'package:family_expense_management/network/failure.dart';
 /// in-memory `MockStore`, later against the API. Swapping the source never
 /// touches the blocs or the widgets.
 ///
-/// There is deliberately no `deleteTransaction`. The design shows no delete
-/// affordance on either the list or the form, so the app exposes none, even
-/// though `TransactionController::destroy` is the one write endpoint that
-/// actually works.
+/// [deleteTransaction] was absent for a long while, on the grounds that the
+/// design draws no delete affordance. That reasoning no longer holds: the
+/// account, category and budget forms all grew one, `DELETE /transactions/{id}`
+/// is a working routed endpoint, and a ledger a family can only add to is not a
+/// ledger they can correct. It lives on the edit form, beside Save, exactly
+/// where the other three put theirs.
 abstract class TransactionsDomain {
   /// Loads the rows plus the accounts and categories the form's pickers need.
   Future<Either<Failure, TransactionsData>> getTransactions();
@@ -28,4 +30,13 @@ abstract class TransactionsDomain {
     int id,
     TransactionDraft draft,
   );
+
+  /// Deletes the row identified by [id] and reverses its effect on the
+  /// account's balance.
+  ///
+  /// Fails with a [ResultFailure] carrying the server's message when the row is
+  /// one leg of a transfer: deleting a leg on its own would orphan the other
+  /// and leave a balance wrong, so the server answers 422 and points at
+  /// `DELETE /transfers/{group}` instead.
+  Future<Either<Failure, bool>> deleteTransaction(int id);
 }

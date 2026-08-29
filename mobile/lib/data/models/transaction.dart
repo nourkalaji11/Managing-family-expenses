@@ -48,6 +48,15 @@ class TransactionModel {
   final Account? account;
   final Category? category;
 
+  /// True when this row is one leg of a transfer between two family accounts.
+  ///
+  /// Sent by the server as the appended `is_transfer` attribute, derived from
+  /// `transactions.transfer_group_id`. The two legs are a real expense and a
+  /// real income row — which is what keeps both account balances correct — but
+  /// they are **not** family income or family spending, so every aggregate
+  /// excludes them. See [DashboardSummary.from].
+  final bool isTransfer;
+
   const TransactionModel({
     this.id,
     this.amount,
@@ -60,6 +69,7 @@ class TransactionModel {
     this.categoryId,
     this.account,
     this.category,
+    this.isTransfer = false,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
@@ -86,6 +96,10 @@ class TransactionModel {
         category: json["category"] == null
             ? null
             : Category.fromJson(json["category"]),
+        // Absent on any payload predating the transfers feature, which reads
+        // correctly as "not a transfer".
+        isTransfer:
+            json["is_transfer"] == true || json["transfer_group_id"] != null,
       );
 
   /// Sentinel for [copyWith], so that `description: null` can mean "clear this"
@@ -125,6 +139,10 @@ class TransactionModel {
     categoryId: categoryId ?? this.categoryId,
     account: account ?? this.account,
     category: category ?? this.category,
+    // Not a `copyWith` parameter on purpose: whether a row belongs to a
+    // transfer is decided when it is created and can never be edited into or
+    // out of. The server refuses to update a transfer leg at all.
+    isTransfer: isTransfer,
   );
 
   /// True when this row reduces the balance.

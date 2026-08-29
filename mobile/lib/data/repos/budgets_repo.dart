@@ -1,45 +1,45 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/mock/mock_config.dart';
 import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/models/budget.dart';
 import 'package:family_expense_management/data/models/budgets_data.dart';
+import 'package:family_expense_management/data/models/category.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/network/api_envelope.dart';
 import 'package:family_expense_management/network/failure.dart';
+import 'package:family_expense_management/network/global_api_endpoint.dart';
+import 'package:family_expense_management/network/network_client.dart';
 import 'package:family_expense_management/presentation/pages/budgets/domain/budgets_domain.dart';
 
 /// The budgets feature's data source.
 ///
-/// MOCK-ONLY FOR NOW. [useMock] comes from [kUseMockData], the app's single
-/// switch, and this class makes no network calls at all: `DioClient` is
-/// deliberately not imported.
+/// Live against the Laravel API when [useMock] is `false`, which is the default.
+/// The mock path is kept compiling as a one-line rollback ([kUseMockData]).
 ///
-/// Why the real endpoints are not called, verified against branch
-/// `origin/souad-backend`:
+/// Endpoint notes worth carrying at the call site:
 ///
-///   * `GET /api/budgets` works, but runs
-///     `Budget::with('category')->latest()->get()` with no `paginate()` and no
-///     `where('user_id', ...)`, so it returns every user's rows.
-///     `routes/api.php` applies no middleware.
-///   * `POST /api/budgets` validates only `category_id` and `limit_amount`, then
-///     calls `Budget::updateOrCreate(['category_id' => ...], ...)`. The NOT NULL
-///     `user_id`, `start_date` and `end_date` columns are neither validated nor
-///     set, so every call fails on an integrity-constraint violation. The match
-///     key carries no user scope either, so one family's budget would overwrite
-///     another's.
-///   * `PUT/PATCH`, `GET /{id}` and `DELETE /{id}` do not exist on
-///     `BudgetController` at all, even though `Route::apiResource` registers
-///     them — calling any of them is a 500, not a 404.
-///   * `GlobalApiEndpoint.base` is still `https://domain/api/v1`, and the
-///     backend serves `/api/budgets` with no `v1` segment.
+///   * `POST /budgets` is an **upsert**, not an insert:
+///     `Budget::updateOrCreate(['category_id' => ..., 'user_id' => ...], ...)`.
+///     Creating a second budget for a category the caller already budgeted
+///     overwrites the first instead of adding a row. The app does not surface
+///     that distinction anywhere, because the form offers no way to tell the
+///     two apart either.
+///   * `user_id` is taken from the bearer token, never from the request body —
+///     which is why [BudgetDraft.toRequestJson] does not send one.
+///   * `budgets.current_spending` is a real column that **nothing maintains**:
+///     no controller writes it and there is no observer or scheduled recompute.
+///     The server therefore always reports its `0.00` default, and
+///     [withDerivedSpending] fills in what the column is meant to hold — which
+///     is why [_remoteGet] also fetches transactions.
 ///
-/// To go live: add the endpoints to `GlobalApiEndpoint`, implement the
-/// `_remote*` methods below following the try/catch shape used by
-/// `NotificationsRepo`, flip [kUseMockData] to `false`, and delete
-/// `lib/data/mock/`. The draft-to-JSON mapping already exists as
-/// `BudgetDraft.toRequestJson()`.
+/// TODO(backend): `index` applies no `where('user_id', ...)`, same as
+/// `TransactionController`. See `TransactionsRepo` for the cross-tenant note.
 class BudgetsRepo extends BudgetsDomain {
+  static DioClient client = DioClient();
+
   /// Mirrors the app-wide switch. Not an independent flag, so the dashboard,
   /// transactions and budgets can never disagree about which world they are in.
   static const bool useMock = kUseMockData;
@@ -192,12 +192,12 @@ class BudgetsRepo extends BudgetsDomain {
   /// Fills each budget's `current_spending` from the transactions that fall
   /// inside its own period.
   ///
-  /// TODO(backend): this belongs server-side. The column exists but nothing
-  /// writes it (see `BudgetModel.currentSpending`), so the client computes what
-  /// the column is meant to hold. When the backend starts maintaining it —
-  /// through an observer on `transactions`, a scheduled recompute, or a
-  /// `withSum` on the query — delete this method and trust the payload, because
-  /// a client-side sum can only ever see the rows the client happens to have.
+  /// **Mock path only.** The remote path no longer calls this:
+  /// `BudgetController::index` computes the figure in SQL and the payload is
+  /// trusted as-is — see [_remoteGet]. The method stays because `MockStore` has
+  /// no server to compute anything, and because it is the reference the two
+  /// implementations were checked against (both produce 555.5 / 180 / 420 on
+  /// the seeded data).
   static List<BudgetModel> withDerivedSpending(
     List<BudgetModel> budgets,
     List<TransactionModel> transactions,
@@ -221,6 +221,12 @@ class BudgetsRepo extends BudgetsDomain {
 
     num total = 0;
     for (final t in transactions) {
+      // A transfer's outgoing leg is an expense row filed under whatever
+      // category the form happened to require, so counting it would consume a
+      // budget the family never actually spent against. The server's own
+      // `NotificationService::spentBefore` applies the same exclusion, so the
+      // "budget exceeded" alert and this bar can never disagree.
+      if (t.isTransfer) continue;
       if (t.type != TransactionType.expense) continue;
       if ((t.categoryId ?? t.category?.id) != categoryId) continue;
 
@@ -258,28 +264,107 @@ class BudgetsRepo extends BudgetsDomain {
   }
 
   // ---------------------------------------------------------------------------
-  // Remote path. Unimplemented on purpose: see the class doc for why each of
-  // these endpoints is either missing, broken, or unsafe to call. Returning a
-  // ServerFailure is the honest behaviour — none of them may silently succeed.
+  // Remote path. Status handling lives in `unwrapList` / `unwrapObject`, which
+  // throw a `Failure` that the `on Failure` catch below turns into a Left — the
+  // same ladder `NotificationsRepo` uses, minus the duplication.
   // ---------------------------------------------------------------------------
 
-  /// TODO(backend): needs a user-scoped `index`, and `current_spending` to be
-  /// maintained (or summed) server-side.
   Future<Either<Failure, BudgetsData>> _remoteGet() async {
-    return Left(ServerFailure());
+    try {
+      // Two concurrent reads. This used to be three: transactions were fetched
+      // as well, purely so [withDerivedSpending] could fill in a figure the
+      // server left at `0.00`.
+      //
+      // `BudgetController::index` now computes `current_spending` itself, so
+      // the payload is authoritative and the third request is gone. That is
+      // also a correctness win, not just one fewer round trip: a client-side
+      // sum can only see the rows the client happens to hold, and now that
+      // `/transactions` is scoped by role a member's own list would have
+      // produced a smaller figure than the budget actually consumed.
+      final responses = await Future.wait([
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.budgets.endpoint,
+        ),
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.categories.endpoint,
+        ),
+      ]);
+
+      final budgets = [
+        for (final json in unwrapList(responses[0])) BudgetModel.fromJson(json),
+      ];
+
+      return Right(
+        BudgetsData(
+          // No derivation: the server's figure is trusted as-is.
+          budgets: sortedNewestFirst(budgets),
+          categories: [
+            for (final json in unwrapList(responses[1])) Category.fromJson(json),
+          ],
+        ),
+      );
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
   }
 
-  /// TODO(backend): `store()` must set `user_id`, `start_date` and `end_date`,
-  /// and scope its `updateOrCreate` match by user, before this can be called.
   Future<Either<Failure, BudgetModel>> _remoteCreate(BudgetDraft draft) async {
-    return Left(ServerFailure());
+    try {
+      final response = await client.request(
+        requestType: RequestType.post,
+        path: GlobalApiEndpoint.budgets.endpoint,
+        body: draft.toRequestJson(),
+      );
+
+      // `store` eager-loads `category` before responding, so the card can be
+      // rendered immediately. `current_spending` comes back as the column's
+      // `0.00` default; the next list load derives the real figure.
+      return Right(BudgetModel.fromJson(unwrapObject(response)));
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
   }
 
-  /// TODO(backend): `BudgetController` has no `update()` method at all.
   Future<Either<Failure, BudgetModel>> _remoteUpdate(
     int id,
     BudgetDraft draft,
   ) async {
-    return Left(ServerFailure());
+    try {
+      final response = await client.request(
+        requestType: RequestType.put,
+        path: GlobalApiEndpoint.budgetById[[id]],
+        body: draft.toRequestJson(),
+      );
+
+      // The body carries no `user_id`, so the budget keeps its original owner.
+      return Right(BudgetModel.fromJson(unwrapObject(response)));
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
+  }
+
+  /// Transport-level errors, mapped exactly as `NotificationsRepo` maps them.
+  static Failure _mapDioException(DioException ex) {
+    if (ex.type == DioExceptionType.connectionTimeout ||
+        ex.type == DioExceptionType.sendTimeout ||
+        ex.type == DioExceptionType.receiveTimeout ||
+        ex.type == DioExceptionType.unknown) {
+      return ConnectionFailure();
+    }
+    return GlobalFailure();
   }
 }

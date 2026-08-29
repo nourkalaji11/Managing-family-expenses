@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/presentation/widgets/profile_avatar.dart';
 import 'package:family_expense_management/style/colors.dart';
 import 'package:family_expense_management/style/text_style.dart';
@@ -8,23 +9,30 @@ import 'package:family_expense_management/style/text_style.dart';
 /// The top bar shared by the main tabs: 64px, translucent white, hairline
 /// bottom border, avatar and bell leading, title centred.
 ///
-/// The designs draw a third element — a `menu`/`menu_open` button — which is
+/// Both leading controls now navigate. They used to be inert — the avatar had
+/// no gesture at all and the bell raised a "coming soon" toast — because
+/// neither destination existed. The navigation lives here rather than in each
+/// tab so all five behave identically and a new tab gets it for free.
+///
+/// The designs draw a third element, a `menu`/`menu_open` button, which is
 /// deliberately not rendered: this app has no drawer, and a control that does
 /// nothing is worse than an absent one.
-///
-/// `TransactionsAppBar` predates this widget and is the same bar with its title
-/// hard-coded. Folding it into this one is a separate cleanup: the transactions
-/// feature is finished, and rewriting it is not this feature's job.
 class MainTabAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Translation key of the tab's title, e.g. `tabs.budgets`.
   final String titleKey;
 
+  /// Overrides the bell's default behaviour. Left for tests and for any caller
+  /// that needs to intercept; production tabs pass nothing.
   final VoidCallback? onNotificationsPressed;
+
+  /// Overrides the avatar's default behaviour, for the same reason.
+  final VoidCallback? onProfilePressed;
 
   const MainTabAppBar({
     super.key,
     required this.titleKey,
     this.onNotificationsPressed,
+    this.onProfilePressed,
   });
 
   @override
@@ -45,10 +53,21 @@ class MainTabAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         children: [
-          // 32px, matching the design's `w-8 h-8`.
-          const ProfileAvatar(size: 32),
+          // 32px, matching the design's `w-8 h-8`. Wrapped so the whole avatar
+          // is the target rather than a hairline around it — 44px is the
+          // minimum comfortable touch size, and the avatar itself is 32.
+          InkWell(
+            onTap: onProfilePressed ??
+                () => Navigator.of(context).pushNamed(AppRoutes.profile),
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: EdgeInsets.all(6.r),
+              child: const ProfileAvatar(size: 32),
+            ),
+          ),
           IconButton(
-            onPressed: onNotificationsPressed,
+            onPressed: onNotificationsPressed ??
+                () => Navigator.of(context).pushNamed(AppRoutes.notifications),
             iconSize: 22.r,
             color: ColorsApp.onSurfaceVariant,
             icon: const Icon(Icons.notifications_none),
@@ -67,7 +86,8 @@ class MainTabAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           // Balances the leading cluster so the title sits optically centred.
-          SizedBox(width: 32.r),
+          // Widened to match the avatar's new padding.
+          SizedBox(width: 44.r),
         ],
       ),
     );
