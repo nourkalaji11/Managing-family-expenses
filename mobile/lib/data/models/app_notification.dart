@@ -11,6 +11,15 @@
 class AppNotification {
   final int? id;
 
+  /// Who the notification is addressed to.
+  ///
+  /// Redundant against the live API — `NotificationController` only ever
+  /// returns the caller's own rows, so the client never has to filter. It
+  /// matters in the mock, where one in-memory list holds every family member's
+  /// notifications: without it a child could read the copy written to their
+  /// parent, which on a real server they could never see.
+  final int? userId;
+
   /// One of [NotificationType]'s wire values. Kept as the raw string as well as
   /// the parsed enum so an unrecognised type from a newer server still round
   /// trips rather than being lost.
@@ -33,6 +42,7 @@ class AppNotification {
 
   const AppNotification({
     this.id,
+    this.userId,
     this.rawType,
     this.title,
     this.message,
@@ -44,6 +54,7 @@ class AppNotification {
   factory AppNotification.fromJson(Map<String, dynamic> json) =>
       AppNotification(
         id: json["id"],
+        userId: json["user_id"],
         rawType: json["type"],
         title: json["title"],
         message: json["message"],
@@ -62,6 +73,7 @@ class AppNotification {
   /// refetching the page.
   AppNotification asSeen() => AppNotification(
     id: id,
+    userId: userId,
     rawType: rawType,
     title: title,
     message: message,
@@ -81,6 +93,13 @@ enum NotificationType {
   limitBlocked('limit_blocked'),
   memberSpent('member_spent'),
   limitUpdated('limit_updated'),
+
+  /// A member has crossed 80% of their ceiling — a warning, not a refusal.
+  ///
+  /// Distinct from [limitBlocked] on purpose: this one arrives while the
+  /// parent can still act, which is the whole reason it exists. Both the
+  /// member and the parent receive a copy, worded differently.
+  limitApproaching('limit_approaching'),
   general('');
 
   final String wire;

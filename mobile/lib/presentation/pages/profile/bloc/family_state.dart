@@ -39,6 +39,14 @@ class FamilyLoaded extends FamilyState {
 
   final bool isRefreshing;
 
+  /// True while a child's account is being created, so the form can show
+  /// progress and refuse a second submission.
+  final bool isAddingMember;
+
+  /// Id of the child added most recently, so the screen can confirm and the
+  /// form can close.
+  final int? lastAddedMemberId;
+
   const FamilyLoaded({
     required this.members,
     required this.canManage,
@@ -46,9 +54,25 @@ class FamilyLoaded extends FamilyState {
     this.lastSavedMemberId,
     this.writeFailure,
     this.isRefreshing = false,
+    this.isAddingMember = false,
+    this.lastAddedMemberId,
   });
 
   bool get isEmpty => members.isEmpty;
+
+  /// The share of [member]'s ceiling already spent, 0..1, or null when they
+  /// have no ceiling to be a share of.
+  ///
+  /// Clamped at 1: a bar cannot draw past full, and the overspend is reported
+  /// by the figures beneath it rather than by an impossible bar.
+  static double? usageOf(User member) {
+    final limit = member.spendingLimit;
+    if (limit == null || limit <= 0) return null;
+
+    final ratio = (member.spent ?? 0) / limit;
+    if (ratio.isNaN) return null;
+    return ratio < 0 ? 0 : (ratio > 1 ? 1 : ratio.toDouble());
+  }
 
   /// Members who can actually carry a ceiling. A parent is not capped, and the
   /// server refuses to set one on them.
@@ -71,6 +95,8 @@ class FamilyLoaded extends FamilyState {
     int? lastSavedMemberId,
     Failure? writeFailure,
     bool? isRefreshing,
+    bool? isAddingMember,
+    int? lastAddedMemberId,
 
     /// Explicit clears, because `null` in a `??`-based copyWith means "keep".
     bool clearSavingMemberId = false,
@@ -84,18 +110,25 @@ class FamilyLoaded extends FamilyState {
     lastSavedMemberId: lastSavedMemberId ?? this.lastSavedMemberId,
     writeFailure: clearFailure ? null : (writeFailure ?? this.writeFailure),
     isRefreshing: isRefreshing ?? this.isRefreshing,
+    isAddingMember: isAddingMember ?? this.isAddingMember,
+    lastAddedMemberId: lastAddedMemberId ?? this.lastAddedMemberId,
   );
 
   @override
   List<Object?> get props => <Object?>[
-    // Ceilings change in place, so the ids alone would not distinguish two
-    // states after a successful save.
-    [for (final m in members) '${m.id}:${m.name}:${m.spendingLimit}'],
+    // Ceilings and spend both change in place, so the ids alone would not
+    // distinguish two states after a save or after a child records an expense.
+    [
+      for (final m in members)
+        '${m.id}:${m.name}:${m.spendingLimit}:${m.spent}',
+    ],
     canManage,
     savingMemberId,
     lastSavedMemberId,
     writeFailure?.message,
     isRefreshing,
+    isAddingMember,
+    lastAddedMemberId,
   ];
 }
 

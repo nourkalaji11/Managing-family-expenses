@@ -303,6 +303,9 @@ class TransactionsRepo extends TransactionsDomain {
     if (viewer == null || viewer.isParent) return null;
     if (type != TransactionType.expense) return null;
 
+    // Null means no ceiling has been set, NOT a ceiling of zero. The server
+    // draws the same distinction: conflating them refused every expense a
+    // child made before their parent had decided on an allowance.
     final limit = viewer.spendingLimit;
     if (limit == null) return null;
 
@@ -317,6 +320,9 @@ class TransactionsRepo extends TransactionsDomain {
     store.addNotification(
       AppNotification(
         id: store.allocateNotificationId(),
+        // The person refused. `NotificationService::limitBlocked` also tells
+        // the parents; that copy is added below.
+        userId: viewer.id,
         rawType: NotificationType.limitBlocked.wire,
         title: 'محاولة تجاوز سقف السحب',
         message:
@@ -326,6 +332,22 @@ class TransactionsRepo extends TransactionsDomain {
         createdAt: DateTime.now(),
       ),
     );
+
+    for (final parent in store.users) {
+      if (!parent.isParent) continue;
+      store.addNotification(
+        AppNotification(
+          id: store.allocateNotificationId(),
+          userId: parent.id,
+          rawType: NotificationType.limitBlocked.wire,
+          title: 'محاولة تجاوز سقف السحب',
+          message:
+              'حاول ${viewer.name ?? ''} صرف ${amount.toStringAsFixed(2)} '
+              'وهو ما يتجاوز سقفه.',
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
 
     return ResultFailure('transactions.error_limit_exceeded'.tr());
   }
@@ -349,18 +371,26 @@ class TransactionsRepo extends TransactionsDomain {
   ) {
     if (!written.isExpense || written.isTransfer) return;
 
+    _warnIfNearingCeiling(store, viewer, written);
+
     if (viewer != null && !viewer.isParent) {
-      store.addNotification(
-        AppNotification(
-          id: store.allocateNotificationId(),
-          rawType: NotificationType.memberSpent.wire,
-          title: 'عملية صرف جديدة',
-          message:
-              'صرف ${viewer.name ?? ''} ${(written.amount ?? 0).toStringAsFixed(2)} '
-              'على ${written.category?.name ?? ''}.',
-          createdAt: DateTime.now(),
-        ),
-      );
+      // Parents only. Telling someone what they themselves just did is noise.
+      for (final parent in store.users) {
+        if (!parent.isParent) continue;
+        store.addNotification(
+          AppNotification(
+            id: store.allocateNotificationId(),
+            userId: parent.id,
+            rawType: NotificationType.memberSpent.wire,
+            title: 'عملية صرف جديدة',
+            message:
+                'صرف ${viewer.name ?? ''} '
+                '${(written.amount ?? 0).toStringAsFixed(2)} '
+                'على ${written.category?.name ?? ''}.',
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
     }
 
     final all = store.transactions;
@@ -378,14 +408,91 @@ class TransactionsRepo extends TransactionsDomain {
       final before = after - (written.amount ?? 0);
       if (before > limit || after <= limit) continue;
 
+      // A budget belongs to the family, so everyone is told.
+      for (final member in store.users) {
+        store.addNotification(
+          AppNotification(
+            id: store.allocateNotificationId(),
+            userId: member.id,
+            rawType: NotificationType.budgetExceeded.wire,
+            title: 'تجاوزت الميزانية',
+            message:
+                'تجاوز الصرف على ${written.category?.name ?? ''} '
+                'ميزانية ${limit.toStringAsFixed(2)}.',
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
+    }
+  }
+
+  /// The share of a ceiling at which the family is warned.
+  ///
+  /// Matches `NotificationService::APPROACHING_RATIO`. 0.8 rather than 0.9: a
+  /// warning that arrives with a tenth of the allowance left arrives too late
+  /// for a parent to decide anything before the child is refused.
+  static const double approachingRatio = 0.8;
+
+  /// The "running out of allowance" warning — the one that arrives BEFORE a
+  /// refusal, which is the point of it.
+  ///
+  /// Both people are told, as on the server: the child so a refusal does not
+  /// come as a surprise, the parent so they can raise the ceiling or ask what
+  /// the money is going on while there is still time to do either.
+  ///
+  /// Fires on **crossing** the threshold only. Warning on every expense after
+  /// 80% turns the list into noise, and the one warning that mattered is lost
+  /// in it.
+  static void _warnIfNearingCeiling(
+    MockStore store,
+    User? viewer,
+    TransactionModel written,
+  ) {
+    if (viewer == null || viewer.isParent) return;
+
+    final limit = viewer.spendingLimit;
+    if (limit == null || limit <= 0) return;
+
+    final after = store.spentAgainstLimitBy(viewer.id);
+    // The row has already been written, so its own amount is removed to
+    // recover the figure as it stood immediately before.
+    final before = after - (written.amount ?? 0);
+
+    final threshold = limit * approachingRatio;
+    if (before >= threshold || after < threshold) return;
+
+    final left = limit - after;
+    final remaining = left < 0 ? 0 : left;
+    final percent = ((after / limit) * 100).round();
+    final remainingText = remaining.toStringAsFixed(2);
+    final limitText = limit.toStringAsFixed(2);
+
+    store.addNotification(
+      AppNotification(
+        id: store.allocateNotificationId(),
+        userId: viewer.id,
+        rawType: NotificationType.limitApproaching.wire,
+        title: 'اقتربت من نهاية مصروفك',
+        message:
+            'صرفت $percent% من مصروفك. '
+            'المتبقي لك $remainingText من أصل $limitText.',
+        createdAt: DateTime.now(),
+      ),
+    );
+
+    // The parent's copy. Named, because a warning that does not say whose
+    // allowance is running out cannot be acted on.
+    for (final parent in store.users) {
+      if (!parent.isParent) continue;
       store.addNotification(
         AppNotification(
           id: store.allocateNotificationId(),
-          rawType: NotificationType.budgetExceeded.wire,
-          title: 'تجاوزت الميزانية',
+          userId: parent.id,
+          rawType: NotificationType.limitApproaching.wire,
+          title: 'اقترب مصروف الابن من نهايته',
           message:
-              'تجاوز الصرف على ${written.category?.name ?? ''} '
-              'ميزانية ${limit.toStringAsFixed(2)}.',
+              'صرف ${viewer.name ?? ''} $percent% من مصروفه. '
+              'المتبقي له $remainingText من أصل $limitText.',
           createdAt: DateTime.now(),
         ),
       );

@@ -48,8 +48,15 @@ enum GlobalApiEndpoint {
   /// `GET` the signed-in user, `PUT` to edit name, email or password.
   profile("profile"),
 
-  /// `GET`. Family members. A parent gets everyone; a member gets only
-  /// themselves — the scoping is the server's, not a filter applied here.
+  /// `GET` family members, `POST` to create one.
+  ///
+  /// `GET` is scoped by the server, not filtered here: a parent gets everyone,
+  /// a member gets only themselves. Each row carries `spent` and `remaining`
+  /// alongside the ceiling, so the parent sees what has been used and not just
+  /// what is allowed.
+  ///
+  /// `POST` is parent-only (403 otherwise) and always creates a `member` — the
+  /// role is fixed server-side and a client-sent one is ignored.
   users("users"),
 
   /// `PUT`. Sets a member's spending ceiling. Parent-only; answers 403

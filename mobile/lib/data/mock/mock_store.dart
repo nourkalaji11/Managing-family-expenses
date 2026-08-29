@@ -56,7 +56,10 @@ class MockStore {
     // itself, and the transactions' `user_id` agrees with it because the two
     // seeds share the same literal — see `FamilyMockSource.signedInUserId`.
     _users = FamilyMockSource.users();
-    _seededUserId = _signedIn()?.id;
+    // The seed's owner. Distinct from the session — nobody is signed in yet at
+    // construction time, and conflating the two is what let a member's writes
+    // be judged against the parent's permissions.
+    _seededUserId = FamilyMockSource.signedInUserId;
     _nextUserId = _highestId<User>(_users, (u) => u.id) + 1;
 
     _notifications = FamilyMockSource.notifications();
@@ -104,19 +107,35 @@ class MockStore {
 
   late final int? _seededUserId;
 
-  /// The user the seeded rows belong to, or null if the seed carries none.
+  /// Who new rows are attributed to — the signed-in user, not the seed's owner.
   ///
-  /// Derived from the seeded family rather than hard-coded here: there is
-  /// deliberately no fallback to a literal id, because inventing an owner would
-  /// be exactly the kind of fabricated backend behaviour this mock layer exists
-  /// to avoid. Callers must handle null. `TransactionsRepo.create` surfaces a
-  /// failure instead of writing an unattributed row.
-  int? get currentUserId => _seededUserId;
+  /// Null before anyone signs in, and callers must handle that: inventing an
+  /// owner would be exactly the fabricated backend behaviour this mock exists to
+  /// avoid. `TransactionsRepo.create` surfaces a failure rather than writing an
+  /// unattributed row.
+  int? get currentUserId => signedInUser?.id;
 
   /// The signed-in user. Everything the mock does is done as this person: there
   /// is one session, so the family scoping the server applies per-request is a
   /// no-op here and is not reimplemented.
+  ///
+  /// This follows the **session**, not the seed. It used to return the seeded
+  /// user unconditionally, which made every role check in the mock answer for
+  /// the parent no matter who had actually logged in: a member's spending
+  /// ceiling was never applied, their dashboard drew the parent's layout, and
+  /// the family list showed them everybody. Signing in is what sets it — see
+  /// [signInAs].
   User? get signedInUser => _signedIn();
+
+  /// Binds the session to [userId]. Called by `AuthRepo` on login and register,
+  /// and with null by `ProfileRepo` on logout.
+  ///
+  /// The store holds the id rather than the `User` so that an edit to the row —
+  /// a rename, a new ceiling — is picked up on the next read instead of leaving
+  /// a stale copy behind.
+  void signInAs(int? userId) => _sessionUserId = userId;
+
+  int? _sessionUserId;
 
   /// The whole family, in seed order. The server scopes this by role — a parent
   /// sees everyone, a member sees only themselves — and `ProfileRepo` applies
@@ -554,14 +573,20 @@ class MockStore {
     return _transactions.length != before;
   }
 
-  /// The signed-in user, matched by the seed's id. A plain loop rather than
-  /// `firstWhereOrNull`, which lives in `package:collection` and is not a direct
-  /// dependency of this project.
+  /// The session's user. A plain loop rather than `firstWhereOrNull`, which
+  /// lives in `package:collection` and is not a direct dependency here.
+  ///
+  /// Returns null when nobody has signed in, rather than falling back to the
+  /// seeded parent: a silent fallback is what hid the role bug this method used
+  /// to have, and a null forces the caller to deal with "no session" explicitly.
   User? _signedIn() {
+    final id = _sessionUserId;
+    if (id == null) return null;
+
     for (final u in _users) {
-      if (u.id == FamilyMockSource.signedInUserId) return u;
+      if (u.id == id) return u;
     }
-    return _users.isEmpty ? null : _users.first;
+    return null;
   }
 
   /// Highest id in [rows], or 0 when none carries one.

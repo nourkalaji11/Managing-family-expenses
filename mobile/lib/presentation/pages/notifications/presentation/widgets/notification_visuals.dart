@@ -18,17 +18,24 @@ class NotificationVisuals {
     NotificationType.limitBlocked => Icons.block_outlined,
     NotificationType.memberSpent => Icons.receipt_long_outlined,
     NotificationType.limitUpdated => Icons.tune_outlined,
+    NotificationType.limitApproaching => Icons.warning_amber_rounded,
     NotificationType.general => Icons.notifications_none,
   };
 
   /// The ink for the glyph.
   ///
-  /// Only the two kinds that report something going wrong are red. A member
-  /// simply recording an expense is routine, and painting it red would train
-  /// the user to ignore the colour that matters.
+  /// Only the two kinds that report something already gone wrong are red. A
+  /// member simply recording an expense is routine, and painting it red would
+  /// train the user to ignore the colour that matters.
+  ///
+  /// `limitApproaching` is amber rather than red on purpose: nothing has failed
+  /// yet, and that is the point of it — it arrives while the parent can still
+  /// raise the ceiling or ask what the money is for. Red would say "too late",
+  /// which is exactly what this one is not.
   static Color inkFor(NotificationType type) => switch (type) {
     NotificationType.budgetExceeded => ColorsApp.errorRed,
     NotificationType.limitBlocked => ColorsApp.errorRed,
+    NotificationType.limitApproaching => ColorsApp.dashboardAmber,
     NotificationType.memberSpent => ColorsApp.primaryGreenPressed,
     NotificationType.limitUpdated => ColorsApp.dashboardBlue,
     NotificationType.general => ColorsApp.onSurfaceVariant,

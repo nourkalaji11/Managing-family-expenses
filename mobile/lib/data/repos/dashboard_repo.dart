@@ -60,13 +60,29 @@ class DashboardRepo extends DashboardDomain {
       // from the dashboard the next time it loaded.
       final store = MockStore.instance;
       final List<Account> accounts = store.accounts;
-      final List<TransactionModel> transactions = store.transactions;
+      final viewer = store.signedInUser;
+
+      // Scoped by role, as `DashboardController` scopes it: a parent's figures
+      // cover the family, a member's cover only their own rows. Without this a
+      // child's home screen reported the household's income and spending as
+      // though it were theirs — and the parent's whole reason for the app,
+      // seeing what each child spends, would show the same numbers to both.
+      //
+      // `total_balance` stays family-wide on both sides, deliberately: the
+      // accounts are shared and listed to everyone, so hiding their sum from a
+      // child is theatre they could undo by adding the list up themselves.
+      final List<TransactionModel> transactions =
+          (viewer == null || viewer.isParent)
+          ? store.transactions
+          : [
+              for (final t in store.transactions)
+                if (t.userId == viewer.id) t,
+            ];
 
       // A member's dashboard draws their ceiling where a parent's draws the
       // alerts panel, so the mock has to know which one is signed in. Without
       // this, signing in as a member offline would silently show the parent
       // layout and the ceiling card would never render.
-      final viewer = store.signedInUser;
       final num? limit = (viewer != null && !viewer.isParent)
           ? viewer.spendingLimit
           : null;

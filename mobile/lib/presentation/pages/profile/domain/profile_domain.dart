@@ -26,7 +26,26 @@ abstract class ProfileDomain {
 
   /// Family members. The server scopes this by role: a parent gets everyone, a
   /// member gets only themselves.
+  ///
+  /// Each row carries `spent` and `remaining` beside the ceiling, so the screen
+  /// can show what has been used rather than only what is allowed.
   Future<Either<Failure, List<User>>> getFamilyMembers();
+
+  /// Creates a child's account. Parent-only; the server answers 403 otherwise
+  /// and 422 on a duplicate email.
+  ///
+  /// The role is not a parameter: the server fixes it to `member` and ignores
+  /// any role the client sends, so offering the choice here would be offering
+  /// something that cannot happen.
+  ///
+  /// [spendingLimit] is optional — null leaves the child with no ceiling, which
+  /// the parent can set later.
+  Future<Either<Failure, User>> createMember({
+    required String name,
+    required String email,
+    required String password,
+    num? spendingLimit,
+  });
 
   /// Sets a member's spending ceiling. Parent-only; the server answers 403
   /// otherwise, and 422 when the target is itself a parent.

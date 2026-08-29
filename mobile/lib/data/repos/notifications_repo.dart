@@ -136,17 +136,30 @@ class NotificationsRepo extends NotificationsDomain {
     await Future.delayed(mockDelay);
 
     final store = MockStore.instance;
-    // Newest first. The store keeps insertion order and prepends, so this
-    // sort is what guarantees the seed and anything added since interleave
-    // correctly by time rather than by when they happened to be written.
-    final all = [...store.notifications]
-      ..sort((a, b) {
-        final x = a.createdAt, y = b.createdAt;
-        if (x == null && y == null) return 0;
-        if (x == null) return 1;
-        if (y == null) return -1;
-        return y.compareTo(x);
-      });
+    final viewerId = store.signedInUser?.id;
+
+    // Addressed to this person only. The server never returns anybody else's
+    // rows, so the live path needs no filter; the mock keeps one list for the
+    // whole family and would otherwise show a child the copy written to their
+    // parent — revealing both that the parent was told and what they were told.
+    //
+    // A null `userId` is a seeded row that predates addressing: shown to
+    // everyone rather than hidden from everyone.
+    //
+    // Newest first. The store keeps insertion order and prepends, so this sort
+    // is what guarantees the seed and anything added since interleave correctly
+    // by time rather than by when they happened to be written.
+    final all =
+        [
+          for (final n in store.notifications)
+            if (n.userId == null || n.userId == viewerId) n,
+        ]..sort((a, b) {
+          final x = a.createdAt, y = b.createdAt;
+          if (x == null && y == null) return 0;
+          if (x == null) return 1;
+          if (y == null) return -1;
+          return y.compareTo(x);
+        });
 
     final total = all.length;
     // At least 1, so an empty list reports page 1 of 1 rather than 1 of 0 —

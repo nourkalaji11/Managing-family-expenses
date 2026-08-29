@@ -61,6 +61,11 @@ class FamilyMockSource {
 
   /// Seeded notifications, oldest first — `NotificationsRepo` sorts.
   ///
+  /// All addressed to the parent: every one of them reports something a child
+  /// did, which is the parent's view. Leaving `userId` null would show them to
+  /// the children too, including the message telling their father they had been
+  /// refused.
+  ///
   /// One row per [NotificationType] that `NotificationService` on the server can
   /// actually produce, so the list screen's type icons and colours are all
   /// exercised without having to trigger each event by hand.
@@ -73,6 +78,7 @@ class FamilyMockSource {
     return [
       AppNotification(
         id: 1,
+        userId: signedInUserId,
         rawType: NotificationType.limitUpdated.wire,
         title: 'تم تحديث سقف السحب',
         message: 'تم تعيين سقف سحب شهري بقيمة 1,500 ل.س لحساب نور.',
@@ -81,6 +87,7 @@ class FamilyMockSource {
       ),
       AppNotification(
         id: 2,
+        userId: signedInUserId,
         rawType: NotificationType.memberSpent.wire,
         title: 'عملية صرف جديدة',
         message: 'صرفت نور 468 ل.س على المطاعم.',
@@ -89,6 +96,7 @@ class FamilyMockSource {
       ),
       AppNotification(
         id: 3,
+        userId: signedInUserId,
         rawType: NotificationType.limitBlocked.wire,
         title: 'تم رفض عملية صرف',
         message: 'حاولت نور صرف 900 ل.س وهو ما يتجاوز السقف المتبقي.',
@@ -96,6 +104,7 @@ class FamilyMockSource {
       ),
       AppNotification(
         id: 4,
+        userId: signedInUserId,
         rawType: NotificationType.budgetExceeded.wire,
         title: 'تجاوزت الميزانية',
         message: 'تجاوز الصرف على المطاعم ميزانية هذا الشهر.',

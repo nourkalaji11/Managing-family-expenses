@@ -83,24 +83,36 @@ extension TransactionTypeHelper on Iterable<TransactionType> {
 ///     removed in a separate cleanup step; the paths they point at do not
 ///     exist, which is why nothing renders them any more.
 enum MainTabs {
-  home("tabs.home", "assets/icons/nav_bar/home.svg", Icons.home_outlined,
-      Icons.home),
+  home(
+    "tabs.home",
+    "assets/icons/nav_bar/home.svg",
+    Icons.home_outlined,
+    Icons.home,
+  ),
   transactions(
     "tabs.transactions",
     "assets/icons/nav_bar/transactions.svg",
     Icons.account_balance_wallet_outlined,
     Icons.account_balance_wallet,
   ),
-  budgets("tabs.budgets", "assets/icons/nav_bar/budgets.svg", Icons.query_stats,
-      Icons.query_stats),
+  budgets(
+    "tabs.budgets",
+    "assets/icons/nav_bar/budgets.svg",
+    Icons.query_stats,
+    Icons.query_stats,
+  ),
   accounts(
     "tabs.accounts",
     "assets/icons/nav_bar/accounts.svg",
     Icons.account_balance_outlined,
     Icons.account_balance,
   ),
-  categories("tabs.categories", "assets/icons/nav_bar/categories.svg",
-      Icons.grid_view_outlined, Icons.grid_view);
+  categories(
+    "tabs.categories",
+    "assets/icons/nav_bar/categories.svg",
+    Icons.grid_view_outlined,
+    Icons.grid_view,
+  );
 
   /// Translation key, resolved with `.tr()` at render time.
   final String text;

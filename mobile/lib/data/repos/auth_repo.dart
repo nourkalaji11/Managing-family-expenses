@@ -245,6 +245,12 @@ class AuthRepo extends AuthDomain {
   /// must not change identity underneath the family list because a screen
   /// assigned to the session object.
   static User _asSession(User user) {
+    // Binds the store to this person. Everything role-dependent in the mock —
+    // the spending ceiling, the family list, the member vs parent dashboard —
+    // reads `MockStore.signedInUser`, so skipping this would sign the user in
+    // on screen while the data layer still answered as somebody else.
+    MockStore.instance.signInAs(user.id);
+
     final session = user.copyWith();
     session.token = mockToken;
     return session;

@@ -124,6 +124,46 @@ class ProfileRepo extends ProfileDomain {
   }
 
   @override
+  Future<Either<Failure, User>> createMember({
+    required String name,
+    required String email,
+    required String password,
+    num? spendingLimit,
+  }) async {
+    if (useMock) {
+      return _mockCreateMember(
+        name: name,
+        email: email,
+        spendingLimit: spendingLimit,
+      );
+    }
+
+    try {
+      final response = await client.request(
+        requestType: RequestType.post,
+        path: GlobalApiEndpoint.users.endpoint,
+        body: {
+          'name': name,
+          'email': email,
+          'password': password,
+          // Omitted rather than sent as null when the parent left it blank:
+          // the rule is `nullable`, and sending the key at all is a claim that
+          // a decision was made.
+          if (spendingLimit != null) 'spending_limit': spendingLimit,
+        },
+      );
+
+      return Right(User.fromJson(unwrapObject(response)));
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, User>> setSpendingLimit(int userId, num limit) async {
     if (useMock) return _mockSetSpendingLimit(userId, limit);
 
@@ -151,6 +191,9 @@ class ProfileRepo extends ProfileDomain {
       // is what signing out actually means here, so it is done directly rather
       // than by letting a doomed request fall through to the `finally`.
       await Future.delayed(mockWriteDelay);
+      // The data layer's session is cleared alongside the app's, so the next
+      // person to log in is not judged against the last one's role.
+      MockStore.instance.signInAs(null);
       LocalStorage().removeUser();
       LocalsApp.user = null;
       return const Right(true);
@@ -257,12 +300,15 @@ class ProfileRepo extends ProfileDomain {
     // The server's rule: a parent sees everyone, a member sees only themselves.
     // A member who could enumerate the family would be reading other people's
     // names, emails and ceilings.
-    final members = viewer.isParent
+    final base = viewer.isParent
         ? ([...store.users]
             ..sort((a, b) => (a.name ?? '').compareTo(b.name ?? '')))
         : <User>[viewer];
 
-    return Right(members);
+    // `spent` and `remaining` are computed per read, as the server computes
+    // them, rather than stored on the row — a stored figure would be stale the
+    // moment anyone recorded an expense.
+    return Right([for (final m in base) _withUsage(store, m)]);
   }
 
   Future<Either<Failure, User>> _mockSetSpendingLimit(
@@ -299,19 +345,87 @@ class ProfileRepo extends ProfileDomain {
     // `NotificationService::limitUpdated` fires here on the server. Generated
     // in the mock too, so the notifications tab reflects what was just done
     // rather than staying frozen on its seed.
+    // The person whose ceiling changed. They are the one it constrains.
     store.addNotification(
       AppNotification(
         id: store.allocateNotificationId(),
+        userId: target.id,
         rawType: NotificationType.limitUpdated.wire,
         title: 'تم تحديث سقف السحب',
         message:
             'تم تعيين سقف سحب بقيمة ${limit.toStringAsFixed(0)} ل.س '
-            'لحساب ${target.name ?? ''}.',
+            'لحسابك.',
         createdAt: DateTime.now(),
       ),
     );
 
     return Right(updated);
+  }
+
+  Future<Either<Failure, User>> _mockCreateMember({
+    required String name,
+    required String email,
+    num? spendingLimit,
+  }) async {
+    await Future.delayed(mockWriteDelay);
+
+    final store = MockStore.instance;
+    final viewer = store.signedInUser;
+    if (viewer == null) return Left(ResultFailure('unauthenticated'.tr()));
+
+    // 403. A member adding family members would be a member granting
+    // themselves an accomplice with a ceiling of their own choosing.
+    if (!viewer.isParent) {
+      return Left(ResultFailure('profile.error_add_forbidden'.tr()));
+    }
+
+    if (store.emailTaken(email)) {
+      return Left(ResultFailure('profile.error_email_taken'.tr()));
+    }
+
+    final member = User(
+      id: store.allocateUserId(),
+      name: name,
+      email: email,
+      // Fixed, never taken from the caller — the server fixes it too.
+      role: 'member',
+      spendingLimit: spendingLimit,
+    );
+
+    store.addUser(member);
+
+    // The same notification that setting a ceiling later would record, so the
+    // history does not depend on when the parent happened to decide.
+    if (spendingLimit != null) {
+      store.addNotification(
+        AppNotification(
+          id: store.allocateNotificationId(),
+          userId: member.id,
+          rawType: NotificationType.limitUpdated.wire,
+          title: 'تم تحديث سقف السحب',
+          message:
+              'تم تعيين سقف سحب بقيمة ${spendingLimit.toStringAsFixed(0)} ل.س '
+              'لحسابك.',
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
+    return Right(member);
+  }
+
+  /// [member] with the spend figures the family screen draws.
+  static User _withUsage(MockStore store, User member) {
+    final spent = store.spentAgainstLimitBy(member.id);
+    final limit = member.spendingLimit;
+    final left = limit == null ? null : limit - spent;
+
+    return member.copyWith(
+      spent: spent,
+      // Null when there is no ceiling — nothing to be left of. Floored at zero
+      // when overspent, matching `DashboardController`.
+      remaining: left == null ? null : (left < 0 ? 0 : left),
+    );
   }
 
   /// A copy of [user] carrying the session's token.

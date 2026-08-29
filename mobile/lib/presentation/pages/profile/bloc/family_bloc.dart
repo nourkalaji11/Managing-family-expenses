@@ -31,6 +31,8 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
         await _load(emit);
       } else if (event is OnSetSpendingLimit) {
         await _setLimit(emit, event.userId, event.limit);
+      } else if (event is OnAddFamilyMember) {
+        await _addMember(emit, event);
       }
     });
   }
@@ -47,6 +49,45 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
           canManage: LocalsApp.user?.isParent ?? false,
         ),
       ),
+    );
+  }
+
+  Future<void> _addMember(
+    Emitter<FamilyState> emit,
+    OnAddFamilyMember event,
+  ) async {
+    final FamilyState current = state;
+    if (current is! FamilyLoaded) return;
+    // A second submission while the first is in flight would create the child
+    // twice — or once, plus a confusing duplicate-email error.
+    if (current.isAddingMember) return;
+
+    emit(current.copyWith(isAddingMember: true, clearFailure: true));
+
+    final result = await _repo.createMember(
+      name: event.name,
+      email: event.email,
+      password: event.password,
+      spendingLimit: event.spendingLimit,
+    );
+
+    result.fold(
+      (failure) =>
+          emit(current.copyWith(isAddingMember: false, writeFailure: failure)),
+      (created) {
+        // Appended and re-sorted rather than refetched: the server answers with
+        // the new row, and the list is ordered by name on both sides.
+        final List<User> next = [...current.members, created]
+          ..sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+
+        emit(
+          current.copyWith(
+            members: next,
+            isAddingMember: false,
+            lastAddedMemberId: created.id,
+          ),
+        );
+      },
     );
   }
 
