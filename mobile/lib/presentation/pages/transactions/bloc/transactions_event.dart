@@ -41,6 +41,29 @@ class OnTypeFilterChanged extends TransactionsEvent {
 /// "هذا الشهر" toggled. Independent of [OnTypeFilterChanged] — the design
 /// prototype treated all four chips as one radio group, which conflates two
 /// unrelated axes.
+/// Narrows to one person's rows, or clears the narrowing with null.
+///
+/// Only ever dispatched on a parent's screen: a member's list is scoped to
+/// their own rows server-side, so there is nobody else to pick.
+class OnPersonFilterChanged extends TransactionsEvent {
+  final int? userId;
+
+  const OnPersonFilterChanged(this.userId);
+
+  @override
+  List<Object?> get props => <Object?>[userId];
+}
+
+/// Narrows to one category, or clears the narrowing with null.
+class OnCategoryFilterChanged extends TransactionsEvent {
+  final int? categoryId;
+
+  const OnCategoryFilterChanged(this.categoryId);
+
+  @override
+  List<Object?> get props => <Object?>[categoryId];
+}
+
 class OnPeriodFilterChanged extends TransactionsEvent {
   final TransactionPeriodFilter filter;
 

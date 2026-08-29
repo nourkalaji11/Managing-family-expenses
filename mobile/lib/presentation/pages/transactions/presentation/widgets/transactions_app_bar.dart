@@ -48,7 +48,8 @@ class TransactionsAppBar extends StatelessWidget
           // 32px here, against the dashboard's 40px — the design draws this
           // avatar smaller (`w-8 h-8`).
           InkWell(
-            onTap: onProfilePressed ??
+            onTap:
+                onProfilePressed ??
                 () => Navigator.of(context).pushNamed(AppRoutes.profile),
             customBorder: const CircleBorder(),
             child: Padding(
@@ -57,7 +58,8 @@ class TransactionsAppBar extends StatelessWidget
             ),
           ),
           IconButton(
-            onPressed: onNotificationsPressed ??
+            onPressed:
+                onNotificationsPressed ??
                 () => Navigator.of(context).pushNamed(AppRoutes.notifications),
             iconSize: 22.r,
             color: ColorsApp.onSurfaceVariant,

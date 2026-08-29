@@ -16,11 +16,7 @@ class AmountDisplay extends StatelessWidget {
   /// save. Null when valid or not yet submitted.
   final String? errorKey;
 
-  const AmountDisplay({
-    super.key,
-    required this.amountInput,
-    this.errorKey,
-  });
+  const AmountDisplay({super.key, required this.amountInput, this.errorKey});
 
   @override
   Widget build(BuildContext context) {

@@ -103,10 +103,7 @@ class TransactionFormBloc
     final result = await _repo.getTransactions();
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: TransactionFormStatus.failure,
-          failure: failure,
-        ),
+        state.copyWith(status: TransactionFormStatus.failure, failure: failure),
       ),
       (data) {
         // Only fills a gap: an id already chosen (Edit, or a seeded default)
@@ -134,8 +131,10 @@ class TransactionFormBloc
   /// Errors are always computed but only *rendered* once [showErrors] is set by
   /// a submit attempt, so the form does not shout at the user before they have
   /// filled anything in.
-  TransactionFormState _revalidated(TransactionFormState next) =>
-      next.copyWith(errors: validate(next), status: TransactionFormStatus.editing);
+  TransactionFormState _revalidated(TransactionFormState next) => next.copyWith(
+    errors: validate(next),
+    status: TransactionFormStatus.editing,
+  );
 
   Future<void> _submit(Emitter<TransactionFormState> emit) async {
     // Guards double submission: a second tap while the first save is in flight
@@ -175,10 +174,7 @@ class TransactionFormBloc
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: TransactionFormStatus.failure,
-          failure: failure,
-        ),
+        state.copyWith(status: TransactionFormStatus.failure, failure: failure),
       ),
       (saved) => emit(
         state.copyWith(status: TransactionFormStatus.success, saved: saved),
@@ -210,10 +206,7 @@ class TransactionFormBloc
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: TransactionFormStatus.failure,
-          failure: failure,
-        ),
+        state.copyWith(status: TransactionFormStatus.failure, failure: failure),
       ),
       // A distinct terminal status, not `success`: the screen pops with a
       // different result so the list knows a row disappeared rather than

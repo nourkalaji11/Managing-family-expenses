@@ -4,6 +4,7 @@ import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/category.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/data/models/user.dart';
 import 'package:family_expense_management/data/repos/transactions_repo.dart';
 import 'package:family_expense_management/network/failure.dart';
 import 'package:family_expense_management/presentation/pages/transactions/domain/transactions_domain.dart';
@@ -41,6 +42,18 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
         _reproject(emit, typeFilter: event.filter);
       } else if (event is OnPeriodFilterChanged) {
         _reproject(emit, periodFilter: event.filter);
+      } else if (event is OnPersonFilterChanged) {
+        _reproject(
+          emit,
+          personFilter: event.userId,
+          clearPersonFilter: event.userId == null,
+        );
+      } else if (event is OnCategoryFilterChanged) {
+        _reproject(
+          emit,
+          categoryFilter: event.categoryId,
+          clearCategoryFilter: event.categoryId == null,
+        );
       }
     });
   }
@@ -56,6 +69,12 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     final TransactionPeriodFilter periodFilter = current is TransactionsLoaded
         ? current.periodFilter
         : TransactionPeriodFilter.all;
+    final int? personFilter = current is TransactionsLoaded
+        ? current.personFilter
+        : null;
+    final int? categoryFilter = current is TransactionsLoaded
+        ? current.categoryFilter
+        : null;
 
     final result = await _repo.getTransactions();
     result.fold((failure) => emit(TransactionsFailure(failure)), (data) {
@@ -64,14 +83,19 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
           all: data.transactions,
           accounts: data.accounts,
           categories: data.categories,
+          members: data.members,
           query: query,
           typeFilter: typeFilter,
           periodFilter: periodFilter,
+          personFilter: personFilter,
+          categoryFilter: categoryFilter,
           groups: buildGroups(
             data.transactions,
             query: query,
             typeFilter: typeFilter,
             periodFilter: periodFilter,
+            personFilter: personFilter,
+            categoryFilter: categoryFilter,
           ),
         ),
       );
@@ -85,6 +109,10 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     String? query,
     TransactionTypeFilter? typeFilter,
     TransactionPeriodFilter? periodFilter,
+    int? personFilter,
+    int? categoryFilter,
+    bool clearPersonFilter = false,
+    bool clearCategoryFilter = false,
   }) {
     final TransactionsState current = state;
     if (current is! TransactionsLoaded) return;
@@ -93,19 +121,31 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     final TransactionTypeFilter nextType = typeFilter ?? current.typeFilter;
     final TransactionPeriodFilter nextPeriod =
         periodFilter ?? current.periodFilter;
+    final int? nextPerson = clearPersonFilter
+        ? null
+        : (personFilter ?? current.personFilter);
+    final int? nextCategory = clearCategoryFilter
+        ? null
+        : (categoryFilter ?? current.categoryFilter);
 
     emit(
       current.copyWith(
         query: nextQuery,
         typeFilter: nextType,
         periodFilter: nextPeriod,
-        // Always rebuilt from `all`, so the three criteria compose instead of
-        // one resetting another.
+        personFilter: nextPerson,
+        categoryFilter: nextCategory,
+        clearPersonFilter: clearPersonFilter,
+        clearCategoryFilter: clearCategoryFilter,
+        // Always rebuilt from `all`, so the criteria compose instead of one
+        // resetting another.
         groups: buildGroups(
           current.all,
           query: nextQuery,
           typeFilter: nextType,
           periodFilter: nextPeriod,
+          personFilter: nextPerson,
+          categoryFilter: nextCategory,
         ),
       ),
     );
@@ -127,6 +167,8 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     required String query,
     required TransactionTypeFilter typeFilter,
     required TransactionPeriodFilter periodFilter,
+    int? personFilter,
+    int? categoryFilter,
     DateTime? now,
   }) {
     final DateTime today = now ?? DateTime.now();
@@ -136,6 +178,10 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     for (final t in source) {
       if (!_matchesType(t, typeFilter)) continue;
       if (!_matchesPeriod(t, periodFilter, today)) continue;
+      if (personFilter != null && t.userId != personFilter) continue;
+      // Compared against the id rather than the relation, because a row whose
+      // `category` failed to load still carries `category_id`.
+      if (categoryFilter != null && t.categoryId != categoryFilter) continue;
       if (!_matchesQuery(t, needle)) continue;
       matches.add(t);
     }
@@ -164,18 +210,13 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       final DateTime? d = effectiveDate(t);
       // Rows with no date at all still render, in a trailing undated group,
       // rather than being dropped from a list the user expects to be complete.
-      final DateTime? day = d == null
-          ? null
-          : DateTime(d.year, d.month, d.day);
+      final DateTime? day = d == null ? null : DateTime(d.year, d.month, d.day);
 
       if (groups.isNotEmpty && _sameDay(groups.last.day, day)) {
         groups.last.transactions.add(t);
       } else {
         groups.add(
-          TransactionDayGroup(
-            day: day,
-            transactions: <TransactionModel>[t],
-          ),
+          TransactionDayGroup(day: day, transactions: <TransactionModel>[t]),
         );
       }
     }

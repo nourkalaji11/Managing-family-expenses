@@ -157,6 +157,7 @@ class TransactionFormState extends Equatable {
     TransactionFormErrors? errors,
     Failure? failure,
     TransactionModel? saved,
+
     /// Explicitly drops a previous failure. Needed because `failure: null` in a
     /// `??`-based copyWith means "keep the old one".
     bool clearFailure = false,

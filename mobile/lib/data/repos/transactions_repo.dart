@@ -95,11 +95,34 @@ class TransactionsRepo extends TransactionsDomain {
       await Future.delayed(mockDelay);
 
       final store = MockStore.instance;
+      final viewer = store.signedInUser;
+      final bool isParent = viewer?.isParent ?? false;
+
+      // Scoped exactly as `TransactionController::index` scopes it: a parent
+      // sees the family's rows, a member sees only their own. The screen builds
+      // its person filter from what it is given, so getting this wrong here
+      // would put siblings' names in a child's filter.
+      final rows = isParent
+          ? store.transactions
+          : [
+              for (final t in store.transactions)
+                if (t.userId == viewer?.id) t,
+            ];
+
       return Right(
         TransactionsData(
-          transactions: sortedNewestFirst(store.transactions),
+          transactions: sortedNewestFirst([
+            // The owner is attached on the way out rather than stored on the
+            // row: a rename would otherwise leave every past transaction
+            // labelled with the old name.
+            for (final t in rows) t.copyWith(user: store.userById(t.userId)),
+          ]),
           accounts: store.accounts,
           categories: store.categories,
+          // Same rule as the server: a member is given only themselves.
+          members: isParent
+              ? store.users
+              : (viewer == null ? const <User>[] : <User>[viewer]),
         ),
       );
     } catch (e) {
@@ -542,6 +565,13 @@ class TransactionsRepo extends TransactionsDomain {
           requestType: RequestType.get,
           path: GlobalApiEndpoint.categories.endpoint,
         ),
+        // The family, for the "whose spending" filter. Scoped server-side: a
+        // member gets back only themselves, so the filter offers them nothing
+        // rather than the app having to decide what to hide.
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.users.endpoint,
+        ),
       ]);
 
       final transactions = [
@@ -562,6 +592,9 @@ class TransactionsRepo extends TransactionsDomain {
           categories: [
             for (final json in unwrapList(responses[2]))
               Category.fromJson(json),
+          ],
+          members: [
+            for (final json in unwrapList(responses[3])) User.fromJson(json),
           ],
         ),
       );

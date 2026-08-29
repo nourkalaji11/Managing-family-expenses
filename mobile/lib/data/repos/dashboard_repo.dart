@@ -5,6 +5,7 @@ import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/dashboard_summary.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/data/models/user.dart';
 import 'package:family_expense_management/network/api_envelope.dart';
 import 'package:family_expense_management/network/failure.dart';
 import 'package:family_expense_management/network/global_api_endpoint.dart';
@@ -95,6 +96,17 @@ class DashboardRepo extends DashboardDomain {
           spentOfLimit: limit == null
               ? null
               : store.spentAgainstLimitBy(viewer?.id),
+          // Parents only, matching `GET /users`: a member is given nobody but
+          // themselves, so the family card does not appear on their home.
+          members: (viewer?.isParent ?? false)
+              ? [
+                  for (final m in store.users)
+                    m.copyWith(
+                      spent: store.spentAgainstLimitBy(m.id),
+                      remaining: _remainingFor(store, m),
+                    ),
+                ]
+              : const <User>[],
         ),
       );
     } catch (e) {
@@ -110,11 +122,25 @@ class DashboardRepo extends DashboardDomain {
   /// Shared by both paths on purpose: when [useMock] flips, the aggregation and
   /// the sort/limit behaviour stay byte-for-byte identical, so the UI cannot
   /// change shape just because the source changed.
+  /// What is left of [member]'s allowance, or null when they have none.
+  ///
+  /// Same arithmetic as `ProfileRepo._withUsage`, and the same floor at zero
+  /// that `DashboardController` applies: a member who has overshot has nothing
+  /// left, not a negative allowance.
+  static num? _remainingFor(MockStore store, User member) {
+    final limit = member.spendingLimit;
+    if (limit == null) return null;
+
+    final left = limit - store.spentAgainstLimitBy(member.id);
+    return left < 0 ? 0 : left;
+  }
+
   DashboardData _aggregate(
     List<Account> accounts,
     List<TransactionModel> transactions, {
     num? spendingLimit,
     num? spentOfLimit,
+    List<User> members = const <User>[],
   }) {
     final summary = DashboardSummary.from(
       accounts: accounts,
@@ -137,6 +163,7 @@ class DashboardRepo extends DashboardDomain {
     return DashboardData(
       summary: summary,
       recentTransactions: sorted.take(recentTransactionsLimit).toList(),
+      members: members,
     );
   }
 
@@ -150,12 +177,22 @@ class DashboardRepo extends DashboardDomain {
   /// be paginated.
   Future<Either<Failure, DashboardData>> _getRemote() async {
     try {
-      final response = await client.request(
-        requestType: RequestType.get,
-        path: GlobalApiEndpoint.dashboard.endpoint,
-      );
+      // Two requests, not one: the dashboard payload has no member list, and
+      // `GET /users` already computes `spent` and `remaining` per person.
+      // Adding those to the dashboard response would be a second source for
+      // the same numbers, and a second thing to keep in agreement.
+      final responses = await Future.wait([
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.dashboard.endpoint,
+        ),
+        client.request(
+          requestType: RequestType.get,
+          path: GlobalApiEndpoint.users.endpoint,
+        ),
+      ]);
 
-      final Map<String, dynamic> data = unwrapObject(response);
+      final Map<String, dynamic> data = unwrapObject(responses[0]);
 
       return Right(
         DashboardData(
@@ -164,6 +201,11 @@ class DashboardRepo extends DashboardDomain {
             for (final json
                 in (data['recent_transactions'] as List? ?? const []))
               if (json is Map<String, dynamic>) TransactionModel.fromJson(json),
+          ],
+          // Scoped by the server: a member gets only themselves back, and
+          // `DashboardData.children` then filters that to nothing.
+          members: [
+            for (final json in unwrapList(responses[1])) User.fromJson(json),
           ],
         ),
       );

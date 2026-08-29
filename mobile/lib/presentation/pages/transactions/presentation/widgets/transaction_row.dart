@@ -19,7 +19,22 @@ class TransactionRow extends StatelessWidget {
   final TransactionModel transaction;
   final VoidCallback? onTap;
 
-  const TransactionRow({super.key, required this.transaction, this.onTap});
+  /// The signed-in user's id, so the row can say who spent it — and stay quiet
+  /// when that is the reader.
+  ///
+  /// A parent's list mixes the whole family's rows and is unreadable without
+  /// names; a member's list is scoped to their own rows server-side, so every
+  /// name there would be their own and pure noise. Comparing against the viewer
+  /// covers both, and covers a parent's own rows too, which should not tell
+  /// أحمد that أحمد spent it.
+  final int? viewerId;
+
+  const TransactionRow({
+    super.key,
+    required this.transaction,
+    this.onTap,
+    this.viewerId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +113,26 @@ class TransactionRow extends StatelessWidget {
   String _subtitle() {
     final String? accountName = transaction.account?.name?.trim();
     final String time = DashboardFormatter.timeOfDay(transaction.createdAt);
+    final String? owner = _ownerName();
 
     final List<String> parts = <String>[];
+    // The name leads: scanning a family's list, "who" is the question being
+    // asked, and it has to be readable without reading to the end of the line.
+    if (owner != null) parts.add(owner);
     if (accountName != null && accountName.isNotEmpty) parts.add(accountName);
     if (time.isNotEmpty) parts.add(time);
     return parts.join(' • ');
+  }
+
+  /// Who spent it, or null when naming them adds nothing.
+  String? _ownerName() {
+    final int? ownerId = transaction.userId;
+    // Unknown owner, or the reader's own row.
+    if (ownerId == null || ownerId == viewerId) return null;
+
+    final String? name = transaction.user?.name?.trim();
+    if (name == null || name.isEmpty) return null;
+    return name;
   }
 }
 
@@ -132,11 +162,7 @@ class _IconTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: tint.withValues(alpha: 0.08)),
       ),
-      child: Icon(
-        CategoryVisuals.iconFor(categoryId),
-        size: 22.r,
-        color: tint,
-      ),
+      child: Icon(CategoryVisuals.iconFor(categoryId), size: 22.r, color: tint),
     );
   }
 }

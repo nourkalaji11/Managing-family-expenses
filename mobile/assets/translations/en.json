@@ -60,6 +60,13 @@
   },
 
   "dashboard": {
+    "family_title": "Family members",
+    "family_count": "{count} family members",
+    "family_view_all": "Manage",
+    "member_spent_of": "{spent} of {limit} spent",
+    "member_no_limit": "No allowance",
+    "member_nothing_spent": "Nothing spent",
+    "member_over": "Over the allowance",
     "title": "Expenses",
 
     "total_balance": "Total balance",
@@ -93,6 +100,12 @@
   },
 
   "transactions": {
+    "filter_person": "Person",
+    "filter_category": "Category",
+    "filter_everyone": "Everyone",
+    "filter_all_categories": "All categories",
+    "pick_person": "Choose a person",
+    "pick_category": "Choose a category",
     "error_limit_exceeded": "This amount exceeds the spending limit set for you.",
     "search_hint": "Search for a transaction...",
     "clear_search": "Clear search",

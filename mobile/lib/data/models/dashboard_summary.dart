@@ -1,6 +1,7 @@
 import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/data/models/user.dart';
 
 /// One slice of the "توزيع المصاريف" donut.
 ///
@@ -237,6 +238,16 @@ class DashboardSummary {
 class DashboardData {
   final DashboardSummary summary;
 
+  /// The family, each with what they have spent against their allowance.
+  ///
+  /// From `GET /users`, not from the dashboard payload: that endpoint already
+  /// computes `spent` and `remaining` per member, and a second source for the
+  /// same numbers is a second thing to keep agreeing.
+  ///
+  /// Empty for a member, who is only ever given themselves — so the home card
+  /// that draws this simply does not appear on a child's screen.
+  final List<User> members;
+
   /// Newest-first, already truncated to what "آخر المعاملات" shows. The server
   /// applies the limit, so the client never receives rows it will not draw.
   final List<TransactionModel> recentTransactions;
@@ -244,7 +255,20 @@ class DashboardData {
   const DashboardData({
     required this.summary,
     required this.recentTransactions,
+    this.members = const <User>[],
   });
+
+  /// Members who carry an allowance — the ones the family card is about.
+  ///
+  /// A parent has no ceiling, so listing them would put a row with nothing to
+  /// report between the rows that have something to report.
+  List<User> get children => [
+    for (final m in members)
+      if (!m.isParent) m,
+  ];
+
+  /// True when there is a family worth drawing a card for.
+  bool get hasFamily => children.isNotEmpty;
 }
 
 /// Laravel returns `DECIMAL` columns as strings, and drops a zero fraction on

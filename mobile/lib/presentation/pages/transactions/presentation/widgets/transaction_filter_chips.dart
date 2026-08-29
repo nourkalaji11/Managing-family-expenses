@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/data/models/category.dart';
+import 'package:family_expense_management/data/models/user.dart';
 import 'package:family_expense_management/presentation/pages/transactions/bloc/transactions_bloc.dart';
 import 'package:family_expense_management/style/colors.dart';
 import 'package:family_expense_management/style/text_style.dart';
@@ -18,6 +20,18 @@ class TransactionFilterChips extends StatelessWidget {
   final ValueChanged<TransactionTypeFilter> onTypeChanged;
   final ValueChanged<TransactionPeriodFilter> onPeriodChanged;
 
+  /// The person currently filtered to, or null for everyone.
+  final User? selectedPerson;
+
+  /// The category currently filtered to, or null for all of them.
+  final Category? selectedCategory;
+
+  /// Null hides the person chip entirely — which is the case for a member,
+  /// who is only ever shown their own rows and has nobody to pick between.
+  final VoidCallback? onPickPerson;
+
+  final VoidCallback? onPickCategory;
+
   /// Horizontal page margin, applied inside the scroll view so the chips can
   /// scroll edge to edge.
   final double horizontalPadding;
@@ -29,6 +43,10 @@ class TransactionFilterChips extends StatelessWidget {
     required this.onTypeChanged,
     required this.onPeriodChanged,
     required this.horizontalPadding,
+    this.selectedPerson,
+    this.selectedCategory,
+    this.onPickPerson,
+    this.onPickCategory,
   });
 
   @override
@@ -38,6 +56,31 @@ class TransactionFilterChips extends StatelessWidget {
       padding: EdgeInsetsDirectional.symmetric(horizontal: horizontalPadding),
       child: Row(
         children: [
+          // Person first: on a parent's screen "who" is the question the list
+          // is opened with, and the type and period chips narrow the answer.
+          if (onPickPerson != null) ...[
+            _Chip(
+              key: const Key('transactions_filter_person'),
+              label:
+                  selectedPerson?.name ?? 'transactions.filter_everyone'.tr(),
+              icon: Icons.person_outline,
+              selected: selectedPerson != null,
+              onTap: onPickPerson!,
+            ),
+            SizedBox(width: 12.w),
+          ],
+          if (onPickCategory != null) ...[
+            _Chip(
+              key: const Key('transactions_filter_category'),
+              label:
+                  selectedCategory?.name ??
+                  'transactions.filter_all_categories'.tr(),
+              icon: Icons.sell_outlined,
+              selected: selectedCategory != null,
+              onTap: onPickCategory!,
+            ),
+            SizedBox(width: 12.w),
+          ],
           _Chip(
             key: const Key('transactions_filter_all'),
             label: 'transactions.filter_all'.tr(),
@@ -114,10 +157,7 @@ class _Chip extends StatelessWidget {
                   : Border.all(color: ColorsApp.outlineVariant),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-                vertical: 9.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 9.h),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

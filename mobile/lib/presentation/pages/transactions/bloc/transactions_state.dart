@@ -43,9 +43,21 @@ class TransactionsLoaded extends TransactionsState {
   final List<Account> accounts;
   final List<Category> categories;
 
+  /// The family, for the "whose spending" filter. Empty for a member, who is
+  /// only ever shown their own rows and must not be handed a roster of the
+  /// others.
+  final List<User> members;
+
   final String query;
   final TransactionTypeFilter typeFilter;
   final TransactionPeriodFilter periodFilter;
+
+  /// Whose rows to show, or null for everyone's. An id rather than a `User` so
+  /// that a rename mid-session cannot leave the filter pointing at a stale copy.
+  final int? personFilter;
+
+  /// Which category to show, or null for all of them.
+  final int? categoryFilter;
 
   /// What the screen renders: filtered, sorted and grouped by day.
   final List<TransactionDayGroup> groups;
@@ -61,8 +73,37 @@ class TransactionsLoaded extends TransactionsState {
     required this.typeFilter,
     required this.periodFilter,
     required this.groups,
+    this.members = const <User>[],
+    this.personFilter,
+    this.categoryFilter,
     this.isRefreshing = false,
   });
+
+  /// True when this screen may offer a "whose spending" filter.
+  ///
+  /// Two or more people, which for a member is never: the server hands them
+  /// only themselves.
+  bool get canFilterByPerson => members.length > 1;
+
+  /// The person currently selected, or null when the filter is off or the id
+  /// matches nobody.
+  User? get selectedPerson {
+    final id = personFilter;
+    if (id == null) return null;
+    for (final m in members) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
+
+  Category? get selectedCategory {
+    final id = categoryFilter;
+    if (id == null) return null;
+    for (final c in categories) {
+      if (c.id == id) return c;
+    }
+    return null;
+  }
 
   /// True when the user has loaded rows but the current criteria match none —
   /// the "no results" empty state, which reads differently from "no data yet".
@@ -75,24 +116,41 @@ class TransactionsLoaded extends TransactionsState {
   bool get hasActiveFilters =>
       query.trim().isNotEmpty ||
       typeFilter != TransactionTypeFilter.all ||
-      periodFilter != TransactionPeriodFilter.all;
+      periodFilter != TransactionPeriodFilter.all ||
+      personFilter != null ||
+      categoryFilter != null;
 
   TransactionsLoaded copyWith({
     List<TransactionModel>? all,
     List<Account>? accounts,
     List<Category>? categories,
+    List<User>? members,
     String? query,
     TransactionTypeFilter? typeFilter,
     TransactionPeriodFilter? periodFilter,
+    int? personFilter,
+    int? categoryFilter,
     List<TransactionDayGroup>? groups,
     bool? isRefreshing,
+
+    /// Explicit clears: `null` in a `??`-based copyWith means "keep", so
+    /// without these there would be no way to turn either filter back off.
+    bool clearPersonFilter = false,
+    bool clearCategoryFilter = false,
   }) => TransactionsLoaded(
     all: all ?? this.all,
     accounts: accounts ?? this.accounts,
     categories: categories ?? this.categories,
+    members: members ?? this.members,
     query: query ?? this.query,
     typeFilter: typeFilter ?? this.typeFilter,
     periodFilter: periodFilter ?? this.periodFilter,
+    personFilter: clearPersonFilter
+        ? null
+        : (personFilter ?? this.personFilter),
+    categoryFilter: clearCategoryFilter
+        ? null
+        : (categoryFilter ?? this.categoryFilter),
     groups: groups ?? this.groups,
     isRefreshing: isRefreshing ?? this.isRefreshing,
   );
@@ -104,9 +162,12 @@ class TransactionsLoaded extends TransactionsState {
     all,
     accounts,
     categories,
+    members,
     query,
     typeFilter,
     periodFilter,
+    personFilter,
+    categoryFilter,
     groups,
     isRefreshing,
   ];

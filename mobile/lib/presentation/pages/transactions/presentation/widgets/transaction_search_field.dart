@@ -78,20 +78,12 @@ class _TransactionSearchFieldState extends State<TransactionSearchField> {
           hintStyle: TextStyleApp.transactionsSearchHint,
           // `prefixIcon` rather than a positioned child, so the glyph flips to
           // the correct side automatically in LTR.
-          prefixIcon: Icon(
-            Icons.search,
-            size: 20.r,
-            color: ColorsApp.outline,
-          ),
+          prefixIcon: Icon(Icons.search, size: 20.r, color: ColorsApp.outline),
           prefixIconConstraints: BoxConstraints(minWidth: 44.w),
           suffixIcon: _controller.text.isEmpty
               ? null
               : IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    size: 18.r,
-                    color: ColorsApp.outline,
-                  ),
+                  icon: Icon(Icons.close, size: 18.r, color: ColorsApp.outline),
                   tooltip: 'transactions.clear_search'.tr(),
                   onPressed: () {
                     _controller.clear();

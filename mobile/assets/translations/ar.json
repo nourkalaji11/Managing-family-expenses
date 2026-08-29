@@ -60,6 +60,13 @@
   },
 
   "dashboard": {
+    "family_title": "أفراد العائلة",
+    "family_count": "{count} من أفراد العائلة",
+    "family_view_all": "إدارة",
+    "member_spent_of": "صرف {spent} من {limit}",
+    "member_no_limit": "بلا سقف",
+    "member_nothing_spent": "لم يصرف شيئاً",
+    "member_over": "تجاوز مصروفه",
     "title": "المصاريف",
 
     "total_balance": "الرصيد الإجمالي",
@@ -93,6 +100,12 @@
   },
 
   "transactions": {
+    "filter_person": "الشخص",
+    "filter_category": "الفئة",
+    "filter_everyone": "الجميع",
+    "filter_all_categories": "كل الفئات",
+    "pick_person": "اختر الشخص",
+    "pick_category": "اختر الفئة",
     "error_limit_exceeded": "عذراً، هذا المبلغ يتجاوز حد السحب المسموح لك به من قبل الأب.",
     "search_hint": "بحث عن معاملة...",
     "clear_search": "مسح البحث",

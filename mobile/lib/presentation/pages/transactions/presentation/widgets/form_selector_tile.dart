@@ -97,10 +97,7 @@ class FormSelectorTile extends StatelessWidget {
             ),
             if (errorKey != null) ...[
               SizedBox(height: 6.h),
-              Text(
-                errorKey!.tr(),
-                style: TextStyleApp.transactionsFieldError,
-              ),
+              Text(errorKey!.tr(), style: TextStyleApp.transactionsFieldError),
             ],
           ],
         ),

@@ -301,9 +301,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     children: [
                       AmountDisplay(
                         amountInput: state.amountInput,
-                        errorKey: state.showErrors
-                            ? state.errors.amount
-                            : null,
+                        errorKey: state.showErrors ? state.errors.amount : null,
                       ),
                       SizedBox(height: 24.h),
                       TransactionTypeToggle(
@@ -322,8 +320,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       SizedBox(height: 20.h),
                       AmountKeypad(
                         onDigit: (d) => _bloc.add(OnAmountDigitPressed(d)),
-                        onBackspace: () =>
-                            _bloc.add(const OnAmountBackspace()),
+                        onBackspace: () => _bloc.add(const OnAmountBackspace()),
                       ),
                     ],
                   ),
@@ -473,11 +470,7 @@ class _DescriptionFieldState extends State<_DescriptionField> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.notes_outlined,
-                size: 18.r,
-                color: ColorsApp.outline,
-              ),
+              Icon(Icons.notes_outlined, size: 18.r, color: ColorsApp.outline),
               SizedBox(width: 10.w),
               Text(
                 'transactions.description'.tr(),
@@ -564,51 +557,50 @@ class _SaveBar extends StatelessWidget {
           ],
           Expanded(
             child: SizedBox(
-        height: 56.h,
-        child: ElevatedButton(
-          key: const Key('transaction_form_save'),
-          // Null while saving: this is what blocks a double submission at the
-          // UI layer. The bloc drops a duplicate event as well.
-          onPressed: state.isBusy ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorsApp.primaryGreenPressed,
-            disabledBackgroundColor: ColorsApp.primaryGreenPressed.withValues(
-              alpha: 0.6,
-            ),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-          ),
-          child: isSubmitting
-              ? SizedBox(
-                  width: 22.r,
-                  height: 22.r,
-                  child: const CircularProgressIndicator(
-                    color: ColorsApp.white,
-                    strokeWidth: 2.5,
+              height: 56.h,
+              child: ElevatedButton(
+                key: const Key('transaction_form_save'),
+                // Null while saving: this is what blocks a double submission at the
+                // UI layer. The bloc drops a duplicate event as well.
+                onPressed: state.isBusy ? null : onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsApp.primaryGreenPressed,
+                  disabledBackgroundColor: ColorsApp.primaryGreenPressed
+                      .withValues(alpha: 0.6),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
                   ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'transactions.save'.tr(),
-                        style: TextStyleApp.transactionsSaveButton,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 22.r,
-                      color: ColorsApp.white,
-                    ),
-                  ],
                 ),
-        ),
+                child: isSubmitting
+                    ? SizedBox(
+                        width: 22.r,
+                        height: 22.r,
+                        child: const CircularProgressIndicator(
+                          color: ColorsApp.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'transactions.save'.tr(),
+                              style: TextStyleApp.transactionsSaveButton,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 22.r,
+                            color: ColorsApp.white,
+                          ),
+                        ],
+                      ),
+              ),
             ),
           ),
         ],

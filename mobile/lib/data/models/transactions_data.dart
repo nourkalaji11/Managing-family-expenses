@@ -2,6 +2,7 @@ import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/category.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
+import 'package:family_expense_management/data/models/user.dart';
 
 /// Everything the transactions feature loads in one call.
 ///
@@ -16,10 +17,19 @@ class TransactionsData {
   final List<Account> accounts;
   final List<Category> categories;
 
+  /// The family, for the "whose spending" filter.
+  ///
+  /// Empty for a member: the server scopes their list to their own rows, so a
+  /// filter offering to narrow by person would offer nothing — and offering
+  /// siblings' names would leak a roster the API deliberately does not give
+  /// them.
+  final List<User> members;
+
   const TransactionsData({
     required this.transactions,
     required this.accounts,
     required this.categories,
+    this.members = const <User>[],
   });
 }
 

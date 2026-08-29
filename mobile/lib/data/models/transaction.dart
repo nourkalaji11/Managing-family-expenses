@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/category.dart';
+import 'package:family_expense_management/data/models/user.dart';
 
 TransactionModel transactionFromJson(String str) =>
     TransactionModel.fromJson(json.decode(str));
@@ -48,6 +49,18 @@ class TransactionModel {
   final Account? account;
   final Category? category;
 
+  /// Who recorded it.
+  ///
+  /// Eager-loaded by `TransactionController::index`, so a parent's list can say
+  /// which child spent what — the reason a parent opens that screen at all. A
+  /// member's list is scoped to their own rows, so it is always themselves
+  /// there and the UI leaves the label off.
+  ///
+  /// `User.$hidden` keeps the password out of the payload; there is a test for
+  /// that, because attaching a relation to a response is exactly where such a
+  /// protection gets lost by accident.
+  final User? user;
+
   /// True when this row is one leg of a transfer between two family accounts.
   ///
   /// Sent by the server as the appended `is_transfer` attribute, derived from
@@ -77,6 +90,7 @@ class TransactionModel {
     this.categoryId,
     this.account,
     this.category,
+    this.user,
     this.isTransfer = false,
     this.transferGroupId,
   });
@@ -105,6 +119,7 @@ class TransactionModel {
         category: json["category"] == null
             ? null
             : Category.fromJson(json["category"]),
+        user: json["user"] == null ? null : User.fromJson(json["user"]),
         // Absent on any payload predating the transfers feature, which reads
         // correctly as "not a transfer".
         isTransfer:
@@ -135,6 +150,7 @@ class TransactionModel {
     int? categoryId,
     Account? account,
     Category? category,
+    User? user,
   }) => TransactionModel(
     id: id ?? this.id,
     amount: amount ?? this.amount,
@@ -149,6 +165,9 @@ class TransactionModel {
     categoryId: categoryId ?? this.categoryId,
     account: account ?? this.account,
     category: category ?? this.category,
+    // Never changed by an edit: the owner is set once, and the server
+    // preserves it on update rather than reading it from the request.
+    user: user ?? this.user,
     // Not a `copyWith` parameter on purpose: whether a row belongs to a
     // transfer is decided when it is created and can never be edited into or
     // out of. The server refuses to update a transfer leg at all.

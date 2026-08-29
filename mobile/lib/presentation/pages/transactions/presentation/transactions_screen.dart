@@ -2,6 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/core/locals_app.dart';
+import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/category_visuals.dart';
+import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/picker_sheet.dart';
 import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/category.dart';
@@ -96,7 +99,71 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _bloc
       ..add(const OnSearchChanged(''))
       ..add(const OnTypeFilterChanged(TransactionTypeFilter.all))
-      ..add(const OnPeriodFilterChanged(TransactionPeriodFilter.all));
+      ..add(const OnPeriodFilterChanged(TransactionPeriodFilter.all))
+      ..add(const OnPersonFilterChanged(null))
+      ..add(const OnCategoryFilterChanged(null));
+  }
+
+  /// Id standing for "no filter" inside a picker.
+  ///
+  /// `PickerSheet` resolves to null when the sheet is dismissed, which would
+  /// otherwise be indistinguishable from choosing "everyone". No real row
+  /// carries id 0, so it is unambiguous.
+  static const int _clearedId = 0;
+
+  Future<void> _pickPerson(TransactionsLoaded state) async {
+    final int? picked = await PickerSheet.show<int>(
+      context: context,
+      title: 'transactions.pick_person'.tr(),
+      selected: state.personFilter ?? _clearedId,
+      options: [
+        PickerOption<int>(
+          value: _clearedId,
+          label: 'transactions.filter_everyone'.tr(),
+          icon: Icons.groups_outlined,
+        ),
+        for (final m in state.members)
+          if (m.id != null)
+            PickerOption<int>(
+              value: m.id!,
+              label: m.name ?? '',
+              // The role, so a parent can tell their children apart from the
+              // other parent at a glance.
+              subtitle: m.isParent
+                  ? 'auth.parent'.tr()
+                  : 'auth.family_member'.tr(),
+              icon: m.isParent ? Icons.shield_outlined : Icons.person_outline,
+            ),
+      ],
+    );
+
+    if (picked == null || !mounted) return;
+    _bloc.add(OnPersonFilterChanged(picked == _clearedId ? null : picked));
+  }
+
+  Future<void> _pickCategory(TransactionsLoaded state) async {
+    final int? picked = await PickerSheet.show<int>(
+      context: context,
+      title: 'transactions.pick_category'.tr(),
+      selected: state.categoryFilter ?? _clearedId,
+      options: [
+        PickerOption<int>(
+          value: _clearedId,
+          label: 'transactions.filter_all_categories'.tr(),
+          icon: Icons.apps_outlined,
+        ),
+        for (final c in state.categories)
+          if (c.id != null)
+            PickerOption<int>(
+              value: c.id!,
+              label: c.name ?? '',
+              icon: CategoryVisuals.iconFor(c.id),
+            ),
+      ],
+    );
+
+    if (picked == null || !mounted) return;
+    _bloc.add(OnCategoryFilterChanged(picked == _clearedId ? null : picked));
   }
 
   @override
@@ -149,6 +216,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       onPeriodChanged: (f) =>
                           _bloc.add(OnPeriodFilterChanged(f)),
                       onClearFilters: _clearFilters,
+                      // Offered only when there is more than one person to
+                      // choose between, which for a member is never: the
+                      // server hands them only themselves.
+                      onPickPerson: state.canFilterByPerson
+                          ? () => _pickPerson(state)
+                          : null,
+                      onPickCategory: state.categories.isEmpty
+                          ? null
+                          : () => _pickCategory(state),
                       onTransactionTap: (t) => _openEdit(state, t),
                     ),
                   };
@@ -169,6 +245,8 @@ class _LoadedView extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<TransactionTypeFilter> onTypeChanged;
   final ValueChanged<TransactionPeriodFilter> onPeriodChanged;
+  final VoidCallback? onPickPerson;
+  final VoidCallback? onPickCategory;
   final VoidCallback onClearFilters;
   final void Function(TransactionModel) onTransactionTap;
 
@@ -179,6 +257,8 @@ class _LoadedView extends StatelessWidget {
     required this.onSearchChanged,
     required this.onTypeChanged,
     required this.onPeriodChanged,
+    this.onPickPerson,
+    this.onPickCategory,
     required this.onClearFilters,
     required this.onTransactionTap,
   });
@@ -209,6 +289,10 @@ class _LoadedView extends StatelessWidget {
             periodFilter: state.periodFilter,
             onTypeChanged: onTypeChanged,
             onPeriodChanged: onPeriodChanged,
+            selectedPerson: state.selectedPerson,
+            selectedCategory: state.selectedCategory,
+            onPickPerson: onPickPerson,
+            onPickCategory: onPickCategory,
             horizontalPadding: horizontal,
           ),
           SizedBox(height: 8.h),
@@ -237,6 +321,9 @@ class _LoadedView extends StatelessWidget {
                   child: TransactionRow(
                     transaction: group.transactions[i],
                     onTap: () => onTransactionTap(group.transactions[i]),
+                    // The row names the spender only when it is somebody other
+                    // than the reader.
+                    viewerId: LocalsApp.user?.id,
                   ),
                 ),
               ],

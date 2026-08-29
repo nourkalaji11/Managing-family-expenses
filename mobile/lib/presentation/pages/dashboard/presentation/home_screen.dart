@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/family_summary_card.dart';
 import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/mock/dashboard_mock_source.dart';
@@ -82,6 +83,19 @@ class _HomeScreenState extends State<HomeScreen> {
   /// derives from `accounts.balance` changes — while the income and expense
   /// totals deliberately do not, because nothing entered or left the family.
   /// See `DashboardSummary.from`.
+  /// Opens the family screen. Returns true when something changed there — a
+  /// member added, an allowance edited — so the card's figures are refreshed
+  /// instead of showing what they were before.
+  Future<void> _openFamily() async {
+    final Object? result = await Navigator.of(
+      context,
+    ).pushNamed(AppRoutes.familyMembers);
+
+    if (result == true && mounted) {
+      _bloc.add(const OnRefreshDashboard());
+    }
+  }
+
   Future<void> _openTransfer() async {
     final Object? result = await Navigator.of(
       context,
@@ -133,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onAddTransaction: _openAddTransaction,
                       onTransfer: _openTransfer,
                       onViewAll: _openTransactionsTab,
+                      onManageFamily: _openFamily,
                     ),
                   };
                 },
@@ -152,6 +167,7 @@ class _LoadedView extends StatelessWidget {
   final VoidCallback onAddTransaction;
   final VoidCallback onTransfer;
   final VoidCallback onViewAll;
+  final VoidCallback onManageFamily;
 
   const _LoadedView({
     required this.data,
@@ -160,6 +176,7 @@ class _LoadedView extends StatelessWidget {
     required this.onAddTransaction,
     required this.onTransfer,
     required this.onViewAll,
+    required this.onManageFamily,
   });
 
   @override
@@ -201,6 +218,20 @@ class _LoadedView extends StatelessWidget {
             summary: data.summary,
             horizontalPadding: horizontal,
           ),
+          // Only a parent has a family to report on: `GET /users` hands a
+          // member nobody but themselves, and `children` filters a parent out
+          // of their own card, so this is absent on a child's home without the
+          // screen having to know the rule.
+          if (data.hasFamily) ...[
+            SizedBox(height: 24.h),
+            Padding(
+              padding: EdgeInsetsDirectional.symmetric(horizontal: horizontal),
+              child: FamilySummaryCard(
+                members: data.children,
+                onManage: onManageFamily,
+              ),
+            ),
+          ],
           SizedBox(height: 24.h),
           Padding(
             padding: EdgeInsetsDirectional.symmetric(horizontal: horizontal),
