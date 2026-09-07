@@ -59,8 +59,100 @@ class CategoryVisuals {
     return _fallbackPalette[index % _fallbackPalette.length];
   }
 
+  /// Icons by the name the server sends in `categories.icon`.
+  ///
+  /// Keyed by name rather than by id because ids are not stable across a fresh
+  /// seed, and because the server chose the name deliberately — mapping it here
+  /// is the client's half of that contract.
+  static const Map<String, IconData> _iconsByName = {
+    // Income
+    'salary': Icons.payments_outlined,
+    'bonus': Icons.emoji_events_outlined,
+    'gift': Icons.card_giftcard_outlined,
+    'sale': Icons.sell_outlined,
+    'extra': Icons.add_circle_outline,
+    'top_up': Icons.account_balance_wallet_outlined,
+    // Movement
+    'cash_out': Icons.money_off_outlined,
+    'transfer': Icons.swap_horiz,
+    'credit_payment': Icons.credit_card_outlined,
+    'atm': Icons.local_atm_outlined,
+    // Food
+    'food': Icons.restaurant_menu_outlined,
+    'cafe': Icons.local_cafe_outlined,
+    'restaurant': Icons.restaurant,
+    'home_cooking': Icons.soup_kitchen_outlined,
+    'fast_food': Icons.lunch_dining_outlined,
+    'groceries': Icons.local_grocery_store_outlined,
+    // Shopping
+    'shopping': Icons.shopping_cart_outlined,
+    'accessories': Icons.watch_outlined,
+    'clothes': Icons.checkroom_outlined,
+    'electronics': Icons.devices_outlined,
+    'shoes': Icons.ice_skating_outlined,
+    'cosmetics': Icons.brush_outlined,
+    // Transport
+    'transport': Icons.directions_car_outlined,
+    'fuel': Icons.local_gas_station_outlined,
+    'car_service': Icons.build_outlined,
+    'parking': Icons.local_parking_outlined,
+    'taxi': Icons.local_taxi_outlined,
+    'company_taxi': Icons.airport_shuttle_outlined,
+    'public_transport': Icons.directions_bus_outlined,
+    // Bills
+    'bills': Icons.receipt_long_outlined,
+    'electricity': Icons.bolt_outlined,
+    'gas': Icons.propane_tank_outlined,
+    'internet': Icons.wifi_outlined,
+    'phone': Icons.phone_outlined,
+    'rent': Icons.home_outlined,
+    'water': Icons.water_drop_outlined,
+    // Household and people
+    'family': Icons.family_restroom_outlined,
+    'children': Icons.child_care_outlined,
+    'home_repair': Icons.handyman_outlined,
+    'services': Icons.cleaning_services_outlined,
+    'pets': Icons.pets_outlined,
+    // Work, study, money
+    'work': Icons.work_outline,
+    'education': Icons.school_outlined,
+    'books': Icons.menu_book_outlined,
+    'courses': Icons.cast_for_education_outlined,
+    'investment': Icons.trending_up_outlined,
+    'insurance': Icons.shield_outlined,
+    'subscriptions': Icons.subscriptions_outlined,
+    // Leisure, giving, health
+    'entertainment': Icons.tv_outlined,
+    'games': Icons.sports_esports_outlined,
+    'movies': Icons.movie_outlined,
+    'donations': Icons.volunteer_activism_outlined,
+    'charity': Icons.favorite_border,
+    'zakat': Icons.spa_outlined,
+    'health': Icons.favorite_outline,
+    'doctor': Icons.medical_services_outlined,
+    'medicine': Icons.medication_outlined,
+    'personal_care': Icons.self_improvement_outlined,
+    'sports': Icons.fitness_center_outlined,
+    'travel': Icons.flight_takeoff_outlined,
+    // Debt and leftovers
+    'debt': Icons.request_quote_outlined,
+    'borrow': Icons.south_west_outlined,
+    'repay': Icons.north_east_outlined,
+    'lent': Icons.call_made_outlined,
+    'owed': Icons.call_received_outlined,
+    'other': Icons.category_outlined,
+    'misc': Icons.more_horiz,
+  };
+
   /// Icon for a transaction row. `receipt_long` is the generic fallback.
-  static IconData iconFor(int? categoryId) {
+  ///
+  /// [name] is `categories.icon`. The id map behind it only still exists for
+  /// rows created before that column, which carry no name.
+  static IconData iconFor(int? categoryId, {String? name}) {
+    if (name != null) {
+      final byName = _iconsByName[name];
+      if (byName != null) return byName;
+    }
     if (categoryId == null) return Icons.receipt_long_outlined;
     return _icons[categoryId] ?? Icons.receipt_long_outlined;
   }

@@ -155,11 +155,10 @@ class CategoriesRepo extends CategoriesDomain {
     final store = MockStore.instance;
     final viewer = store.signedInUser;
     final int? ownerId = (viewer?.isParent ?? true) ? null : viewer?.id;
-    // Ordered by name ascending, matching `CategoryController::index`. Doing it
-    // here rather than in the store keeps ordering a repository concern, the
-    // same arrangement `TransactionsRepo` uses for newest-first.
-    final categories = [...store.categories]
-      ..sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+    // Planted order, matching `CategoryController::index`, which orders by id.
+    // It used to sort by name — correct while the list was flat, wrong now that
+    // it is a tree: alphabetical order tears every child away from its group.
+    final categories = store.categories;
 
     return Right(
       CategoriesData(

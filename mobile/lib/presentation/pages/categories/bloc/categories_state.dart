@@ -23,7 +23,11 @@ class CategoriesLoaded extends CategoriesState {
   /// The current search text, exactly as typed.
   final String query;
 
-  /// What the grid renders: the categories whose name matches [query].
+  /// The tab in view: `income`, `expense` or `debt`.
+  final String type;
+
+  /// What the list renders: the categories in [type] whose name matches
+  /// [query], groups and children together and in planted order.
   final List<Category> visible;
 
   /// True while a refresh is in flight over already-visible content.
@@ -33,8 +37,30 @@ class CategoriesLoaded extends CategoriesState {
     required this.data,
     required this.query,
     required this.visible,
+    this.type = Category.typeExpense,
     this.isRefreshing = false,
   });
+
+  /// [visible] as sections: each group followed by the children beneath it.
+  ///
+  /// Built here rather than in the widget so the screen renders a list it is
+  /// handed, and the tree is assembled in one place.
+  List<CategorySection> get sections {
+    final Map<int, List<Category>> childrenOf = {};
+    for (final c in visible) {
+      if (c.parentId == null) continue;
+      childrenOf.putIfAbsent(c.parentId!, () => <Category>[]).add(c);
+    }
+
+    return [
+      for (final c in visible)
+        if (c.parentId == null)
+          CategorySection(
+            group: c,
+            children: childrenOf[c.id] ?? const <Category>[],
+          ),
+    ];
+  }
 
   /// True when there are genuinely no categories.
   bool get isEmpty => data.categories.isEmpty;
@@ -45,11 +71,13 @@ class CategoriesLoaded extends CategoriesState {
   CategoriesLoaded copyWith({
     CategoriesData? data,
     String? query,
+    String? type,
     List<Category>? visible,
     bool? isRefreshing,
   }) => CategoriesLoaded(
     data: data ?? this.data,
     query: query ?? this.query,
+    type: type ?? this.type,
     visible: visible ?? this.visible,
     isRefreshing: isRefreshing ?? this.isRefreshing,
   );
@@ -60,9 +88,18 @@ class CategoriesLoaded extends CategoriesState {
     data.transactionCounts,
     data.budgetCounts,
     query,
+    type,
     visible,
     isRefreshing,
   ];
+}
+
+/// A group and the categories filed under it.
+class CategorySection {
+  final Category group;
+  final List<Category> children;
+
+  const CategorySection({required this.group, required this.children});
 }
 
 class CategoriesFailure extends CategoriesState {

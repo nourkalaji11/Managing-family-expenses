@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The name under the launcher icon.
+
+    A string resource rather than a literal in the manifest so it can be
+    translated: Android picks values-ar/ on an Arabic device, and the home
+    screen matches the language the app itself opens in.
+-->
+<resources>
+    <string name="app_name">Family Expenses</string>
+</resources>

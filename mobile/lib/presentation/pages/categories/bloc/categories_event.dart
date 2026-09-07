@@ -19,6 +19,16 @@ class OnRefreshCategories extends CategoriesEvent {
 }
 
 /// The search field changed. Re-filters the loaded categories; no network call.
+/// Switches tab: income, expense or debt.
+class OnCategoryTypeChanged extends CategoriesEvent {
+  final String type;
+
+  const OnCategoryTypeChanged(this.type);
+
+  @override
+  List<Object?> get props => <Object?>[type];
+}
+
 class OnCategoriesQueryChanged extends CategoriesEvent {
   final String query;
 

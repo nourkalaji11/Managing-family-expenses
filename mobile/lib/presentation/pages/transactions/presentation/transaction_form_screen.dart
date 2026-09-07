@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/data/constant/enums.dart';
 import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/category.dart';
 import 'package:family_expense_management/data/models/transaction.dart';
@@ -208,7 +209,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   Future<void> _pickCategory(TransactionFormState state) async {
-    if (state.categories.isEmpty) {
+    // Only the tab that matches what is being recorded. Categories carry a type
+    // now, and offering الراتب while the user is entering an expense — which is
+    // what an unfiltered list did — offers a filing that makes no sense.
+    final String wanted = state.type == TransactionType.income
+        ? Category.typeIncome
+        : Category.typeExpense;
+
+    final List<Category> options = [
+      for (final c in state.categories)
+        if (c.id != null && c.type == wanted) c,
+    ];
+
+    if (options.isEmpty) {
       EasyLoading.showToast(
         'transactions.no_categories'.tr(),
         toastPosition: EasyLoadingToastPosition.bottom,
@@ -216,18 +229,28 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       return;
     }
 
+    // Groups are kept in the list: several of them — سحب رصيد، مصاريف شغل،
+    // السفر — have no children, so filing under a group is normal, not a
+    // half-made choice.
+    final Map<int?, String> groupNames = {
+      for (final c in options)
+        if (c.parentId == null) c.id: c.name ?? '',
+    };
+
     final int? picked = await PickerSheet.show<int>(
       context: context,
       title: 'transactions.select_category'.tr(),
       selected: state.categoryId,
       options: <PickerOption<int>>[
-        for (final c in state.categories)
-          if (c.id != null)
-            PickerOption<int>(
-              value: c.id!,
-              label: c.name ?? 'unknown'.tr(),
-              icon: CategoryVisuals.iconFor(c.id),
-            ),
+        for (final c in options)
+          PickerOption<int>(
+            value: c.id!,
+            label: c.name ?? 'unknown'.tr(),
+            // The group a child belongs to, so "الصيانة" under المواصلات is
+            // told apart from "الصيانة المنزلية" under الأسرة.
+            subtitle: c.parentId == null ? null : groupNames[c.parentId],
+            icon: CategoryVisuals.iconFor(c.id, name: c.icon),
+          ),
       ],
     );
 

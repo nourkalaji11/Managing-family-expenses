@@ -47,19 +47,98 @@ import 'package:family_expense_management/data/models/transaction.dart';
 class DashboardMockSource {
   const DashboardMockSource._();
 
-  /// Category rows. `categories` only has (id, name) — no colour, no icon.
-  static const Category _restaurants = Category(id: 1, name: 'المطاعم');
-  static const Category _housing = Category(id: 2, name: 'السكن');
-  static const Category _transport = Category(id: 3, name: 'النقل');
-  static const Category _shopping = Category(id: 4, name: 'التسوق');
-  static const Category _salary = Category(id: 5, name: 'الراتب');
+  // The rows the seeded transactions are filed under, resolved out of the tree
+  // below so the two cannot drift apart.
+  static Category _byId(int id) => categories.firstWhere((c) => c.id == id);
 
+  static Category get _restaurants => _byId(13);   // الغذاء > المطاعم
+  static Category get _housing => _byId(35);       // فواتير > الإيجار
+  static Category get _transport => _byId(23);     // المواصلات (group)
+  static Category get _shopping => _byId(16);      // التسوق (group)
+  static Category get _salary => _byId(1);        // الراتب (income)
+
+  /// The default category tree, identical to what `CategorySeeder` plants on
+  /// the server: 7 income, 59 expense across 19 groups, 4 debt.
+  ///
+  /// Ids follow the seeder's planting order — income, then each group with its
+  /// children, then debt — so both sources hand the screen the same sequence
+  /// and it never has to sort a tree back into shape.
+  ///
+  /// The five flat rows that used to live here (المطاعم، السكن، النقل، التسوق،
+  /// الراتب) are gone. Two of them survive by name inside the tree; السكن and
+  /// النقل do not, so the seeded transactions were re-pointed — see
+  /// [_restaurants] and friends below.
   static const List<Category> categories = [
-    _restaurants,
-    _housing,
-    _transport,
-    _shopping,
-    _salary,
+    Category(id: 1, name: 'الراتب', type: Category.typeIncome, parentId: null, icon: 'salary'),
+    Category(id: 2, name: 'المكافآت', type: Category.typeIncome, parentId: null, icon: 'bonus'),
+    Category(id: 3, name: 'الهدايا', type: Category.typeIncome, parentId: null, icon: 'gift'),
+    Category(id: 4, name: 'المبيعات', type: Category.typeIncome, parentId: null, icon: 'sale'),
+    Category(id: 5, name: 'الإضافي', type: Category.typeIncome, parentId: null, icon: 'extra'),
+    Category(id: 6, name: 'أخرى', type: Category.typeIncome, parentId: null, icon: 'other'),
+    Category(id: 7, name: 'إضافة رصيد', type: Category.typeIncome, parentId: null, icon: 'top_up'),
+    Category(id: 8, name: 'سحب رصيد', type: Category.typeExpense, parentId: null, icon: 'cash_out'),
+    Category(id: 9, name: 'تحويل رصيد', type: Category.typeExpense, parentId: null, icon: 'transfer'),
+    Category(id: 10, name: 'دفعة الكريديت', type: Category.typeExpense, parentId: 9, icon: 'credit_payment'),
+    Category(id: 11, name: 'الغذاء', type: Category.typeExpense, parentId: null, icon: 'food'),
+    Category(id: 12, name: 'المقاهي', type: Category.typeExpense, parentId: 11, icon: 'cafe'),
+    Category(id: 13, name: 'المطاعم', type: Category.typeExpense, parentId: 11, icon: 'restaurant'),
+    Category(id: 14, name: 'طبخة', type: Category.typeExpense, parentId: 11, icon: 'home_cooking'),
+    Category(id: 15, name: 'اكل جاهز', type: Category.typeExpense, parentId: 11, icon: 'fast_food'),
+    Category(id: 16, name: 'التسوق', type: Category.typeExpense, parentId: null, icon: 'shopping'),
+    Category(id: 17, name: 'اكسسوارات', type: Category.typeExpense, parentId: 16, icon: 'accessories'),
+    Category(id: 18, name: 'ملابس', type: Category.typeExpense, parentId: 16, icon: 'clothes'),
+    Category(id: 19, name: 'الكترونيات', type: Category.typeExpense, parentId: 16, icon: 'electronics'),
+    Category(id: 20, name: 'أحذية', type: Category.typeExpense, parentId: 16, icon: 'shoes'),
+    Category(id: 21, name: 'مستحضرات تجميل', type: Category.typeExpense, parentId: 16, icon: 'cosmetics'),
+    Category(id: 22, name: 'اكل', type: Category.typeExpense, parentId: 16, icon: 'groceries'),
+    Category(id: 23, name: 'المواصلات', type: Category.typeExpense, parentId: null, icon: 'transport'),
+    Category(id: 24, name: 'البنزين', type: Category.typeExpense, parentId: 23, icon: 'fuel'),
+    Category(id: 25, name: 'الصيانة', type: Category.typeExpense, parentId: 23, icon: 'car_service'),
+    Category(id: 26, name: 'الجراج', type: Category.typeExpense, parentId: 23, icon: 'parking'),
+    Category(id: 27, name: 'الأجرة', type: Category.typeExpense, parentId: 23, icon: 'taxi'),
+    Category(id: 28, name: 'تكسي للشركة', type: Category.typeExpense, parentId: 23, icon: 'company_taxi'),
+    Category(id: 29, name: 'نول', type: Category.typeExpense, parentId: 23, icon: 'public_transport'),
+    Category(id: 30, name: 'فواتير', type: Category.typeExpense, parentId: null, icon: 'bills'),
+    Category(id: 31, name: 'الكهرباء', type: Category.typeExpense, parentId: 30, icon: 'electricity'),
+    Category(id: 32, name: 'الغاز', type: Category.typeExpense, parentId: 30, icon: 'gas'),
+    Category(id: 33, name: 'الإنترنت', type: Category.typeExpense, parentId: 30, icon: 'internet'),
+    Category(id: 34, name: 'الإتصالات', type: Category.typeExpense, parentId: 30, icon: 'phone'),
+    Category(id: 35, name: 'الإيجار', type: Category.typeExpense, parentId: 30, icon: 'rent'),
+    Category(id: 36, name: 'الماء', type: Category.typeExpense, parentId: 30, icon: 'water'),
+    Category(id: 37, name: 'أخرى', type: Category.typeExpense, parentId: null, icon: 'other'),
+    Category(id: 38, name: 'دين', type: Category.typeExpense, parentId: 37, icon: 'debt'),
+    Category(id: 39, name: 'غيث', type: Category.typeExpense, parentId: 37, icon: 'misc'),
+    Category(id: 40, name: 'الأسرة', type: Category.typeExpense, parentId: null, icon: 'family'),
+    Category(id: 41, name: 'الأطفال', type: Category.typeExpense, parentId: 40, icon: 'children'),
+    Category(id: 42, name: 'الصيانة المنزلية', type: Category.typeExpense, parentId: 40, icon: 'home_repair'),
+    Category(id: 43, name: 'الخدمات', type: Category.typeExpense, parentId: 40, icon: 'services'),
+    Category(id: 44, name: 'الحيوانات الأليفة', type: Category.typeExpense, parentId: 40, icon: 'pets'),
+    Category(id: 45, name: 'مصاريف شغل', type: Category.typeExpense, parentId: null, icon: 'work'),
+    Category(id: 46, name: 'دين', type: Category.typeExpense, parentId: null, icon: 'debt'),
+    Category(id: 47, name: 'التعليم', type: Category.typeExpense, parentId: null, icon: 'education'),
+    Category(id: 48, name: 'كتب دراسية', type: Category.typeExpense, parentId: 47, icon: 'books'),
+    Category(id: 49, name: 'الدورات التدريبية', type: Category.typeExpense, parentId: 47, icon: 'courses'),
+    Category(id: 50, name: 'إستثمار', type: Category.typeExpense, parentId: null, icon: 'investment'),
+    Category(id: 51, name: 'الترفيه', type: Category.typeExpense, parentId: null, icon: 'entertainment'),
+    Category(id: 52, name: 'العاب', type: Category.typeExpense, parentId: 51, icon: 'games'),
+    Category(id: 53, name: 'أفلام و صوتيات', type: Category.typeExpense, parentId: 51, icon: 'movies'),
+    Category(id: 54, name: 'الرسوم و الإشتراكات', type: Category.typeExpense, parentId: null, icon: 'subscriptions'),
+    Category(id: 55, name: 'التبرعات و الهدايا', type: Category.typeExpense, parentId: null, icon: 'donations'),
+    Category(id: 56, name: 'الصدقة', type: Category.typeExpense, parentId: 55, icon: 'charity'),
+    Category(id: 57, name: 'الزكاة', type: Category.typeExpense, parentId: 55, icon: 'zakat'),
+    Category(id: 58, name: 'الهدايا', type: Category.typeExpense, parentId: 55, icon: 'gift'),
+    Category(id: 59, name: 'الصحة و اللياقة البدنيه', type: Category.typeExpense, parentId: null, icon: 'health'),
+    Category(id: 60, name: 'الأطباء', type: Category.typeExpense, parentId: 59, icon: 'doctor'),
+    Category(id: 61, name: 'الأدوية', type: Category.typeExpense, parentId: 59, icon: 'medicine'),
+    Category(id: 62, name: 'العناية الشخصية', type: Category.typeExpense, parentId: 59, icon: 'personal_care'),
+    Category(id: 63, name: 'الانشطة الرياضية', type: Category.typeExpense, parentId: 59, icon: 'sports'),
+    Category(id: 64, name: 'التأمينات', type: Category.typeExpense, parentId: null, icon: 'insurance'),
+    Category(id: 65, name: 'السفر', type: Category.typeExpense, parentId: null, icon: 'travel'),
+    Category(id: 66, name: 'السحب النقدي', type: Category.typeExpense, parentId: null, icon: 'atm'),
+    Category(id: 67, name: 'سلفة', type: Category.typeDebt, parentId: null, icon: 'borrow'),
+    Category(id: 68, name: 'تسديد سلفة', type: Category.typeDebt, parentId: null, icon: 'repay'),
+    Category(id: 69, name: 'دين لي', type: Category.typeDebt, parentId: null, icon: 'lent'),
+    Category(id: 70, name: 'دين عليّ', type: Category.typeDebt, parentId: null, icon: 'owed'),
   ];
 
   /// Σ balance = 14,450.00 for the parent, who sees the family's accounts and

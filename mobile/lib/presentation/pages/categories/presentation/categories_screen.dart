@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/data/models/category.dart';
+import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/category_visuals.dart';
 import 'package:family_expense_management/presentation/pages/categories/bloc/categories_bloc.dart';
 import 'package:family_expense_management/presentation/pages/categories/presentation/category_form_screen.dart';
 import 'package:family_expense_management/presentation/pages/categories/presentation/widgets/categories_empty_state.dart';
@@ -121,6 +122,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       onRetry: () => _bloc.add(const OnLoadCategories()),
                     ),
                     CategoriesLoaded() => _LoadedView(
+                      onTypeChanged: (t) => _bloc.add(OnCategoryTypeChanged(t)),
                       state: state,
                       searchKey: _searchKey,
                       pagePadding: _pagePadding,
@@ -155,8 +157,10 @@ class _LoadedView extends StatelessWidget {
   final VoidCallback onClearSearch;
   final VoidCallback onAdd;
   final void Function(Category) onCategoryTap;
+  final ValueChanged<String> onTypeChanged;
 
   const _LoadedView({
+    required this.onTypeChanged,
     required this.state,
     required this.searchKey,
     required this.pagePadding,
@@ -178,10 +182,7 @@ class _LoadedView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(horizontal, 20.h, horizontal, 96.h),
         children: [
-          Text(
-            'categories.subtitle'.tr(),
-            style: TextStyleApp.dashboardStatLabel,
-          ),
+          _TypeTabs(selected: state.type, onChanged: onTypeChanged),
           SizedBox(height: 16.h),
           TransactionSearchField(
             key: searchKey,
@@ -193,21 +194,25 @@ class _LoadedView extends StatelessWidget {
           // The filtered-empty case gets a message rather than a lone add tile:
           // offering "new category" as the only answer to "nothing matched your
           // search" would be answering a different question.
-          if (state.isFilteredEmpty)
-            CategoriesEmptyState(isFiltered: true, onClearSearch: onClearSearch)
+          if (state.visible.isEmpty)
+            CategoriesEmptyState(
+              isFiltered: state.query.trim().isNotEmpty,
+              onClearSearch: onClearSearch,
+            )
           else
-            _Grid(
-              state: state,
-              onAdd: onAdd,
-              onCategoryTap: onCategoryTap,
-            ),
+            for (final section in state.sections)
+              _Section(
+                key: ValueKey<int?>(section.group.id),
+                section: section,
+                onCategoryTap: onCategoryTap,
+              ),
         ],
       ),
     );
   }
 }
 
-/// The two-column grid, with the add tile always last.
+
 class _Grid extends StatelessWidget {
   final CategoriesLoaded state;
   final VoidCallback onAdd;
@@ -254,6 +259,169 @@ class _Grid extends StatelessWidget {
           onTap: () => onCategoryTap(category),
         );
       },
+    );
+  }
+}
+
+/// The three tabs: income, expense, debt.
+///
+/// A row of chips rather than a `TabBar`: the screen is a `ListView`, and a
+/// `TabBar` would want a `TabController` and a `TabBarView` to hold three
+/// separately scrolling pages of what is one list with a filter on it.
+class _TypeTabs extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _TypeTabs({required this.selected, required this.onChanged});
+
+  static const Map<String, String> _labels = {
+    Category.typeIncome: 'categories.tab_income',
+    Category.typeExpense: 'categories.tab_expense',
+    Category.typeDebt: 'categories.tab_debt',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final type in Category.types) ...[
+          if (type != Category.types.first) SizedBox(width: 8.w),
+          Expanded(
+            child: GestureDetector(
+              key: ValueKey<String>('category_tab_$type'),
+              onTap: () => onChanged(type),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: type == selected
+                      ? ColorsApp.primaryGreenPressed
+                      : ColorsApp.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: type == selected
+                        ? ColorsApp.primaryGreenPressed
+                        : ColorsApp.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Text(
+                  _labels[type]!.tr(),
+                  style: TextStyleApp.dashboardSectionAction.copyWith(
+                    color: type == selected
+                        ? ColorsApp.white
+                        : ColorsApp.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A group and the categories under it, drawn as one card.
+///
+/// The group heads the card in bold; its children are rows beneath. A group
+/// with no children is just the header — which is how سحب رصيد، مصاريف شغل and
+/// السفر appear in the reference app.
+class _Section extends StatelessWidget {
+  final CategorySection section;
+  final void Function(Category) onCategoryTap;
+
+  const _Section({
+    super.key,
+    required this.section,
+    required this.onCategoryTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        color: ColorsApp.white,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          _Row(
+            category: section.group,
+            isGroup: true,
+            onTap: () => onCategoryTap(section.group),
+          ),
+          for (final child in section.children) ...[
+            Divider(
+              height: 1,
+              indent: 60.w,
+              endIndent: 16.w,
+              color: ColorsApp.outlineVariant.withValues(alpha: 0.3),
+            ),
+            _Row(
+              category: child,
+              isGroup: false,
+              onTap: () => onCategoryTap(child),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  final Category category;
+  final bool isGroup;
+  final VoidCallback onTap;
+
+  const _Row({
+    required this.category,
+    required this.isGroup,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: ValueKey<String>('category_row_${category.id}'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
+          children: [
+            Container(
+              width: (isGroup ? 40 : 32).r,
+              height: (isGroup ? 40 : 32).r,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: ColorsApp.primaryGreenPressed.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                CategoryVisuals.iconFor(category.id, name: category.icon),
+                size: (isGroup ? 22 : 18).r,
+                color: ColorsApp.primaryGreenPressed,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                category.name ?? '',
+                // The group is the heading of its card, so it carries the
+                // weight; a child that looked the same would flatten the tree
+                // back into the list this replaced.
+                style: isGroup
+                    ? TextStyleApp.budgetsCardFooterValue
+                    : TextStyleApp.dashboardStatLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
