@@ -18,10 +18,16 @@ class DatabaseSeeder extends Seeder
      *
      * FamilySeeder يزرع عائلة كاملة يمكن تسجيل الدخول بها فوراً، ويمتنع عن
      * العمل خارج بيئة local أو testing.
+     *
+     * CategorySeeder على النقيض: شجرة الفئات بيانات مرجعية لا بيانات تجربة،
+     * ويلزم تشغيلها في الإنتاج أيضاً — تطبيق بلا فئات لا يقبل أي عملية، لأن
+     * transactions.category_id غير قابل للإفراغ. ولذلك يُنفَّذ أولاً: العائلة
+     * المزروعة تسجّل عمليات تشير إلى فئات يجب أن تكون موجودة قبلها.
      */
     public function run(): void
     {
         $this->call([
+            CategorySeeder::class,
             FamilySeeder::class,
         ]);
     }

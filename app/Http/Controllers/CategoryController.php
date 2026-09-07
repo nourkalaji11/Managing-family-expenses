@@ -42,7 +42,14 @@ class CategoryController extends Controller
                     ),
                 'budgets as budgets_count',
             ])
-            ->orderBy('name', 'asc')
+            // مرتَّبة بترتيب الإنشاء لا بالاسم: الشجرة تُعرض كما زرعها
+            // CategorySeeder — المجموعة ثم فروعها — والترتيب الأبجدي يبعثر
+            // الفرع عن مجموعته ويقلب ترتيباً مقصوداً في التطبيق المرجعي.
+            ->when(
+                $request->filled('type'),
+                fn ($query) => $query->where('type', $request->string('type')),
+            )
+            ->orderBy('id', 'asc')
             ->get();
 
         return response()->json([
@@ -56,12 +63,36 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        // فحص أمان الاسم ومنع التكرار
         $validated = $request->validate([
-            'name' => 'required|string|max:50|unique:categories,name',
+            // التكرار ممنوع داخل المجموعة الواحدة لا في الجدول كله: "الهدايا"
+            // فئة دخل وفرع تحت التبرعات معاً، و"دين" مجموعة رئيسية وفرع تحت
+            // "أخرى" — وقاعدة unique على الاسم وحده كانت تمنع نصف الشجرة.
+            'name'      => 'required|string|max:50',
+            'type'      => 'nullable|string|in:' . implode(',', Category::TYPES),
+            'parent_id' => 'nullable|exists:categories,id',
+            'icon'      => 'nullable|string|max:60',
         ]);
 
-        $category = Category::create($validated);
+        $type = $validated['type'] ?? Category::TYPE_EXPENSE;
+        $parentId = $validated['parent_id'] ?? null;
+
+        $taken = Category::where('name', $validated['name'])
+            ->where('type', $type)
+            ->where('parent_id', $parentId)
+            ->exists();
+
+        if ($taken) {
+            return response()->json([
+                'message' => 'يوجد فئة بهذا الاسم في المكان نفسه.'
+            ], 422);
+        }
+
+        $category = Category::create([
+            'name'      => $validated['name'],
+            'type'      => $type,
+            'parent_id' => $parentId,
+            'icon'      => $validated['icon'] ?? null,
+        ]);
 
         return response()->json([
             'message' => 'تم إنشاء الفئة بنجاح!',
@@ -85,11 +116,27 @@ class CategoryController extends Controller
             ], 404);
         }
 
-        // قاعدة unique تستثني الفئة نفسها، وإلا فشل حفظ الفئة دون تغيير اسمها.
         $validated = $request->validate([
-            'name' => 'required|string|max:50|unique:categories,name,' . $category->id,
+            'name' => 'required|string|max:50',
+            'icon' => 'nullable|string|max:60',
         ]);
 
+        // التفرّد داخل المجموعة، كما في store — و`unique:categories,name` هنا
+        // كانت سترفض تسمية فرع باسم يحمله فرع في مجموعة أخرى، وهو مسموح.
+        $taken = Category::where('name', $validated['name'])
+            ->where('type', $category->type)
+            ->where('parent_id', $category->parent_id)
+            ->whereKeyNot($category->id)
+            ->exists();
+
+        if ($taken) {
+            return response()->json([
+                'message' => 'يوجد فئة بهذا الاسم في المكان نفسه.'
+            ], 422);
+        }
+
+        // النوع والأب لا يُعدَّلان من هنا: نقل فئة بين التبويبات يترك عمليات
+        // مصنَّفة تحت نوع لا تنتمي إليه.
         $category->update($validated);
 
         return response()->json([
