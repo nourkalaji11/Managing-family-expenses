@@ -41,10 +41,8 @@ class TransactionFormBloc
         if (seeded.accounts.isEmpty || seeded.categories.isEmpty) {
           await _loadOptions(emit);
         }
-      } else if (event is OnAmountDigitPressed) {
-        emit(_withInput(_appendDigit(state.amountInput, event.digit)));
-      } else if (event is OnAmountBackspace) {
-        emit(_withInput(_removeLastDigit(state.amountInput)));
+      } else if (event is OnAmountChanged) {
+        emit(_withInput(_sanitiseAmount(event.input)));
       } else if (event is OnTypeChanged) {
         emit(_revalidated(state.copyWith(type: event.type)));
       } else if (event is OnAccountChanged) {
@@ -272,40 +270,64 @@ class TransactionFormBloc
   }
 
   // ---------------------------------------------------------------------------
-  // Keypad buffer. Mirrors the design's behaviour, with two limits the schema
-  // imposes: `transactions.amount` is DECIMAL(15,2).
+  // Amount buffer. The two limits come from the schema: `transactions.amount`
+  // is DECIMAL(15,2).
   // ---------------------------------------------------------------------------
 
   /// 15 total digits with 2 after the point leaves 13 before it.
   static const int maxIntegerDigits = 13;
   static const int maxDecimalDigits = 2;
 
-  static String _appendDigit(String current, String digit) {
-    if (digit == '.') {
-      if (current.contains('.')) return current;
-      return current.isEmpty ? '0.' : '$current.';
+  /// Trims typed text down to something `transactions.amount` can hold.
+  ///
+  /// The field's input formatters already reject anything but digits and a dot,
+  /// so this is about the two limits a formatter cannot express on its own: one
+  /// decimal point, and DECIMAL(15,2)'s 13 + 2 digits. It runs on every change
+  /// rather than trusting the field, because paste and autofill do not go
+  /// through the keyboard.
+  static String _sanitiseAmount(String input) {
+    final buffer = StringBuffer();
+    var seenDot = false;
+    var integerDigits = 0;
+    var decimalDigits = 0;
+
+    // Code units, not characters: every digit and separator handled here is in
+    // the Basic Multilingual Plane, so there are no surrogate pairs to keep
+    // together, and this avoids a dependency on `package:characters` in a bloc.
+    for (final unit in input.codeUnits) {
+      final String ch = String.fromCharCode(unit);
+      if (ch == '.' || ch == ',') {
+        // Arabic keyboards offer a comma where the decimal point sits.
+        if (seenDot) continue;
+        seenDot = true;
+        buffer.write(buffer.isEmpty ? '0.' : '.');
+        continue;
+      }
+      final int code = ch.codeUnitAt(0);
+      final String? digit = switch (code) {
+        >= 0x30 && <= 0x39 => ch, // ASCII 0-9
+        >= 0x660 && <= 0x669 => String.fromCharCode(code - 0x660 + 0x30), // ٠-٩
+        >= 0x6F0 && <= 0x6F9 => String.fromCharCode(code - 0x6F0 + 0x30), // ۰-۹
+        _ => null,
+      };
+      if (digit == null) continue;
+
+      if (seenDot) {
+        if (decimalDigits >= maxDecimalDigits) continue;
+        decimalDigits++;
+      } else {
+        if (integerDigits >= maxIntegerDigits) continue;
+        integerDigits++;
+      }
+      // Folded to ASCII: `num.tryParse` does not read Arabic-Indic digits, and
+      // an amount typed on an Arabic keyboard would parse as null.
+      buffer.write(digit);
     }
 
-    final int dot = current.indexOf('.');
-    if (dot < 0) {
-      // Leading zero is replaced rather than accumulated, so "0" then "5"
-      // reads "5", not "05".
-      if (current == '0') return digit;
-      if (current.length >= maxIntegerDigits) return current;
-      return '$current$digit';
-    }
-
-    final String decimals = current.substring(dot + 1);
-    if (decimals.length >= maxDecimalDigits) return current;
-    return '$current$digit';
+    return buffer.toString();
   }
 
-  static String _removeLastDigit(String current) {
-    if (current.isEmpty) return current;
-    return current.substring(0, current.length - 1);
-  }
-
-  /// Renders an existing amount back into the keypad buffer for Edit.
+  /// Renders an existing amount back into the field for Edit.
   ///
   /// Trailing ".00" is dropped so a whole amount opens as "240", not "240.00",
   /// which is what the user would have typed.

@@ -116,7 +116,7 @@ class BudgetMonthHeader extends StatelessWidget {
                   alignment: AlignmentDirectional.centerEnd,
                   child: Text(
                     '${DashboardFormatter.compactAmount(totalLimit)} '
-                    '${'dashboard.currency_sar'.tr()}',
+                    '${'dashboard.currency'.tr()}',
                     style: TextStyleApp.budgetsSummaryValue,
                     maxLines: 1,
                   ),

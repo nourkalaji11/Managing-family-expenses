@@ -21,7 +21,7 @@ class BudgetSummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String currency = 'dashboard.currency_sar'.tr();
+    final String currency = 'dashboard.currency'.tr();
 
     // `IntrinsicHeight` is what makes `CrossAxisAlignment.stretch` legal here.
     // Without it the Row sits directly inside the screen's `ListView`, which

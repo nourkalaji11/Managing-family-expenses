@@ -148,7 +148,7 @@ class _LimitRow extends StatelessWidget {
           limit == null
               ? 'profile.no_limit'.tr()
               : '${DashboardFormatter.isolatedAmount(limit)} '
-                    '${'dashboard.currency_sar'.tr()}',
+                    '${'dashboard.currency'.tr()}',
           style: TextStyleApp.budgetsSummaryValue.copyWith(
             color: ColorsApp.white,
           ),

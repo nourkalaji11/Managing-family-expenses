@@ -10,7 +10,6 @@ import 'package:family_expense_management/presentation/pages/dashboard/presentat
 import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/dashboard_formatter.dart';
 import 'package:family_expense_management/presentation/pages/transactions/bloc/transaction_form_bloc.dart';
 import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/amount_display.dart';
-import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/amount_keypad.dart';
 import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/form_selector_tile.dart';
 import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/picker_sheet.dart';
 import 'package:family_expense_management/presentation/pages/transactions/presentation/widgets/transaction_type_toggle.dart';
@@ -199,7 +198,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               label: a.name ?? 'unknown'.tr(),
               subtitle:
                   '${DashboardFormatter.amount(a.balance)} '
-                  '${'dashboard.currency_sar'.tr()}',
+                  '${'dashboard.currency'.tr()}',
               icon: Icons.account_balance_wallet_outlined,
             ),
       ],
@@ -302,6 +301,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       AmountDisplay(
                         amountInput: state.amountInput,
                         errorKey: state.showErrors ? state.errors.amount : null,
+                        onChanged: (v) => _bloc.add(OnAmountChanged(v)),
+                        // Adding starts on the amount; editing does not, so an
+                        // existing transaction is not immediately hidden behind
+                        // a keyboard the user did not ask for.
+                        autofocus: !state.isEditing,
                       ),
                       SizedBox(height: 24.h),
                       TransactionTypeToggle(
@@ -317,11 +321,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         onDescriptionChanged: (v) =>
                             _bloc.add(OnDescriptionChanged(v)),
                       ),
-                      SizedBox(height: 20.h),
-                      AmountKeypad(
-                        onDigit: (d) => _bloc.add(OnAmountDigitPressed(d)),
-                        onBackspace: () => _bloc.add(const OnAmountBackspace()),
-                      ),
+                      // The on-screen keypad that used to sit here is gone: the
+                      // amount is typed on the device keyboard now, and a
+                      // second number pad below the form would be a duplicate
+                      // input for the same field.
                     ],
                   ),
                 ),

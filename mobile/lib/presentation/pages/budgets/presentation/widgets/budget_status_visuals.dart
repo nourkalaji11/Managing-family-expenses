@@ -28,12 +28,12 @@ class BudgetStatusVisuals {
   };
 
   /// The translated status line: "تم استهلاك 45%", "اقتربت من الحد (82%)",
-  /// "تجاوزت الميزانية بـ 150 ر.س", "بداية جيدة (10%)".
+  /// "تجاوزت الميزانية بـ 150 ل.س", "بداية جيدة (10%)".
   ///
   /// Returns the finished string rather than a key, because three of the four
   /// need an interpolated figure that only the budget can supply.
   static String labelFor(BudgetModel budget) {
-    final String currency = 'dashboard.currency_sar'.tr();
+    final String currency = 'dashboard.currency'.tr();
 
     if (budget.status == BudgetStatus.exceeded) {
       return 'budgets.status_exceeded'.tr(

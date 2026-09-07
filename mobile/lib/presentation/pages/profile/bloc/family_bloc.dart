@@ -33,6 +33,8 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
         await _setLimit(emit, event.userId, event.limit);
       } else if (event is OnAddFamilyMember) {
         await _addMember(emit, event);
+      } else if (event is OnDeleteFamilyMember) {
+        await _deleteMember(emit, event.userId);
       }
     });
   }
@@ -85,6 +87,40 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
             members: next,
             isAddingMember: false,
             lastAddedMemberId: created.id,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteMember(Emitter<FamilyState> emit, int userId) async {
+    final FamilyState current = state;
+    if (current is! FamilyLoaded) return;
+    // One deletion at a time: a second tap on a row already being removed would
+    // produce a 404 on the retry and an error the parent cannot act on.
+    if (current.deletingMemberId != null) return;
+
+    emit(current.copyWith(deletingMemberId: userId, clearFailure: true));
+
+    final result = await _repo.deleteMember(userId);
+
+    result.fold(
+      (failure) => emit(
+        current.copyWith(clearDeletingMemberId: true, writeFailure: failure),
+      ),
+      (_) {
+        // Dropped from the list rather than refetched: the server answers with
+        // a message, not a list, and the row is known to be gone.
+        final List<User> next = [
+          for (final m in current.members)
+            if (m.id != userId) m,
+        ];
+
+        emit(
+          current.copyWith(
+            members: next,
+            clearDeletingMemberId: true,
+            lastDeletedMemberId: userId,
           ),
         );
       },

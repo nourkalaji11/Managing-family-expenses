@@ -320,7 +320,7 @@ class _PreviewHeader extends StatelessWidget {
           SizedBox(height: 4.h),
           Text(
             '${DashboardFormatter.isolatedAmount(balance)} '
-            '${'dashboard.currency_sar'.tr()}',
+            '${'dashboard.currency'.tr()}',
             style: TextStyleApp.budgetsPreviewValue.copyWith(
               color: AccountVisuals.amountColorFor(balance),
             ),
@@ -378,7 +378,7 @@ class _FormCard extends StatelessWidget {
             onChanged: onBalanceChanged,
             errorKey: showErrors ? state.errors.balance : null,
             icon: Icons.payments_outlined,
-            suffixText: 'dashboard.currency_sar'.tr(),
+            suffixText: 'dashboard.currency'.tr(),
             // `signed` so an overdrawn card can actually be typed; `decimal`
             // for the two fractional digits the column stores.
             keyboardType: const TextInputType.numberWithOptions(

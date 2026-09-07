@@ -146,7 +146,7 @@ class _Header extends StatelessWidget {
             SizedBox(height: 2.h),
             Text(
               '${DashboardFormatter.compactAmount(budget.limit)} '
-              '${'dashboard.currency_sar'.tr()}',
+              '${'dashboard.currency'.tr()}',
               style: TextStyleApp.budgetsCardLimit,
               maxLines: 1,
             ),
@@ -157,7 +157,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// "المتبقي: 1,100 ر.س" and "صرفت: 900 ر.س", or the overshoot when the ceiling
+/// "المتبقي: 1,100 ل.س" and "صرفت: 900 ر.س", or the overshoot when the ceiling
 /// has been passed.
 class _Footer extends StatelessWidget {
   final BudgetModel budget;
@@ -167,7 +167,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String currency = 'dashboard.currency_sar'.tr();
+    final String currency = 'dashboard.currency'.tr();
 
     return Row(
       children: [

@@ -819,7 +819,7 @@ class TextStyleApp {
     color: ColorsApp.onSurface,
   );
 
-  /// The over-budget footer — "تجاوز بـ: 150 ر.س" (12px bold, red).
+  /// The over-budget footer — "تجاوز بـ: 150 ل.س" (12px bold, red).
   static TextStyle budgetsCardFooterOver = TextStyle(
     fontSize: 12.sp,
     fontWeight: FontWeight.w700,

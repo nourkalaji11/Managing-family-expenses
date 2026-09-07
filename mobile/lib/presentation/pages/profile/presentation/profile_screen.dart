@@ -2,8 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/blocs/locale_cubit.dart';
 import 'package:family_expense_management/core/app_routes.dart';
 import 'package:family_expense_management/data/models/user.dart';
+import 'package:family_expense_management/utils/service_locator.dart';
 import 'package:family_expense_management/presentation/pages/profile/bloc/profile_bloc.dart';
 import 'package:family_expense_management/presentation/pages/profile/presentation/widgets/profile_action_tile.dart';
 import 'package:family_expense_management/presentation/pages/profile/presentation/widgets/profile_header.dart';
@@ -49,6 +51,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (result is User && mounted) {
       _bloc.add(OnProfileUpdated(result));
     }
+  }
+
+  /// Switches the interface between Arabic and English.
+  ///
+  /// Both calls are needed and they do different jobs. `setLocale` swaps
+  /// easy_localization's translation table — it is what makes `tr()` return the
+  /// other language. `LocaleCubit` holds the locale that `MaterialApp` is bound
+  /// to, which is what flips the text direction to RTL/LTR, and it writes the
+  /// choice to Hive so the next launch opens in the same language instead of
+  /// falling back to the device's.
+  Future<void> _toggleLanguage() async {
+    final Locale next = context.locale.languageCode == 'ar'
+        ? const Locale('en')
+        : const Locale('ar');
+
+    await context.setLocale(next);
+    if (!mounted) return;
+    getIt<LocaleCubit>().changeLang(context, next);
   }
 
   Future<void> _openFamily() async {
@@ -158,6 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onRefresh: () async => _bloc.add(const OnRefreshProfile()),
                 onEdit: () => _openEdit(state.user),
                 onFamily: _openFamily,
+                onToggleLanguage: _toggleLanguage,
                 onLogout: _confirmLogout,
               ),
             },
@@ -174,6 +195,7 @@ class _LoadedView extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final VoidCallback onEdit;
   final VoidCallback onFamily;
+  final VoidCallback onToggleLanguage;
   final VoidCallback onLogout;
 
   const _LoadedView({
@@ -182,6 +204,7 @@ class _LoadedView extends StatelessWidget {
     required this.onRefresh,
     required this.onEdit,
     required this.onFamily,
+    required this.onToggleLanguage,
     required this.onLogout,
   });
 
@@ -222,6 +245,24 @@ class _LoadedView extends StatelessWidget {
               onTap: onFamily,
             ),
           ],
+          SizedBox(height: 24.h),
+          Text(
+            'profile.preferences_section'.tr(),
+            style: TextStyleApp.budgetsSectionLabel,
+          ),
+          SizedBox(height: 12.h),
+          ProfileActionTile(
+            key: const Key('profile_language'),
+            icon: Icons.translate_outlined,
+            label: 'profile.language_title'.tr(),
+            // The language the app is in now, not the one the tap switches to:
+            // a row that reads "English" while the screen is Arabic is
+            // ambiguous about which of the two it is reporting.
+            subtitle: context.locale.languageCode == 'ar'
+                ? 'profile.language_arabic'.tr()
+                : 'profile.language_english'.tr(),
+            onTap: onToggleLanguage,
+          ),
           SizedBox(height: 24.h),
           Text(
             'profile.session_section'.tr(),

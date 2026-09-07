@@ -71,7 +71,7 @@ class _TransferScreenState extends State<TransferScreen> {
               label: a.name ?? '',
               subtitle:
                   '${DashboardFormatter.isolatedAmount(a.balance)} '
-                  '${'dashboard.currency_sar'.tr()}',
+                  '${'dashboard.currency'.tr()}',
               icon: AccountVisuals.iconFor(a.name),
             ),
       ],
@@ -287,7 +287,7 @@ class _AmountCard extends StatelessWidget {
             initialValue: state.amountInput,
             onChanged: onChanged,
             errorKey: errorKey,
-            suffixText: 'dashboard.currency_sar'.tr(),
+            suffixText: 'dashboard.currency'.tr(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(
@@ -438,7 +438,7 @@ class _AccountRow extends StatelessWidget {
                                 namedArgs: {
                                   'amount':
                                       '${DashboardFormatter.isolatedAmount(projected)} '
-                                      '${'dashboard.currency_sar'.tr()}',
+                                      '${'dashboard.currency'.tr()}',
                                 },
                               ),
                               style: TextStyleApp.dashboardCaption.copyWith(

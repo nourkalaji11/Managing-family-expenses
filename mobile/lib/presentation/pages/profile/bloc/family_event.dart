@@ -44,6 +44,20 @@ class OnAddFamilyMember extends FamilyEvent {
   List<Object?> get props => <Object?>[name, email, spendingLimit];
 }
 
+/// Removes a child from the family.
+///
+/// The server does the refusing — a parent target, the caller themselves, or a
+/// member with recorded transactions all come back as failures with a message
+/// the screen shows verbatim.
+class OnDeleteFamilyMember extends FamilyEvent {
+  final int userId;
+
+  const OnDeleteFamilyMember(this.userId);
+
+  @override
+  List<Object?> get props => <Object?>[userId];
+}
+
 class OnSetSpendingLimit extends FamilyEvent {
   final int userId;
   final num limit;

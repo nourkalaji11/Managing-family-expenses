@@ -452,6 +452,57 @@ class MockStore {
     return true;
   }
 
+  /// How many transactions [userId] recorded.
+  ///
+  /// The server refuses to delete a member who has any, so the mock has to be
+  /// able to answer the same question — otherwise the offline build would allow
+  /// a deletion the real one rejects.
+  int transactionCountBy(int? userId) {
+    if (userId == null) return 0;
+    var count = 0;
+    for (final t in _transactions) {
+      if (t.userId == userId) count++;
+    }
+    return count;
+  }
+
+  /// Removes [userId] from the family, mirroring `AuthController::deleteMember`.
+  ///
+  /// [reassignTo] inherits the accounts and budgets that member created. On the
+  /// server those rows cascade on delete, so the family would lose shared
+  /// accounts — and their history — merely because a child happened to be the
+  /// one who added them. Their notifications go with them: those are addressed
+  /// to a person who no longer exists.
+  ///
+  /// Transactions are never touched here; the caller refuses the deletion when
+  /// any exist.
+  bool removeUser(int id, {required int? reassignTo}) {
+    final index = _users.indexWhere((u) => u.id == id);
+    if (index < 0) return false;
+
+    for (var i = 0; i < _accounts.length; i++) {
+      final account = _accounts[i];
+      if (account.userId != id) continue;
+      // Rebuilt rather than copied: `Account` has no `copyWith`, and adding one
+      // for a single caller would be a wider change than this needs.
+      _accounts[i] = Account(
+        id: account.id,
+        name: account.name,
+        balance: account.balance,
+        userId: reassignTo,
+        transactionsCount: account.transactionsCount,
+      );
+    }
+    for (var i = 0; i < _budgets.length; i++) {
+      if (_budgets[i].userId == id) {
+        _budgets[i] = _budgets[i].copyWith(userId: reassignTo);
+      }
+    }
+    _notifications.removeWhere((n) => n.userId == id);
+    _users.removeAt(index);
+    return true;
+  }
+
   /// True when [email] already belongs to somebody other than [exceptId].
   /// Mirrors the server's `unique:users,email`.
   bool emailTaken(String email, {int? exceptId}) {

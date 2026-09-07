@@ -134,7 +134,7 @@ class _MemberRow extends StatelessWidget {
                     limit == null
                         ? 'dashboard.member_no_limit'.tr()
                         : '${DashboardFormatter.isolatedAmount(member.remaining ?? 0)} '
-                              '${'dashboard.currency_sar'.tr()}',
+                              '${'dashboard.currency'.tr()}',
                     style: TextStyleApp.budgetsCardFooterValue.copyWith(
                       color: ink,
                     ),
@@ -174,7 +174,7 @@ class _MemberRow extends StatelessWidget {
       // No ceiling, but they have spent — the figure alone is still the answer
       // to "how much has this child spent".
       return '${DashboardFormatter.isolatedAmount(spent)} '
-          '${'dashboard.currency_sar'.tr()}';
+          '${'dashboard.currency'.tr()}';
     }
     return 'dashboard.member_spent_of'.tr(
       namedArgs: {

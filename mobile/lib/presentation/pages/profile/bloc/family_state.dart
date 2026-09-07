@@ -47,6 +47,14 @@ class FamilyLoaded extends FamilyState {
   /// form can close.
   final int? lastAddedMemberId;
 
+  /// Id of the member being removed, or null when idle. Kept separate from
+  /// [savingMemberId] so a row can tell "saving your allowance" apart from
+  /// "deleting you".
+  final int? deletingMemberId;
+
+  /// Id of the member removed most recently, so the screen can confirm it.
+  final int? lastDeletedMemberId;
+
   const FamilyLoaded({
     required this.members,
     required this.canManage,
@@ -56,6 +64,8 @@ class FamilyLoaded extends FamilyState {
     this.isRefreshing = false,
     this.isAddingMember = false,
     this.lastAddedMemberId,
+    this.deletingMemberId,
+    this.lastDeletedMemberId,
   });
 
   bool get isEmpty => members.isEmpty;
@@ -88,6 +98,8 @@ class FamilyLoaded extends FamilyState {
 
   bool isSaving(int? id) => id != null && savingMemberId == id;
 
+  bool isDeleting(int? id) => id != null && deletingMemberId == id;
+
   FamilyLoaded copyWith({
     List<User>? members,
     bool? canManage,
@@ -97,9 +109,12 @@ class FamilyLoaded extends FamilyState {
     bool? isRefreshing,
     bool? isAddingMember,
     int? lastAddedMemberId,
+    int? deletingMemberId,
+    int? lastDeletedMemberId,
 
     /// Explicit clears, because `null` in a `??`-based copyWith means "keep".
     bool clearSavingMemberId = false,
+    bool clearDeletingMemberId = false,
     bool clearFailure = false,
   }) => FamilyLoaded(
     members: members ?? this.members,
@@ -112,6 +127,10 @@ class FamilyLoaded extends FamilyState {
     isRefreshing: isRefreshing ?? this.isRefreshing,
     isAddingMember: isAddingMember ?? this.isAddingMember,
     lastAddedMemberId: lastAddedMemberId ?? this.lastAddedMemberId,
+    deletingMemberId: clearDeletingMemberId
+        ? null
+        : (deletingMemberId ?? this.deletingMemberId),
+    lastDeletedMemberId: lastDeletedMemberId ?? this.lastDeletedMemberId,
   );
 
   @override
@@ -129,6 +148,8 @@ class FamilyLoaded extends FamilyState {
     isRefreshing,
     isAddingMember,
     lastAddedMemberId,
+    deletingMemberId,
+    lastDeletedMemberId,
   ];
 }
 

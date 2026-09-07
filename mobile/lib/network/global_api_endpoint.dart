@@ -63,6 +63,12 @@ enum GlobalApiEndpoint {
   /// otherwise, and 422 when the target is itself a parent.
   userLimit("users/{id}/limit"),
 
+  /// `DELETE`. Removes a child from the family. Parent-only; answers 422 for a
+  /// parent target, for the caller themselves, and for any member who has
+  /// recorded transactions — those are the family's financial history and the
+  /// accounts' balances rest on them.
+  user("users/{id}"),
+
   /// `GET`, **paginated** — unlike every other index in this API. Notifications
   /// are the one collection that grows without bound as the family uses the
   /// app. Accepts `page` and `per_page` (capped at 50 server-side).

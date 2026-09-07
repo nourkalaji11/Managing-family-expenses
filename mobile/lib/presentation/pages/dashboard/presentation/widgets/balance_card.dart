@@ -62,7 +62,7 @@ class BalanceCard extends StatelessWidget {
                         ),
                         SizedBox(width: 8.w),
                         Text(
-                          'dashboard.currency_sar'.tr(),
+                          'dashboard.currency'.tr(),
                           style: TextStyleApp.dashboardCurrency,
                         ),
                       ],

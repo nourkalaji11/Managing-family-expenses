@@ -14,7 +14,7 @@ BudgetModel budgetFromJson(String str) =>
 /// The four buckets are exactly the four states the design draws
 /// (`docs/stitch_family_finance_tracker/budgets_list_screen_minimal_redesign`):
 /// "بداية جيدة (10%)", "تم استهلاك 45%", "اقتربت من الحد (82%)" and
-/// "تجاوزت الميزانية بـ 150 ر.س". The thresholds live on [BudgetModel] so the
+/// "تجاوزت الميزانية بـ 150 ل.س". The thresholds live on [BudgetModel] so the
 /// bucket is decided once, in the model, and never re-derived inside a widget.
 ///
 /// TODO(backend/business-rule): the thresholds are read off the design, not off

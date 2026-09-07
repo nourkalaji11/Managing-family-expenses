@@ -51,6 +51,19 @@ abstract class ProfileDomain {
   /// otherwise, and 422 when the target is itself a parent.
   Future<Either<Failure, User>> setSpendingLimit(int userId, num limit);
 
+  /// Removes a child from the family.
+  ///
+  /// Parent-only, and refused with 422 for a parent target, for the caller
+  /// themselves, and — the case that matters — for any member who has recorded
+  /// transactions. Their spending is the family's financial history and the
+  /// accounts' balances depend on it, so it is neither deleted nor moved onto
+  /// somebody else's name.
+  ///
+  /// Accounts and budgets the member created are inherited by the parent doing
+  /// the deleting: those are shared family records, and `user_id` on them only
+  /// says who added the row.
+  Future<Either<Failure, bool>> deleteMember(int userId);
+
   /// Revokes the token this device is using.
   ///
   /// Returns `true` even when the request itself failed: see `ProfileRepo` for

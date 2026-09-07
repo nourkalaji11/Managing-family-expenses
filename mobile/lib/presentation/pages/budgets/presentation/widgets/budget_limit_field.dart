@@ -76,7 +76,7 @@ class _BudgetLimitFieldState extends State<BudgetLimitField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${'budgets.limit_label'.tr()} (${'dashboard.currency_sar'.tr()})',
+          '${'budgets.limit_label'.tr()} (${'dashboard.currency'.tr()})',
           style: TextStyleApp.budgetsAmountLabel,
         ),
         SizedBox(height: 8.h),

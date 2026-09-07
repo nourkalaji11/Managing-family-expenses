@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:family_expense_management/core/locals_app.dart';
 import 'package:family_expense_management/data/models/user.dart';
 import 'package:family_expense_management/presentation/pages/dashboard/presentation/widgets/dashboard_formatter.dart';
 import 'package:family_expense_management/presentation/pages/profile/bloc/family_bloc.dart';
@@ -77,6 +78,64 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
   /// Asks for the new ceiling in a dialog rather than pushing a screen: it is a
   /// single number, and a full route for one field would be heavier than the
   /// task.
+  /// Asks before removing a child, then lets the bloc do it.
+  ///
+  /// The dialog states what survives — the accounts and budgets they created
+  /// stay with the family — because the alternative reading, that removing a
+  /// member takes the family's shared records with them, is exactly what the
+  /// database's cascade would have done without the server's transfer.
+  Future<void> _confirmDelete(User member) async {
+    final int? id = member.id;
+    if (id == null) return;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: ColorsApp.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          'profile.delete_member_title'.tr(
+            namedArgs: {'name': member.name ?? ''},
+          ),
+          style: TextStyleApp.dashboardSectionTitle,
+        ),
+        content: Text(
+          'profile.delete_member_body'.tr(),
+          style: TextStyleApp.budgetsCardCaption,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              // Same key the ceiling dialog above uses, so the two dialogs on
+              // this screen do not label the same button differently.
+              'accounts.cancel'.tr(),
+              style: TextStyleApp.dashboardSectionAction,
+            ),
+          ),
+          TextButton(
+            key: const Key('family_delete_confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'profile.delete_member_confirm'.tr(),
+              style: TextStyleApp.dashboardSectionAction.copyWith(
+                color: ColorsApp.errorRed,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // `== true` explicitly: dismissing the dialog resolves to null, which is a
+    // cancellation, not consent.
+    if (confirmed == true && mounted) {
+      _bloc.add(OnDeleteFamilyMember(id));
+    }
+  }
+
   Future<void> _editLimit(User member) async {
     final int? id = member.id;
     if (id == null) return;
@@ -111,7 +170,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
               hint: '0.00',
               initialValue: input,
               onChanged: (v) => input = v,
-              suffixText: 'dashboard.currency_sar'.tr(),
+              suffixText: 'dashboard.currency'.tr(),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -179,18 +238,24 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
       listenWhen: (previous, current) {
         if (current is! FamilyLoaded) return false;
         if (current.writeFailure != null) return true;
-        // A newly added child, identified by the id changing rather than by a
-        // flag — a flag would re-fire on every later rebuild.
-        return previous is FamilyLoaded &&
+        if (previous is! FamilyLoaded) return false;
+        // A newly added or newly removed child, identified by the id changing
+        // rather than by a flag — a flag would re-fire on every later rebuild.
+        final bool added =
             previous.lastAddedMemberId != current.lastAddedMemberId &&
             current.lastAddedMemberId != null;
+        final bool deleted =
+            previous.lastDeletedMemberId != current.lastDeletedMemberId &&
+            current.lastDeletedMemberId != null;
+        return added || deleted;
       },
       listener: (context, state) {
         final loaded = state as FamilyLoaded;
 
         if (loaded.writeFailure != null) {
           // The server's own message: it is the only side that can decide 403
-          // (not a parent), 422 (target is a parent) or a duplicate email.
+          // (not a parent), 422 (target is a parent, or has transactions) or a
+          // duplicate email.
           EasyLoading.showToast(
             loaded.writeFailure?.message ?? 'errorglobal'.tr(),
             toastPosition: EasyLoadingToastPosition.bottom,
@@ -198,8 +263,14 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
           return;
         }
 
+        final bool justDeleted =
+            loaded.lastDeletedMemberId != null &&
+            !loaded.members.any((m) => m.id == loaded.lastDeletedMemberId);
+
         EasyLoading.showToast(
-          'profile.member_added'.tr(),
+          justDeleted
+              ? 'profile.delete_member_done'.tr()
+              : 'profile.member_added'.tr(),
           toastPosition: EasyLoadingToastPosition.bottom,
         );
       },
@@ -240,6 +311,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 horizontal: horizontal,
                 onRefresh: () async => _bloc.add(const OnRefreshFamily()),
                 onEditLimit: _editLimit,
+                onDeleteMember: _confirmDelete,
               ),
             },
           ),
@@ -281,12 +353,14 @@ class _LoadedView extends StatelessWidget {
   final double horizontal;
   final Future<void> Function() onRefresh;
   final void Function(User) onEditLimit;
+  final void Function(User) onDeleteMember;
 
   const _LoadedView({
     required this.state,
     required this.horizontal,
     required this.onRefresh,
     required this.onEditLimit,
+    required this.onDeleteMember,
   });
 
   @override
@@ -335,7 +409,15 @@ class _LoadedView extends StatelessWidget {
                 onEditLimit: state.canManage
                     ? () => onEditLimit(members[i])
                     : null,
+                // Parents only, and never the viewer's own row — the server
+                // refuses both, so offering the button would be offering
+                // something that cannot happen.
+                onDelete:
+                    state.canManage && members[i].id != LocalsApp.user?.id
+                    ? () => onDeleteMember(members[i])
+                    : null,
                 isSaving: state.isSaving(members[i].id),
+                isDeleting: state.isDeleting(members[i].id),
               ),
             ],
         ],
@@ -348,13 +430,19 @@ class _LoadedView extends StatelessWidget {
 class _MemberCard extends StatelessWidget {
   final User member;
   final VoidCallback? onEditLimit;
+
+  /// Null for a row that cannot be removed — a parent, or the viewer's own row.
+  final VoidCallback? onDelete;
   final bool isSaving;
+  final bool isDeleting;
 
   const _MemberCard({
     super.key,
     required this.member,
     required this.onEditLimit,
     required this.isSaving,
+    this.onDelete,
+    this.isDeleting = false,
   });
 
   @override
@@ -454,7 +542,7 @@ class _MemberCard extends StatelessWidget {
                         member.spendingLimit == null
                             ? 'profile.no_limit'.tr()
                             : '${DashboardFormatter.isolatedAmount(member.spendingLimit)} '
-                                  '${'dashboard.currency_sar'.tr()}',
+                                  '${'dashboard.currency'.tr()}',
                         style: TextStyleApp.budgetsCardFooterValue,
                       ),
                     ],
@@ -484,6 +572,39 @@ class _MemberCard extends StatelessWidget {
             // card stays the "no limit set" shape rather than showing an empty
             // bar that implies one exists.
             _UsageBar(member: member),
+          ],
+          if (onDelete != null || isDeleting) ...[
+            SizedBox(height: 4.h),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: isDeleting
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      child: SizedBox(
+                        width: 20.r,
+                        height: 20.r,
+                        child: const CircularProgressIndicator(
+                          color: ColorsApp.errorRed,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    )
+                  : TextButton.icon(
+                      key: ValueKey<String>('family_delete_${member.id}'),
+                      onPressed: onDelete,
+                      icon: Icon(
+                        Icons.person_remove_outlined,
+                        size: 18.r,
+                        color: ColorsApp.errorRed,
+                      ),
+                      label: Text(
+                        'profile.delete_member'.tr(),
+                        style: TextStyleApp.dashboardSectionAction.copyWith(
+                          color: ColorsApp.errorRed,
+                        ),
+                      ),
+                    ),
+            ),
           ],
         ],
       ),

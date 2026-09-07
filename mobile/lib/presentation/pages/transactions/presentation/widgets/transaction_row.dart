@@ -91,7 +91,7 @@ class TransactionRow extends StatelessWidget {
                 Flexible(
                   child: Text(
                     '${DashboardFormatter.signedAmount(transaction.amount, isExpense: isExpense)} '
-                    '${'dashboard.currency_sar'.tr()}',
+                    '${'dashboard.currency'.tr()}',
                     style: isExpense
                         ? TextStyleApp.dashboardAmountNegative
                         : TextStyleApp.dashboardAmountPositive,

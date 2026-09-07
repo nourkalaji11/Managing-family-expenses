@@ -61,7 +61,7 @@ class _TransfersHistoryScreenState extends State<TransfersHistoryScreen> {
 
     final String amount =
         '${DashboardFormatter.isolatedAmount(transfer.amount)} '
-        '${'dashboard.currency_sar'.tr()}';
+        '${'dashboard.currency'.tr()}';
 
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -289,7 +289,7 @@ class _TransferCard extends StatelessWidget {
                   children: [
                     Text(
                       '${DashboardFormatter.isolatedAmount(transfer.amount)} '
-                      '${'dashboard.currency_sar'.tr()}',
+                      '${'dashboard.currency'.tr()}',
                       style: TextStyleApp.transactionsRowTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

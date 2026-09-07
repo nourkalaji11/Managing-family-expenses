@@ -27,18 +27,18 @@ class OnFormStarted extends TransactionFormEvent {
   List<Object?> get props => <Object?>[transaction?.id, accounts, categories];
 }
 
-class OnAmountDigitPressed extends TransactionFormEvent {
-  /// A single character: "0".."9" or ".".
-  final String digit;
+/// The amount as typed on the system keyboard.
+///
+/// Replaces the whole buffer rather than appending, because a real keyboard
+/// also allows selecting, pasting and deleting from the middle — none of which
+/// a digit-at-a-time event can express.
+class OnAmountChanged extends TransactionFormEvent {
+  final String input;
 
-  const OnAmountDigitPressed(this.digit);
+  const OnAmountChanged(this.input);
 
   @override
-  List<Object?> get props => <Object?>[digit];
-}
-
-class OnAmountBackspace extends TransactionFormEvent {
-  const OnAmountBackspace();
+  List<Object?> get props => <Object?>[input];
 }
 
 class OnTypeChanged extends TransactionFormEvent {

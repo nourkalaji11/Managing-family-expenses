@@ -185,6 +185,26 @@ class ProfileRepo extends ProfileDomain {
   }
 
   @override
+  Future<Either<Failure, bool>> deleteMember(int userId) async {
+    if (useMock) return _mockDeleteMember(userId);
+
+    try {
+      final response = await client.request(
+        requestType: RequestType.delete,
+        path: GlobalApiEndpoint.user[[userId]],
+      );
+      ensureSuccess(response);
+      return const Right(true);
+    } on DioException catch (ex) {
+      return Left(_mapDioException(ex));
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(GlobalFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, bool>> logout() async {
     if (useMock) {
       // No request to make — there is no token to revoke. The local clear below
@@ -412,6 +432,54 @@ class ProfileRepo extends ProfileDomain {
     }
 
     return Right(member);
+  }
+
+  /// Mirrors `AuthController::deleteMember`, refusal by refusal.
+  ///
+  /// The transaction check is the one that earns its place: without it the
+  /// offline build would happily remove a child the real server refuses, and
+  /// the difference would only surface against a live backend.
+  Future<Either<Failure, bool>> _mockDeleteMember(int userId) async {
+    await Future.delayed(mockWriteDelay);
+
+    final store = MockStore.instance;
+    final viewer = store.signedInUser;
+    if (viewer == null) return Left(ResultFailure('unauthenticated'.tr()));
+
+    // 403.
+    if (!viewer.isParent) {
+      return Left(ResultFailure('profile.error_delete_forbidden'.tr()));
+    }
+
+    final target = store.userById(userId);
+    if (target == null) {
+      return Left(ResultFailure('profile.error_member_not_found'.tr()));
+    }
+
+    // 422s, in the server's order.
+    if (target.id == viewer.id) {
+      return Left(ResultFailure('profile.error_delete_self'.tr()));
+    }
+    if (target.isParent) {
+      return Left(ResultFailure('profile.error_delete_parent'.tr()));
+    }
+
+    final int recorded = store.transactionCountBy(target.id);
+    if (recorded > 0) {
+      return Left(
+        ResultFailure(
+          'profile.error_delete_has_transactions'.tr(
+            namedArgs: {'count': recorded.toString()},
+          ),
+        ),
+      );
+    }
+
+    if (!store.removeUser(userId, reassignTo: viewer.id)) {
+      return Left(ResultFailure('profile.error_member_not_found'.tr()));
+    }
+
+    return const Right(true);
   }
 
   /// [member] with the spend figures the family screen draws.

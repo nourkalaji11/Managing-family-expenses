@@ -77,7 +77,7 @@ class AccountsTotalCard extends StatelessWidget {
               SizedBox(width: 6.w),
               Padding(
                 padding: EdgeInsets.only(bottom: 4.h),
-                child: Text('dashboard.currency_sar'.tr(), style: currency),
+                child: Text('dashboard.currency'.tr(), style: currency),
               ),
             ],
           ),

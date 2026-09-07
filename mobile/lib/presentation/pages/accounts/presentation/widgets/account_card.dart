@@ -143,7 +143,7 @@ class _Balance extends StatelessWidget {
         ),
         SizedBox(height: 2.h),
         Text(
-          'dashboard.currency_sar'.tr(),
+          'dashboard.currency'.tr(),
           style: TextStyleApp.dashboardCaption,
         ),
       ],

@@ -64,7 +64,7 @@ class BudgetPreviewCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   '${DashboardFormatter.compactAmount(limitAmount)} '
-                  '${'dashboard.currency_sar'.tr()}',
+                  '${'dashboard.currency'.tr()}',
                   style: TextStyleApp.budgetsPreviewValue,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
