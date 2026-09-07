@@ -44,10 +44,14 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // العمليات مقيَّدة بالدور، والحسابات مشتركة — انظر ScopesToFamily.
-        // الرصيد الإجمالي يظهر للطرفين: الحسابات مرئية للجميع أصلاً، فإخفاء
-        // مجموعها عن الابن مسرحية يستطيع تجاوزها بجمع القائمة بنفسه.
+        // العمليات والحسابات كلاهما مقيَّد بالدور — انظر ScopesToFamily.
+        //
+        // كان الرصيد الإجمالي مجموع حسابات العائلة كلها للطرفين، بحجة أن
+        // الحسابات مرئية للجميع أصلاً فإخفاء مجموعها مسرحية. الحجة سقطت مع
+        // القائمة: الابن لم يعد يرى إلا حساباته، فمجموع لا يطابقها ليس شفافية
+        // بل تسريب لرقم لا مصدر له على شاشته.
         $scoped = fn () => $this->scopeToViewer(Transaction::query(), $user);
+        $scopedAccounts = fn () => $this->scopeToViewer(Account::query(), $user);
 
         $totals = $this->totals($scoped);
         $breakdown = $this->breakdown($scoped, $totals['expenses']);
@@ -59,7 +63,7 @@ class DashboardController extends Controller
 
         $data = [
             'role' => $user->role,
-            'total_balance' => (float) Account::sum('balance'),
+            'total_balance' => (float) $scopedAccounts()->sum('balance'),
             'income' => $totals['income'],
             'expenses' => $totals['expenses'],
             // قد يكون سالباً حين تتجاوز المصاريف الدخل، وهو الرقم الصادق —
@@ -71,7 +75,7 @@ class DashboardController extends Controller
             // TODO(backend): "الحساب العائلي" لا وجود له في المخطط — لا عمود
             // is_primary ولا رقم حساب. هذا أحدث حساب أُنشئ، وهو نائب للعرض لا
             // أكثر. تحديده فعلياً يحتاج تغييراً في المخطط لا نقطة نهاية جديدة.
-            'primary_account' => Account::latest()->first(),
+            'primary_account' => $scopedAccounts()->latest()->first(),
         ];
 
         if ($user->isParent()) {

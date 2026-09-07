@@ -130,17 +130,161 @@ class ScopingTest extends TestCase
             ->getJson('/api/budgets')->assertOk()->assertJsonCount(1, 'data');
     }
 
-    public function test_accounts_stay_shared_so_a_member_has_somewhere_to_spend_from(): void
+    public function test_a_member_sees_only_their_own_accounts(): void
     {
-        // Deliberately NOT scoped: accounts.user_id records who created an
-        // account, not who may spend from it. Scoping it would leave a member
-        // with no account to book a transaction against, which is the whole
-        // point of the app for them.
+        // Accounts used to be unscoped, on the argument that `user_id` records
+        // who created one rather than who may spend from it. The consequence
+        // was a child reading their parent's account name and balance. They are
+        // scoped now, and a child gets a wallet of their own instead — see the
+        // wallet migration and `AuthController::createMember`.
+        $childWallet = Account::create([
+            'name' => 'Child wallet',
+            'balance' => 50,
+            'user_id' => $this->child->id,
+        ]);
+
         $this->actingAs($this->parent)
-            ->getJson('/api/accounts')->assertOk()->assertJsonCount(1, 'data');
+            ->getJson('/api/accounts')->assertOk()->assertJsonCount(2, 'data');
+
+        $rows = $this->actingAs($this->child)
+            ->getJson('/api/accounts')->assertOk()->json('data');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame($childWallet->id, $rows[0]['id']);
+    }
+
+    public function test_a_new_member_is_given_a_wallet_of_their_own(): void
+    {
+        // Without this a child created after accounts became scoped opens the
+        // app on an empty account list and cannot record anything, because
+        // every transaction needs an account.
+        $this->actingAs($this->parent)
+            ->postJson('/api/users', [
+                'name' => 'New child',
+                'email' => 'new@test.local',
+                'password' => 'password123',
+            ])->assertCreated();
+
+        $created = User::where('email', 'new@test.local')->firstOrFail();
+
+        $rows = $this->actingAs($created)
+            ->getJson('/api/accounts')->assertOk()->json('data');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame(0.0, (float) $rows[0]['balance']);
+    }
+
+    public function test_a_member_cannot_reach_a_parents_account_by_id(): void
+    {
+        // Scoping the list stops browsing, not access: without these the child
+        // renames their father's account, or empties it, by guessing a number.
+        $this->actingAs($this->child)
+            ->putJson("/api/accounts/{$this->account->id}", [
+                'name' => 'Taken over',
+                'balance' => 0,
+            ])->assertStatus(404);
 
         $this->actingAs($this->child)
-            ->getJson('/api/accounts')->assertOk()->assertJsonCount(1, 'data');
+            ->deleteJson("/api/accounts/{$this->account->id}")
+            ->assertStatus(404);
+
+        $this->assertDatabaseHas('accounts', [
+            'id' => $this->account->id,
+            'name' => $this->account->name,
+        ]);
+    }
+
+    public function test_a_member_cannot_book_a_transaction_against_a_parents_account(): void
+    {
+        // `exists:accounts,id` proves the row exists, not that the caller may
+        // use it. Without the ownership check the child spends from an account
+        // they cannot even see, and its balance drops.
+        $this->actingAs($this->child)
+            ->postJson('/api/transactions', [
+                'account_id' => $this->account->id,
+                'category_id' => $this->category->id,
+                'amount' => 25,
+                'type' => 'expense',
+                'date' => now()->toDateString(),
+            ])->assertStatus(404);
+
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_a_member_cannot_transfer_out_of_a_parents_account(): void
+    {
+        $childWallet = Account::create([
+            'name' => 'Child wallet',
+            'balance' => 0,
+            'user_id' => $this->child->id,
+        ]);
+
+        // The widest hole of the three: this would not merely read the parent's
+        // balance, it would move it.
+        $this->actingAs($this->child)
+            ->postJson('/api/transfers', [
+                'from_account_id' => $this->account->id,
+                'to_account_id' => $childWallet->id,
+                'amount' => 100,
+                'category_id' => $this->category->id,
+                'date' => now()->toDateString(),
+            ])->assertStatus(404);
+
+        $this->assertSame(
+            (float) $this->account->balance,
+            (float) $this->account->fresh()->balance,
+        );
+    }
+
+    public function test_a_member_sees_only_their_own_spending_in_the_category_counts(): void
+    {
+        $childWallet = Account::create([
+            'name' => 'Child wallet',
+            'balance' => 500,
+            'user_id' => $this->child->id,
+        ]);
+
+        foreach ([$this->parent->id => $this->account->id, $this->child->id => $childWallet->id] as $userId => $accountId) {
+            Transaction::create([
+                'amount' => 10,
+                'type' => 'expense',
+                'date' => now()->toDateString(),
+                'account_id' => $accountId,
+                'category_id' => $this->category->id,
+                'user_id' => $userId,
+            ]);
+        }
+
+        $countFor = function (User $viewer): int {
+            $rows = $this->actingAs($viewer)->getJson('/api/categories')->assertOk()->json('data');
+            return collect($rows)->firstWhere('id', $this->category->id)['transactions_count'];
+        };
+
+        $this->assertSame(2, $countFor($this->parent));
+        // A count that included the parent's row would let the child infer
+        // spending they are not allowed to see.
+        $this->assertSame(1, $countFor($this->child));
+    }
+
+    public function test_a_member_sees_only_their_own_balance_on_the_dashboard(): void
+    {
+        Account::create([
+            'name' => 'Child wallet',
+            'balance' => 250,
+            'user_id' => $this->child->id,
+        ]);
+
+        $this->assertSame(
+            (float) $this->account->balance + 250.0,
+            (float) $this->actingAs($this->parent)
+                ->getJson('/api/dashboard')->assertOk()->json('data.total_balance'),
+        );
+
+        $this->assertSame(
+            250.0,
+            (float) $this->actingAs($this->child)
+                ->getJson('/api/dashboard')->assertOk()->json('data.total_balance'),
+        );
     }
 
     // -------------------------------------------------------------------------

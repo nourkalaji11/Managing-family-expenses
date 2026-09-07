@@ -8,10 +8,12 @@ use App\Models\Transaction;
 
 class AccountController extends Controller
 {
+    use \App\Http\Controllers\Concerns\ScopesToFamily;
+
     /**
      * عرض جميع الحسابات المالية للعائلة
      */
-    public function index()
+    public function index(Request $request)
     {
         // withCount يضيف transactions_count بجملة فرعية واحدة.
         //
@@ -21,7 +23,13 @@ class AccountController extends Controller
         //
         // أطراف التحويل محسوبة عمداً: التحويل يمسّ الحسابين فعلاً، بخلاف فئته
         // التي هي حشو — انظر CategoryController::index.
-        $accounts = Account::withCount('transactions')->latest()->get();
+        // ولي الأمر يرى حسابات العائلة كلها — بما فيها حسابات أبنائه، وهو سبب
+        // فتحه الشاشة. الابن يرى حساباته وحدها: كان الاستعلام بلا قيد، فيقرأ
+        // الابن اسم حساب أبيه ورصيده.
+        $accounts = $this->scopeToViewer(
+            Account::withCount('transactions'),
+            $request->user()
+        )->latest()->get();
 
         return response()->json([
             'message' => 'تم جلب الحسابات المالية بنجاح',
@@ -70,6 +78,14 @@ class AccountController extends Controller
             ], 404);
         }
 
+        // قصر القائمة يمنع التصفح لا الوصول: بلا هذا الفحص يكفي أن يخمّن الابن
+        // رقماً في المسار ليعدّل اسم حساب أبيه ورصيده.
+        if (! $this->viewerOwns($request->user(), $account->user_id)) {
+            return response()->json([
+                'message' => 'الحساب غير موجود!'
+            ], 404);
+        }
+
         $validated = $request->validate([
             'name'    => 'required|string|max:100',
             'balance' => 'required|numeric',
@@ -92,11 +108,18 @@ class AccountController extends Controller
      * يمسح كل عملياته صامتاً. رفض الحذف وإبلاغ المستخدم بالعدد أصدق من محو
      * سجلّ مالي كامل خلف ظهره.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $account = Account::find($id);
 
         if (!$account) {
+            return response()->json([
+                'message' => 'الحساب غير موجود!'
+            ], 404);
+        }
+
+        // 404 لا 403: قول "ممنوع" يؤكّد للابن أن الحساب موجود ويكشف وجوده.
+        if (! $this->viewerOwns($request->user(), $account->user_id)) {
             return response()->json([
                 'message' => 'الحساب غير موجود!'
             ], 404);

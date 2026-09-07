@@ -272,6 +272,17 @@ class AuthController extends Controller
             'spending_limit' => $validated['spending_limit'] ?? null,
         ]);
 
+        // محفظة خاصة بالابن.
+        //
+        // لازمة منذ صار الابن لا يرى إلا حساباته: بدونها يفتح حسابه الجديد على
+        // قائمة حسابات فارغة، ولا يستطيع تسجيل أي مصروف لأن كل عملية تحتاج
+        // حساباً. الرصيد يبدأ صفراً — ولي الأمر يحوّل إليها ما يشاء.
+        Account::create([
+            'name'    => 'محفظة ' . $member->name,
+            'balance' => 0,
+            'user_id' => $member->id,
+        ]);
+
         // إشعار بالسقف عند تحديده مع الإنشاء، تماماً كما لو حُدِّد لاحقاً عبر
         // setSpendingLimit — وإلا لاختفى السجل لمجرد أن التوقيت اختلف.
         if (isset($validated['spending_limit'])) {

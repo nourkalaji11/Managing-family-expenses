@@ -89,6 +89,14 @@ class TransactionController extends Controller
         $user = auth()->user();
         $notifier = new NotificationService();
 
+        // `exists:accounts,id` أثبتت وجود الحساب لا أحقية استعماله. الابن الذي
+        // يرسل رقم حساب أبيه كان يسجّل عليه وينقص رصيده — حساب لا يراه أصلاً.
+        if (! $this->viewerCanUseAccount($user, $validated['account_id'])) {
+            return response()->json([
+                'message' => 'الحساب غير موجود!'
+            ], 404);
+        }
+
         // 2. التحقق من حد السحب عند إضافة مصروف.
         //    كان الشرط `role === 'member'` حرفياً، فأي دور آخر غير 'member'
         //    و'admin' كان يفلت من السقف تماماً. isParent يقلب الفحص: من ليس
@@ -242,6 +250,14 @@ class TransactionController extends Controller
         if (! $this->viewerOwns($user, $transaction->user_id)) {
             return response()->json([
                 'message' => 'العملية غير موجودة!'
+            ], 404);
+        }
+
+        // ولا يُنقل إلى حساب لا يراه: وإلا صار التعديل طريقاً جانبياً إلى رصيد
+        // حساب الأب بعد أن أُغلق الطريق المباشر في store.
+        if (! $this->viewerCanUseAccount($user, $validated['account_id'])) {
+            return response()->json([
+                'message' => 'الحساب غير موجود!'
             ], 404);
         }
 

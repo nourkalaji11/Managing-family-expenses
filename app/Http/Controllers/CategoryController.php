@@ -9,10 +9,12 @@ use App\Models\Transaction;
 
 class CategoryController extends Controller
 {
+    use \App\Http\Controllers\Concerns\ScopesToFamily;
+
     /**
      * عرض جميع فئات المصاريف المتاحة بالتطبيق
      */
-    public function index()
+    public function index(Request $request)
     {
         // عدّادان يغنيان العميل عن جلب /transactions و/budgets كاملين:
         //   transactions_count → الرقم تحت اسم الفئة في الشبكة.
@@ -23,10 +25,21 @@ class CategoryController extends Controller
         // اضطراراً لأن transactions.category_id غير قابل للإفراغ، فعدّها ينفخ
         // فئة لا علاقة لها بالأمر. عدّ الحسابات يشملها، لأن التحويل يمسّ
         // الحسابين فعلاً.
+        // العدّاد مقيَّد بالدور مثل القائمة نفسها: كان يعدّ عمليات العائلة كلها،
+        // فيقرأ الابن تحت "المطاعم" رقماً يشمل مصاريف أبيه — أي أنه يستدلّ على
+        // نشاط لا يُسمح له برؤيته من عدّاد بريء الشكل.
+        //
+        // budgets_count يبقى بلا قيد: وظيفته حارس الحذف، وفئة تستعملها ميزانية
+        // شخص آخر يجب أن تظل ممنوعة الحذف بصرف النظر عمّن يسأل.
+        $viewer = $request->user();
+
         $categories = Category::query()
             ->withCount([
                 'transactions as transactions_count' => fn ($query) =>
-                    $query->whereNull('transfer_group_id'),
+                    $this->scopeToViewer(
+                        $query->whereNull('transfer_group_id'),
+                        $viewer
+                    ),
                 'budgets as budgets_count',
             ])
             ->orderBy('name', 'asc')

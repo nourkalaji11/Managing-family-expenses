@@ -75,6 +75,17 @@ class TransferController extends Controller
             'date'            => 'required|date',
         ]);
 
+        // الطرفان يجب أن يكونا حسابين يراهما المحوِّل. بلا هذا الفحص يصبح
+        // التحويل أوسع ثغرة من الجميع: لا يقرأ الابن رصيد أبيه فحسب، بل ينقله
+        // إلى محفظته بطلب واحد.
+        foreach (['from_account_id', 'to_account_id'] as $field) {
+            if (! $this->viewerCanUseAccount($request->user(), $validated[$field])) {
+                return response()->json([
+                    'message' => 'الحساب غير موجود!'
+                ], 404);
+            }
+        }
+
         // سقف سحب الابن لا يُطبَّق هنا عمداً: التحويل لا يُخرج مالاً من العائلة،
         // والسقف يقيّد الإنفاق. تطبيقه كان سيمنع ابناً من ترتيب حساباته.
         return DB::transaction(function () use ($validated, $request) {

@@ -48,10 +48,13 @@ class SpendingLimitAndNotificationsTest extends TestCase
         ]);
 
         $this->category = Category::create(['name' => 'Food']);
+        // The child's own wallet. Accounts are scoped by role now, so a child
+        // spending from an account their parent owns is refused — which is the
+        // point, and what every case below records against.
         $this->account = Account::create([
             'name' => 'Wallet',
             'balance' => 10000,
-            'user_id' => $this->parent->id,
+            'user_id' => $this->child->id,
         ]);
     }
 
@@ -116,10 +119,12 @@ class SpendingLimitAndNotificationsTest extends TestCase
 
     public function test_a_transfer_does_not_consume_the_ceiling(): void
     {
+        // Both ends belong to the child: a transfer into somebody else's
+        // account would be refused before the ceiling is ever consulted.
         $second = Account::create([
             'name' => 'Savings',
             'balance' => 100,
-            'user_id' => $this->parent->id,
+            'user_id' => $this->child->id,
         ]);
 
         // Moving money between the family's own accounts is not spending, so it
@@ -277,7 +282,7 @@ class SpendingLimitAndNotificationsTest extends TestCase
         $second = Account::create([
             'name' => 'Savings',
             'balance' => 0,
-            'user_id' => $this->parent->id,
+            'user_id' => $this->child->id,
         ]);
 
         $group = $this->actingAs($this->child)
@@ -381,8 +386,19 @@ class SpendingLimitAndNotificationsTest extends TestCase
             'role' => 'member',
         ]);
 
+        // Their own wallet: one member cannot spend from another's, and
+        // `$this->account` belongs to `$this->child`.
+        $wallet = Account::create([
+            'name' => 'Uncapped wallet',
+            'balance' => 10000,
+            'user_id' => $uncapped->id,
+        ]);
+
         $this->actingAs($uncapped)
-            ->postJson('/api/transactions', $this->payload(['amount' => 5000]))
+            ->postJson('/api/transactions', $this->payload([
+                'amount' => 5000,
+                'account_id' => $wallet->id,
+            ]))
             ->assertCreated();
 
         $this->assertSame(0, AppNotification::where('type', AppNotification::TYPE_LIMIT_APPROACHING)->count());
@@ -482,7 +498,7 @@ class SpendingLimitAndNotificationsTest extends TestCase
         $other = Account::create([
             'name' => 'Savings',
             'balance' => 1000,
-            'user_id' => $this->parent->id,
+            'user_id' => $this->child->id,
         ]);
 
         $this->actingAs($this->child)->postJson('/api/transfers', [
