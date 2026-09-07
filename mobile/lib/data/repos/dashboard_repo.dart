@@ -60,7 +60,12 @@ class DashboardRepo extends DashboardDomain {
       // would make every transaction added or edited during the session vanish
       // from the dashboard the next time it loaded.
       final store = MockStore.instance;
-      final List<Account> accounts = store.accounts;
+      // Scoped like the server's `total_balance`: a member's home shows the
+      // balance of their own wallet. It used to sum the family's accounts for
+      // everyone, on the argument that the list was visible to all anyway —
+      // that argument died with the list, and the figure became a number with
+      // no source on a child's screen.
+      final List<Account> accounts = store.accountsVisibleTo(store.signedInUser);
       final viewer = store.signedInUser;
 
       // Scoped by role, as `DashboardController` scopes it: a parent's figures

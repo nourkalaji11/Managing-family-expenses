@@ -186,7 +186,12 @@ class TransfersRepo extends TransfersDomain {
 
     final store = MockStore.instance;
     return Right(
-      TransferFormData(accounts: store.accounts, categories: store.categories),
+      // Both ends of a transfer must be accounts the viewer owns — offering
+      // the parent's would offer a move the server refuses.
+      TransferFormData(
+        accounts: store.accountsVisibleTo(store.signedInUser),
+        categories: store.categories,
+      ),
     );
   }
 

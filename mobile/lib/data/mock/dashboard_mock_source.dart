@@ -62,10 +62,22 @@ class DashboardMockSource {
     _salary,
   ];
 
-  /// Σ balance = 12,450.00, matching the design's total.
+  /// Σ balance = 14,450.00 for the parent, who sees the family's accounts and
+  /// the children's wallets; 1,200.00 for نور and 800.00 for سعاد, who each see
+  /// only their own. The design's 12,450.00 was the parent's two accounts alone,
+  /// before the children had wallets.
+  ///
+  /// Each child has a wallet of their own. Accounts are scoped by role now — a
+  /// member sees only what they own — so without these the two seeded children
+  /// would open the app on an empty account list and be unable to record
+  /// anything, since every transaction needs an account. The server does the
+  /// same: `AuthController::createMember` opens a wallet with each child, and a
+  /// migration backfills the ones created before the rule changed.
   static const List<Account> accounts = [
     Account(id: 1, name: 'الحساب الجاري', balance: 9450.00, userId: 1),
     Account(id: 2, name: 'التوفير', balance: 3000.00, userId: 1),
+    Account(id: 3, name: 'محفظة نور', balance: 1200.00, userId: 2),
+    Account(id: 4, name: 'محفظة سعاد', balance: 800.00, userId: 3),
   ];
 
   /// Placeholder for the masked family account number in the balance card.

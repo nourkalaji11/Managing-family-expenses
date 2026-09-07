@@ -159,6 +159,18 @@ class MockStore {
 
   List<Account> get accounts => List.unmodifiable(_accounts);
 
+  /// The accounts [viewer] may see: everything for a parent, their own for a
+  /// member. Mirrors `AccountController::index` — see `ScopesToFamily`, which
+  /// records why these stopped being shared.
+  List<Account> accountsVisibleTo(User? viewer) {
+    if (viewer == null) return const <Account>[];
+    if (viewer.isParent) return List.unmodifiable(_accounts);
+    return [
+      for (final a in _accounts)
+        if (a.userId == viewer.id) a,
+    ];
+  }
+
   List<Category> get categories => List.unmodifiable(_categories);
 
   /// Ordering is the repository's job here too, so `BudgetsRepo` and a future
@@ -360,11 +372,18 @@ class MockStore {
   ///
   /// Transfer legs are counted: they are real rows against the account and they
   /// do block a delete, exactly as on the server.
-  int countTransactionsForAccount(int? accountId) {
+  /// Rows booked against [accountId], optionally only [ownerId]'s.
+  ///
+  /// [ownerId] is what a member's subtitle counts. Without it the number under
+  /// an account includes rows the viewer is not allowed to see, which leaks the
+  /// existence of that spending through a count.
+  int countTransactionsForAccount(int? accountId, {int? ownerId}) {
     if (accountId == null) return 0;
     var count = 0;
     for (final t in _transactions) {
-      if (t.accountId == accountId) count++;
+      if (t.accountId != accountId) continue;
+      if (ownerId != null && t.userId != ownerId) continue;
+      count++;
     }
     return count;
   }
@@ -398,11 +417,18 @@ class MockStore {
   /// Excludes transfer legs, matching `CategoryController::index` — a transfer
   /// borrows a category for schema reasons only, and counting it would inflate
   /// every tile the moment the user moved money.
-  int countTransactionsForCategory(int? categoryId) {
+  /// Expense rows filed under [categoryId], optionally only [ownerId]'s.
+  ///
+  /// Mirrors `CategoryController::index`, which scopes this count by role for
+  /// the same reason: a child reading "3 transactions" under المطاعم when only
+  /// one is theirs has been told something about their parent's spending.
+  int countTransactionsForCategory(int? categoryId, {int? ownerId}) {
     if (categoryId == null) return 0;
     var count = 0;
     for (final t in _transactions) {
-      if (t.categoryId == categoryId && !t.isTransfer) count++;
+      if (t.categoryId != categoryId || t.isTransfer) continue;
+      if (ownerId != null && t.userId != ownerId) continue;
+      count++;
     }
     return count;
   }

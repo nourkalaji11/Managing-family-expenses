@@ -153,7 +153,10 @@ class AccountsRepo extends AccountsDomain {
     await Future.delayed(mockDelay);
 
     final store = MockStore.instance;
-    final accounts = store.accounts;
+    final viewer = store.signedInUser;
+    // Scoped by role, as `AccountController::index` scopes it: a member sees
+    // their own wallet, not their parent's account and balance.
+    final accounts = store.accountsVisibleTo(viewer);
 
     return Right(
       AccountsData(
@@ -164,7 +167,12 @@ class AccountsRepo extends AccountsDomain {
         // stored count would miss.
         transactionCounts: {
           for (final a in accounts)
-            if (a.id != null) a.id!: store.countTransactionsForAccount(a.id),
+            if (a.id != null)
+              a.id!: store.countTransactionsForAccount(
+                a.id,
+                // A member counts only their own rows; a parent counts all.
+                ownerId: (viewer?.isParent ?? true) ? null : viewer?.id,
+              ),
         },
       ),
     );

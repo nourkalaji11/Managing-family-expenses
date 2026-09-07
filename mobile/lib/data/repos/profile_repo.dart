@@ -7,6 +7,7 @@ import 'package:family_expense_management/core/locals_app.dart';
 import 'package:family_expense_management/data/mock/mock_config.dart';
 import 'package:family_expense_management/data/mock/mock_store.dart';
 import 'package:family_expense_management/data/local_storage.dart';
+import 'package:family_expense_management/data/models/account.dart';
 import 'package:family_expense_management/data/models/app_notification.dart';
 import 'package:family_expense_management/data/models/user.dart';
 import 'package:family_expense_management/network/api_envelope.dart';
@@ -413,6 +414,19 @@ class ProfileRepo extends ProfileDomain {
     );
 
     store.addUser(member);
+
+    // A wallet of their own, as `AuthController::createMember` opens one.
+    // Without it the child signs in to an empty account list and cannot record
+    // a thing, because accounts are scoped by role and every transaction needs
+    // one.
+    store.addAccount(
+      Account(
+        id: store.allocateAccountId(),
+        name: 'محفظة ${member.name ?? ''}'.trim(),
+        balance: 0,
+        userId: member.id,
+      ),
+    );
 
     // The same notification that setting a ceiling later would record, so the
     // history does not depend on when the parent happened to decide.

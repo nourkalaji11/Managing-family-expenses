@@ -117,7 +117,9 @@ class TransactionsRepo extends TransactionsDomain {
             // labelled with the old name.
             for (final t in rows) t.copyWith(user: store.userById(t.userId)),
           ]),
-          accounts: store.accounts,
+          // The form's account picker: only what the viewer may book against,
+          // so a member is never offered their parent's account.
+          accounts: store.accountsVisibleTo(store.signedInUser),
           categories: store.categories,
           // Same rule as the server: a member is given only themselves.
           members: isParent

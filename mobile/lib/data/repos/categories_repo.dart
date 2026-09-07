@@ -153,6 +153,8 @@ class CategoriesRepo extends CategoriesDomain {
     await Future.delayed(mockDelay);
 
     final store = MockStore.instance;
+    final viewer = store.signedInUser;
+    final int? ownerId = (viewer?.isParent ?? true) ? null : viewer?.id;
     // Ordered by name ascending, matching `CategoryController::index`. Doing it
     // here rather than in the store keeps ordering a repository concern, the
     // same arrangement `TransactionsRepo` uses for newest-first.
@@ -164,7 +166,10 @@ class CategoriesRepo extends CategoriesDomain {
         categories: categories,
         transactionCounts: {
           for (final c in categories)
-            if (c.id != null) c.id!: store.countTransactionsForCategory(c.id),
+            if (c.id != null)
+              // Scoped by role like the server's: an unscoped count tells a
+              // member how often the rest of the family used a category.
+              c.id!: store.countTransactionsForCategory(c.id, ownerId: ownerId),
         },
         budgetCounts: {
           for (final c in categories)
