@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -52,7 +55,9 @@ class AuthController extends Controller
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
-        
+            // اسم الجهاز اختياري: يظهر في عمود name للتوكن ليتمكن المستخدم من
+            // تمييز جلساته لاحقاً. لا يؤثر على الصلاحيات إطلاقاً.
+            'device_name' => 'nullable|string|max:100',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -63,9 +68,22 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // إبطال أي توكنات قديمة وإنشاء توكن جديد
-        $user->tokens()->delete();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // كان هنا $user->tokens()->delete(); — أي أن كل تسجيل دخول يُبطل توكنات
+        // كل الأجهزة الأخرى. فحين يدخل شخصان بالحساب نفسه من جهازين، يخرج
+        // الأول فوراً عند دخول الثاني. الجلسات المتوازية سلوك مقصود هنا،
+        // فالحذف الشامل أُزيل.
+        //
+        // ما يُبطل الجلسات الأخرى الآن هو تغيير كلمة المرور فقط — انظر
+        // updateProfile — وهو المكان الصحيح لذلك: عندها يريد المستخدم فعلاً
+        // إخراج كل من يملك جلسة قديمة.
+        $token = $user->createToken(
+            $request->input('device_name') ?: 'auth_token'
+        )->plainTextToken;
+
+        // سقف للجلسات المتزامنة: بدونه يترك كل تسجيل دخول صفاً جديداً في
+        // personal_access_tokens إلى الأبد، فينمو الجدول بلا حد ويبقى توكن
+        // جهاز قديم صالحاً لسنوات. نُبقي الأحدث ونحذف ما زاد.
+        $this->pruneOldSessions($user);
 
         return response()->json([
             'message'      => 'Login successful',
@@ -73,6 +91,33 @@ class AuthController extends Controller
             'token_type'   => 'Bearer',
             'user'         => $user
         ], 200);
+    }
+
+    /**
+     * أقصى عدد جلسات متزامنة لمستخدم واحد.
+     *
+     * الرقم ليس قيداً أمنياً بقدر ما هو سقف نمو: هاتف وجهاز لوحي وحاسوب
+     * وجهازان احتياطيان تغطي الاستخدام الواقعي، وما بعدها تراكم لتوكنات
+     * أجهزة لم يعد أحد يستعملها.
+     */
+    private const MAX_ACTIVE_SESSIONS = 5;
+
+    /**
+     * يحذف أقدم التوكنات إذا تجاوز عددها [MAX_ACTIVE_SESSIONS].
+     *
+     * الترتيب بـ id تنازلياً لا بـ last_used_at: الأخير يبقى null لتوكن أُنشئ
+     * ولم يُستعمل بعد، فيُحذف توكن الجهاز الذي سجّل دخوله للتو.
+     */
+    private function pruneOldSessions(User $user): void
+    {
+        $stale = $user->tokens()
+            ->orderByDesc('id')
+            ->pluck('id')
+            ->slice(self::MAX_ACTIVE_SESSIONS);
+
+        if ($stale->isNotEmpty()) {
+            $user->tokens()->whereIn('id', $stale->all())->delete();
+        }
     }
 
     // 3. تسجيل الخروج (Logout)
@@ -119,6 +164,16 @@ class AuthController extends Controller
                 ], 422);
             }
             $user->password = Hash::make($validated['password']);
+
+            // إخراج بقية الأجهزة عند تغيير كلمة المرور، مع إبقاء الجلسة
+            // الحالية. صار هذا لازماً بعد إزالة الحذف الشامل من login: قبلها
+            // كان تسجيل الدخول التالي يُبطل التوكنات القديمة بالمصادفة، وبدون
+            // هذا السطر تبقى جلسة مسروقة صالحة رغم تغيير كلمة المرور — وهو
+            // أول ما يفعله المستخدم حين يشك أن أحداً دخل على حسابه.
+            $current = $request->user()->currentAccessToken();
+            $user->tokens()
+                ->when($current, fn ($query) => $query->where('id', '!=', $current->id))
+                ->delete();
         }
 
         if (isset($validated['name']))  $user->name = $validated['name'];
@@ -229,7 +284,76 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // 7. تحديد حد السحب المالي للابن (خاص بولي الأمر)
+    /**
+     * 7. حذف ابن من العائلة (خاص بولي الأمر).
+     *
+     * ---------------------------------------------------------------------
+     * الحذف هنا ليس `$user->delete()` وحده، لأن كل الجداول المرتبطة معرَّفة
+     * بـ onDelete('cascade'): حذف الابن مباشرةً يمحو معه **حسابات العائلة**
+     * التي أنشأها وكل المعاملات المسجَّلة عليها. أي أن حذف ابن أضاف "الحساب
+     * الجاري" يعني ضياع الحساب الرئيسي للعائلة وتاريخه كاملاً.
+     *
+     * لذلك يُفصل المرتبط إلى نوعين:
+     *
+     * - **الحسابات والميزانيات** موارد عائلية مشتركة، و user_id فيها يعني
+     *   "من أنشأها" لا "من يملكها". تُنقل ملكيتها إلى ولي الأمر الحاذف فتبقى
+     *   العائلة محتفظة بها.
+     *
+     * - **المعاملات** نسبة شخصية: نقلها إلى ولي الأمر يجعل مصاريف الابن تظهر
+     *   كمصاريف أبيه، وهو نقيض الغرض من التطبيق. ولا يجوز محوها لأنها تاريخ
+     *   مالي وأرصدة. فإن وُجدت، يُرفض الحذف ويُبلَّغ ولي الأمر بالسبب.
+     *
+     * - **الإشعارات** رسائل موجَّهة لشخص بعينه، فتذهب معه.
+     * ---------------------------------------------------------------------
+     */
+    public function deleteMember(Request $request, $id)
+    {
+        $actor = $request->user();
+
+        if (! $actor->isParent()) {
+            return response()->json(['message' => 'غير مصرح لك بحذف أفراد.'], 403);
+        }
+
+        $member = User::findOrFail($id);
+
+        // حذف الذات يترك العائلة بلا ولي أمر وينهي جلسة الطالب نفسه.
+        if ($member->id === $actor->id) {
+            return response()->json([
+                'message' => 'لا يمكنك حذف حسابك من هنا.'
+            ], 422);
+        }
+
+        // ولي أمر آخر ليس "ابناً" تُدار عضويته من هذه الشاشة.
+        if ($member->isParent()) {
+            return response()->json([
+                'message' => 'لا يمكن حذف ولي أمر.'
+            ], 422);
+        }
+
+        $transactions = Transaction::where('user_id', $member->id)->count();
+        if ($transactions > 0) {
+            return response()->json([
+                'message' => 'لا يمكن حذف هذا الفرد لأن له معاملات مسجَّلة. احذف معاملاته أولاً إن أردت إزالته.',
+                'transactions_count' => $transactions,
+            ], 422);
+        }
+
+        DB::transaction(function () use ($member, $actor) {
+            // نقل الموارد المشتركة قبل الحذف، وإلا أخذها الـ cascade معه.
+            Account::where('user_id', $member->id)->update(['user_id' => $actor->id]);
+            Budget::where('user_id', $member->id)->update(['user_id' => $actor->id]);
+
+            // إنهاء جلساته على كل الأجهزة: حساب محذوف يجب ألا يبقى توكنه صالحاً.
+            $member->tokens()->delete();
+            $member->delete();
+        });
+
+        return response()->json([
+            'message' => 'تم حذف الفرد من العائلة.'
+        ], 200);
+    }
+
+    // 8. تحديد حد السحب المالي للابن (خاص بولي الأمر)
     public function setSpendingLimit(Request $request, $id)
     {
         // كان الفحص `role !== 'admin'` حرفياً، فحساب ولي أمر أُنشئ من التطبيق

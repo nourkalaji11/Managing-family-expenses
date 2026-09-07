@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ولي الأمر ينشئ حساب ابن. الدور مثبَّت داخل الكنترولر ولا يُقرأ من الطلب.
     Route::post('/users', [AuthController::class, 'createMember']);
     Route::put('/users/{id}/limit', [AuthController::class, 'setSpendingLimit']);
+    Route::delete('/users/{id}', [AuthController::class, 'deleteMember']);
 
     // الإشعارات داخل التطبيق
     Route::get('/notifications', [NotificationController::class, 'index']);
