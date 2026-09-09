@@ -1,6 +1,7 @@
 // ignore_for_file: camel_case_types, non_constant_identifier_names
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -50,9 +51,16 @@ class DioClient {
   }) async {
     final connected = await NetworkConnection.isConnected();
     if (connected) {
-      log("$_baseUrl/$path", name: requestType.name);
-      debugPrint(queryParameters.toString());
-      debugPrint(json.encode(body));
+      // Debug builds only. `body` carries the plaintext password on login,
+      // register and change-password, and the block below logs the bearer
+      // token — all of it readable over `adb logcat` by anything with USB
+      // debugging. A release build talking to a real server must not narrate
+      // its own credentials.
+      if (kDebugMode) {
+        log("$_baseUrl/$path", name: requestType.name);
+        debugPrint(queryParameters.toString());
+        debugPrint(json.encode(body));
+      }
 
       _dio.options.headers['Content-Type'] = 'application/json';
       _dio.options.headers['Accept'] = 'application/json';
@@ -60,7 +68,7 @@ class DioClient {
       _dio.options.headers['X-OS'] = LocalsApp.deviceOS;
 
       if (LocalsApp.user?.token != null) {
-        log(LocalsApp.user!.token ?? "no token");
+        if (kDebugMode) log(LocalsApp.user!.token ?? "no token");
         _dio.options.headers['Authorization'] =
             "Bearer ${LocalsApp.user!.token}";
       } else {

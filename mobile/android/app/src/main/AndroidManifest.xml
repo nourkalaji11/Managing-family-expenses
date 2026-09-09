@@ -1,4 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        Declared here, not left to the manifest merger. It was only reaching a
+        release build because Firebase and OneSignal happen to declare it in
+        their own manifests; dropping either plugin would have taken the app's
+        network access with it, and a release build with no internet fails at
+        every screen rather than at build time.
+
+        The debug manifest declares it too, alongside the cleartext opt-in that
+        a local http:// server needs. Release talks to https:// only.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
