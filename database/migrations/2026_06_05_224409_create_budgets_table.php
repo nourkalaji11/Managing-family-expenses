@@ -20,7 +20,7 @@ return new class extends Migration
             
             // ربط الميزانية بالمستخدم والتصنيف (المفاتيح الأجنبية F.K)
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
             
             $table->timestamps();
         });
